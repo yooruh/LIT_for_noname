@@ -1,0 +1,220 @@
+<html lang="zh">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>游戏规则</title>
+	<style>
+		:root {
+			--secondary: #e74c3c;
+			--accent: #3498db;
+		}
+
+		html, body {
+			height: 100%;
+			width: 100%;
+			margin: 0;
+			padding: 0;
+			font-family: 'Segoe UI', system-ui, sans-serif;
+			line-height: 1.6;
+			background-color: transparent;
+		}
+
+		.container {
+			box-sizing: border-box;
+			width: 100%;
+			min-height: 100%;
+			padding: 30px;
+			margin: 0;
+			background: white;
+			border-radius: 0;
+			box-shadow: none;
+			overflow-y: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		/* 标题样式 */
+		h1 {
+			font-size: 24px;
+			color: var(--secondary);
+			border-bottom: 3px solid var(--accent);
+			margin: 0 0 0.5em;
+			padding-bottom: 0.3em;
+		}
+		h2 {
+			font-size: 20px;
+			color: #333;
+			margin: 0.8em 0 0.3em;
+		}
+
+		.section {
+			margin-bottom: 20px;
+		}
+
+		p, li {
+			margin: 0.5em 0;
+			line-height: 1.5;
+		}
+
+		ul, ol {
+			padding-left: 20px;
+			margin: 0.5em 0;
+		}
+
+		strong {
+			color: #007BFF;
+		}
+
+		/* 关闭按钮 */
+		.close-button {
+			position: fixed;
+			top: 10px;
+			right: 10px;
+			padding: 5px 10px;
+			background-color: var(--secondary);
+			color: white;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			font-size: 16px;
+			z-index: 1000;
+		}
+
+		#closeButton {
+			display: block;
+		}
+
+		/* 游戏内隐藏 */
+		body[data-type="game"][data-embedded] #closeButton {
+			display: none !important;
+		}
+
+		/* 移动端优化 */
+		@media (max-width: 768px) {
+			.container {
+				padding: 20px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<button id="closeButton" class="close-button">关闭</button>
+		<h1>游戏规则</h1>
+		<section class="section">
+			<h2>前言</h2>
+			<p>本模式完全由幻化之战改动而来，但适配了吊卡技能和负面效果，同时添加规则方便单机游玩</p>
+		</section>
+		<section class="section">
+			<h2>一、选将、灵力与技能</h2>
+			<ol>
+				<li>
+					<strong>选将机制：</strong>
+					选择的武将没有本身的技能，体力值均为4，选将只影响美观度和性别等基本信息，与强度几乎无关。
+				</li>
+				<li>
+					<strong>任务目标：</strong>
+					<ul>
+						<li>
+							<strong>次要目标：</strong>
+							游戏开始时会随机分配一个次要目标，即杀伤xx，保护xx，于正上方显示，这两个目标不为自己，不会重合。乾坤八卦判定后，次要目标重置。当你成功杀死目标击败的对象时获得3点灵力值；当你对保护目标使用桃时（如使保护目标脱离濒死），你可以获得1点灵力值；保护目标死亡时，随机失去4张牌。
+						</li>
+						<li>
+							<strong>主要目标：</strong>
+							活到最后一个，这个模式十分惨烈，最终只会有一个玩家取得胜利。
+						</li>
+					</ul>
+				</li>
+				<li>
+					<strong>灵力值：</strong>
+					<ul>
+						<li>
+							<strong>获得灵力值的方法：</strong>
+							<ol>
+								<li>七号位和八号位在选择起始技能后获得一点灵力值，六七八号位多获得一张手牌。</li>
+								<li>死战前每一轮每人可以获得一点灵力值。</li>
+								<li>击败一名武将可以获得一点灵力值和摸一张牌，如果击败的武将是目标武将，则额外获得两点灵力值，对保护目标使用桃时，获得一点灵力值。</li>
+							</ol>
+						</li>
+						<li>
+							<strong>灵力值的使用方法：</strong>
+							<ol>
+								<li>回合开始时可以选择消耗两点灵力值从三个选项中选择获得一个新技能，或者消耗三点灵力值从六个选项中选择获得一个新技能（当通过此方法获得的技能超过3个时，需要选择放弃其中一个技能）。</li>
+								<li>选择新技能时可以通过消耗一点灵力值重新刷新技能选项再做选择。</li>
+								<li>出牌阶段可以弃置任意数量的灵力值，获得相同数量的手牌。</li>
+							</ol>
+						</li>
+					</ul>
+				</li>
+				<li>
+					<strong>起始技能：</strong>
+					<ul>
+						<li>牺牲：每名其他角色的回合限一次，你可以将两张牌当做【桃】使用。</li>
+						<li>熟虑：出牌阶段限一次，你可以弃置1/2张牌并摸2/3张牌。</li>
+						<li>先登：锁定技，出牌阶段，你使用的第一张【杀】不计入次数且无距离限制。</li>
+					</ul>
+					<p>场上存活人数（不计宝箱和女子）≤4人时，进入死战：不再获得灵力值，次要目标消失，若角色在自己的回合内没有造成伤害，则会失去1点体力<br>补刀速推选先登，救人自救牺牲好，稳扎稳打熟虑强，这个模式里杀人远没有活下来重要，所以不该保的人别救，不该贪的人头别贪，降低嘲讽苟下来也许会更好一点。</p>
+				</li>
+			</ol>
+		</section>
+		<section class="section">
+			<h2>二、乾坤八卦</h2>
+			<p>有任意实体阵亡的回合结束后，会判一次乾坤八卦，不同的卦象会触发不同的效果：</p>
+			<ul>
+				<li>离：全场掉一点体力。</li>
+				<li>坎：全场摸两牌。</li>
+				<li>乾：最后一名阵亡实体3血3牌复活。</li>
+				<li>震：全场随机弃一张牌。</li>
+				<li>兑：全场+1灵力值。</li>
+				<li>艮：每个人获得牌堆里的一张装备（若牌堆里没有装备牌，则不获得）。</li>
+				<li>巽：每个人获得一个技能（已有三个的不获得）。</li>
+				<li>坤：变珍藏宝箱，普通宝箱或神秘女子（该玩家变为旁观者）。</li>
+			</ul>
+			<p>
+				抢宝箱（杀宝箱有正收益），避女子（击杀女子后弃置所有牌并失去一个技能），女子和宝箱均不会响应打出牌，也不受死战模式掉体力影响。
+				<li>注：击败宝箱时随机获得一个技能，如果自己已有三个技能，那么将会随机替换其中一个技能。</li>
+			</p>
+		</section>
+		<section class="section">
+			<h2>三、特殊卡牌，技能</h2>
+			<ul>
+				<li>
+					<strong>偷梁换柱：</strong>
+					可重铸；出牌阶段，对任意一名玩家使用，随机更换其一个技能。两种情况：<br>一是自己技能太弱，使用偷梁换柱换掉自己的技能，但是要注意，追梦有风险，望慎行；<br>二是破坏其他人特别强势的技能，当然也可能越换越厉害。
+				</li>
+				<li>
+					<strong>釜底抽薪：</strong>
+					全牌堆最阴的一种牌，出牌阶段，你可以弃置一名角色的随机一个技能，这两张新锦囊均可触发集智。<br>①4血4手牌上限，完全可以屯一张釜底抽薪留到死战不能再获得灵力值时对最厉害的武将使用。<br>②前期不要随意对其他玩家使用，此时获得技能速度慢，往往一个技能被拆倒还影响不了整个局势，但倘若是入机，那结下的仇就是不死不休了。
+				</li>
+				<li>
+					<strong>挥泪：</strong>
+					杀死你的玩家将会被弃置所有牌，宛若小丑的一个威慑技。
+				</li>
+			</ul>
+		</section>
+		<section class="section">
+			<h2>四、玩法技巧</h2>
+			<ol>
+				<li>次要目标只是次要目标，完不完成不重要，且这个次要目标可能随时会换，没准你现在打残的击败目标下一刻变成你要保护的对象呢？正确做法应该是：压制最强的，补刀最弱的，手有余桃救救保护对象，如果保护对象是唯一被集火对象，果断放弃，一点体力而已～不要为了拼命保护别人把自己状态弄残了。</li>
+				<li>形势不危机的时候（自己不是被集火对象），可以等屯了3颗灵力值再选择技能，三选一和六选一，还是六选一比较靠谱，且技能少的大多数时候嘲讽低，还可能捡到巽卦的便宜。</li>
+				<li>一开始不要选择太过于强势的技能，吊卡技加一起也架不住7打1，在前期，防御技会比较的好使，比如<del>帷幕飞影龙胆</del>善良闺蜜游侠，活着才是最重要的。</li>
+				<li>起始刷牌，前置位加一防具为主，后置位杀闪都要有，桃越多越好，无懈最好也得有一张。</li>
+				<li>合纵连横才能以弱胜强，尤其是在死战模式三人局，两弱一强，不一定要为了怕自己掉一点体力，而去补刀弱势的另一人。</li>
+				<li>谨记：劣势局求险，优势局求稳。</li>
+			</ol>
+		</section>
+	</div>
+	<script>
+		// 环境检测与按钮控制
+		document.body.setAttribute('data-environment', window.self === window.top ? 'standalone' : 'embedded');
+		
+		if (window.self !== window.top) {
+			document.getElementById('closeButton').remove();
+			document.body.setAttribute('data-embedded', 'true');
+		} else {
+			document.getElementById('closeButton').addEventListener('click', function() {
+				window.close();
+			});
+		}
+	</script>
+</body>
+</html>
