@@ -258,24 +258,24 @@ export let info = {
                                     promptStr += " " + get.translation(skill);
                                 }
                                 if (player.storage._lingli === 2 || (3 <= skillList.length && skillList.length < 6)) {
-                                    const control = await player.chooseControl(['确定', 'cancel2'])
+                                    const { control } = await player.chooseControl(['确定', 'cancel2'])
                                         .set("prompt", `${promptStr}，是否消耗2点灵力从三个技能中选择其中一个${player.skillH.length === 3 ? '替换' : '获得'}？`)
                                         .set("ai", (event, player) => {
                                             if (player.skillH.length == 3) return 'cancel2';
                                             return '确定';
-                                        }).forResultControl();
+                                        }).forResult();
                                     if (control != 'cancel2') event.result = {
                                         bool: true,
                                         cost_data: [1, skillList.slice(3)],
                                     };
                                 } else if (skillList.length === 6) {
                                     const list = ['三选其一', '六选其一', 'cancel2'];
-                                    const control = await player.chooseControl(list)
+                                    const { control } = await player.chooseControl(list)
                                         .set("prompt", `###${promptStr}，是否消耗2点灵力从三个技能中${player.skillH.length === 3 ? '替换' : '获得'}其一？###<li>或多消耗1点灵力从六个技能中选择`)
                                         .set("ai", (event, player) => {
                                             if (player.skillH.length === 3) return 'cancel2';
                                             return '三选其一';
-                                        }).forResultControl();
+                                        }).forResult();
                                     let index = list.indexOf(control) + 1;
                                     event.result = {
                                         bool: control != 'cancel2',

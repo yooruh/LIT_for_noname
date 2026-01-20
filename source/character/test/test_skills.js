@@ -15,7 +15,7 @@ export const skill = {
                     const j = Math.floor(player.maxHp / (game.countPlayer() + 1));
                     const options = ['+1上限 -1体力', j > 0 ? `+1体力 -${j}上限` : '+1体力'];
 
-                    const result = await player.chooseControl(options)
+                    const { control } = await player.chooseControl(options)
                         .set("prompt", "【悲哀】")
                         .set("prompt2", "选择发动技能的内容")
                         .set("ai", () => {
@@ -29,9 +29,9 @@ export const skill = {
                                 return 1;
                             }
                             return 1;
-                        }).forResultControl();
+                        }).forResult();
 
-                    if (result === '+1上限 -1体力') {
+                    if (control === '+1上限 -1体力') {
                         await player.gainMaxHp();
                         await player.loseHp();
                     } else {
@@ -648,7 +648,7 @@ export const skill = {
                 trigger.player.hasSkillTag('maixie_defend') ||
                 trigger.player.hasSkillTag('maixie_hp');
 
-            const result = await player.chooseControl(['确定', '取消'])
+            const { control } = await player.chooseControl(['确定', '取消'])
                 .set("prompt", "【大哈】")
                 .set("prompt2", "弃置所有手牌，否则此伤害视为失去体力")
                 .set("ai", () => {
@@ -666,10 +666,9 @@ export const skill = {
                     }
                     // 默认选择取消，让伤害变为失去体力
                     return 0;
-                })
-                .forResultControl();
+                }).forResult();
 
-            if (result === '确定') {
+            if (control === '确定') {
                 await player.discard(player.getCards('h'), true);
             } else {
                 trigger.cancel();
@@ -850,7 +849,7 @@ export const skill = {
             const selectedCard = result.links[0];
 
             // 选择操作
-            const control = await player.chooseControl(['拿走', '置于牌堆顶', '取消', '返回'])
+            const { control } = await player.chooseControl(['拿走', '置于牌堆顶', '取消', '返回'])
                 .set("prompt", "【单纯】")
                 .set("prompt2", `选择对${get.translation(selectedCard)}的操作`)
                 .set("ai", () => {
@@ -860,7 +859,7 @@ export const skill = {
                         return '拿走';
                     }
                     return '取消';
-                }).forResultControl();
+                }).forResult();
 
             dialog.close();
             if (control === '置于牌堆顶') {

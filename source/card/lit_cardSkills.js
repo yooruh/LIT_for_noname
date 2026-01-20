@@ -450,12 +450,12 @@ export const skill = {
             return target.hasSkill('lit_diaokajineng');
         },
         async content(event, trigger, player) {
-             // 记录target当前拥有的吊卡技能
+            // 记录target当前拥有的吊卡技能
             const target = event.target;
             const targetSkills = target.storage.lit_diaokajineng || [];
 
             // 移除吊卡技能
-            if(targetSkills.length)await target.removeSkills(targetSkills);
+            if (targetSkills.length) await target.removeSkills(targetSkills);
             await player.removeSkills('lit_xiaohongtanver');
 
             const removedSkills = [];   // 不可用的吊卡技能
@@ -583,7 +583,7 @@ export const skill = {
                 str += lib.translate[i] + "：<ul>";
                 str += lib.translate[i + "_info"] + "</ul>"
             }
-            const control = await player.chooseControl(list/* .concat("cancel2"),true */)
+            const { control } = await player.chooseControl(list/* .concat("cancel2"),true */)
                 .set("prompt", "获得" + get.translation(trigger.player) + "角色牌上的一个初始技能")
                 .set("prompt2", str)
                 .set("ai", (event, player) => {
@@ -598,7 +598,7 @@ export const skill = {
                         ai_list = ai_list.filter(e => e.startsWith("lit_shengji"));
                     }
                     return ai_list.randomGets(1)[0];
-                }).forResultControl();
+                }).forResult();
             game.log(player, "选择了", trigger.player, "的技能", "#g【" + get.translation(control) + "】");
             await player.popup("地缝：<br>" + get.translation(control));
             player.addSkill(control);

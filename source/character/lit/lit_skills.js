@@ -2905,13 +2905,13 @@ export const skill = {
             await player.logSkill('lit_kuaihuo', target, { color: [255, 192, 203] });
             target.line(targets, { color: [255, 192, 203] });
 
-            const control = await target.chooseControl('使用杀', '不使用', true).set('prompt', "【快活】").set('prompt2', "是否对" + get.translation(targets) + "使用1张无实体牌的“杀”？")
+            const { control } = await target.chooseControl('使用杀', '不使用', true).set('prompt', "【快活】").set('prompt2', "是否对" + get.translation(targets) + "使用1张无实体牌的“杀”？")
                 .set("ai", (event) => {
                     for (let i of targets) {
                         if (get.effect(i, { name: 'sha' }, target, target) <= 0) return '不使用';
                     }
                     return '使用杀';
-                }).forResultControl();
+                }).forResult();
             game.log(target, "选择" + control);
             target.popup(control);
             if (control === '使用杀') {
@@ -4695,7 +4695,7 @@ export const skill = {
         async cost(event, trigger, player) {
             const list = lib.suit.slice(0);
             const str = get.translation(trigger.player) + "的" + (trigger.judgestr || "") + "判定为" + get.translation(trigger.player.judging[0]) + "<li>是否失去1点体力并固定其花色？";
-            const control = await player
+            const { control } = await player
                 .chooseControl(list.concat(['cancel2']))
                 .set("prompt", "「梧桐」")
                 .set("prompt2", str)
@@ -4723,7 +4723,7 @@ export const skill = {
                     return list[0];
                 })
                 .set("judging", trigger.player.judging[0])
-                .forResultControl();
+                .forResult();
             event.result = {
                 bool: control != "cancel2",
                 cost_data: control,
@@ -4757,7 +4757,7 @@ export const skill = {
         },
         async cost(event, trigger, player) {
             const str = get.translation(trigger.player) + "的" + (trigger.judgestr || "") + "判定为" + get.translation(trigger.player.judging[0]);
-            const next = await player.chooseControl(["失去体力", "弃置手牌", 'cancel2'].filter(e => player.countCards('h') > 0 ? 1 : e != "弃置手牌"))
+            const { control } = await player.chooseControl(["失去体力", "弃置手牌", 'cancel2'].filter(e => player.countCards('h') > 0 ? 1 : e != "弃置手牌"))
                 .set("prompt", "「梧桐」")
                 .set("prompt2", str + "<li>是否失去1点体力" + (player.countCards('h') > 0 ? "或弃置全部手牌" : "") + "从而固定其花色？")
                 .set("ai", function () {
@@ -4802,16 +4802,16 @@ export const skill = {
                     if (cards.length > 0 && num < 3 * delval) return "弃置手牌";
                     if (delval / 2 > 5 - player.hp) return "失去体力";
                     return 'cancel2';
-                }).set("judging", trigger.player.judging[0]).forResultControl();
+                }).set("judging", trigger.player.judging[0]).forResult();
             event.result = {
-                bool: next != "cancel2",
-                cost_data: next,
+                bool: control != "cancel2",
+                cost_data: control,
             };
         },
         async content(event, trigger, player) {
             const str = get.translation(trigger.player) + "的" + (trigger.judgestr || "") + "判定为" + get.translation(trigger.player.judging[0]);
             const list = lib.suit.slice(0);
-            const control = await player
+            const { control } = await player
                 .chooseControl(list.concat(['cancel2']))
                 .set("prompt", "「梧桐」")
                 .set("prompt2", str + "<li>请选择要固定的花色")
@@ -4834,7 +4834,7 @@ export const skill = {
                     return list[0];
                 })
                 .set("judging", trigger.player.judging[0])
-                .forResultControl();
+                .forResult();
 
             if (control === 'cancel2') return;
             event.forceDie = true;
@@ -5280,12 +5280,12 @@ export const skill = {
         // 	game.broadcastAll(async (event, trigger, player) => {
         // 		if(player.isUnderControl(true)){
         // 			if(lib.config.autoskilllist.includes("lit_male")){
-        // 				const control = await player.chooseControl(['确定','取消'])
+        // 				const { control } = await player.chooseControl(['确定','取消'])
         // 				.set("prompt",`是否对${get.translation(trigger.player)}发动【麻了】？`)
         // 				.set("ai",trigger => {
         // 					if(get.info(trigger.card).selectTarget === -1)return '取消';
         // 					return '确定';
-        // 				}).forResultControl();
+        // 				}).forResult();
         // 				if(control === '确定')event.result = { bool: true };
         // 			} else {
         // 				if(get.info(trigger.card).selectTarget != -1)event.result = { bool: true };
