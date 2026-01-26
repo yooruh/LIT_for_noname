@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>叁岛世界更新日志</title>
+	<style>
+		.update-log {
+			font-family: "Microsoft YaHei", Arial, sans-serif;
+			width: 90%;
+			max-width: 1200px;
+			margin: 20px auto;
+			padding: 30px 40px;
+			background: #fff;
+			border-radius: 12px;
+			box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+		}
+		body {
+			margin: 0;
+			padding: 20px;
+			min-width: 320px;
+			background: #f5f7f9;
+		}
+		.update-block {
+			margin-bottom: 35px;
+			border-left: 3px solid #3498db;
+			padding-left: 20px;
+		}
+		h1 {
+			color: #2c3e50;
+			text-align: center;
+			margin-bottom: 40px;
+			font-size: 28px;
+		}
+		h3 {
+			color: #3498db;
+			margin: 25px 0 15px;
+			font-size: 19px;
+		}
+		.update-list {
+			list-style: none;
+			padding-left: 0;
+		}
+		.update-list li {
+			margin-bottom: 12px;
+			line-height: 1.8;
+			padding-left: 2em;
+			text-indent: -2em;
+			color: #555;
+		}
+		.update-list li::before {
+			content: "・";
+			color: #3498db;
+			margin-right: 8px;
+		}
+		.notice-text p {
+			color: #888;
+			font-size: 14px;
+			text-align: center;
+			margin: -20px 0 30px;
+			line-height: 1.4;
+		}
+		.dash-line {
+			color: #ddd;
+			text-align: center;
+			letter-spacing: 3px;
+			margin: 15px 0 25px;
+			font-family: monospace;
+		}
+	</style>
+</head>
+<body>
+	<div class="update-log">
+		<h1>叁岛世界更新日志</h1>
+		<div class="notice-text">
+			<p>如果游玩过程中有任何Bug，还请见谅并及时反馈……？</p>
+		</div>
+		
+		<div class="update-block">
+			<h3>{{version}}更新（当前版本）</h3>
+			<ul class="update-list">
+				<li>① 加入角色：王荣 以及吊卡技能：荣少的剑、杨湘铃的追随者；</li>
+				<li>② 调整了杨湘铃、胡畔的强度及部分角色的AI逻辑；</li>
+				<li>③ 叁岛国战：重构导入逻辑（由于本体国战模式正在重做，故暂停叁岛国战的更新）；</li>
+				<li>④ "叁岛测试"角色包上线：其中的6个《九班杀》老角色默认关闭，需手动开启。注意：强度、AI、兼容性均未完成优化，极可能存在Bug；</li>
+				<li>⑤ 引入了新UI以代替部分老代码，加入“应用推荐的无名杀全局设置”功能。此外，本体已加入名词解释超链接和复活事件，本扩展不再额外重复；</li>
+				<li>⑥ 部分角色新增可选皮肤，以前的皮肤用AI塑炼了一下，清晰度↗，占用空间↘</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>25.4.1更新</h3>
+			<ul class="update-list">
+				<li>① 加入全新角色：张驰、杨湘铃；</li>
+				<li>② 平衡林淼、菠树角色强度，减少设计撞车；</li>
+				<li>③ 开启叁岛国战的实验性测试，已知大量Bug，先平衡强度，以后会修；</li>
+				<li>④ 一并为更新日志和帮助文档添加HTML介绍，分别可在旧帮助界面和叁岛世界设置中找到；</li>
+				<li>⑤ 取消原append形式的技能补充介绍，转而使用右键小窗口（或长按屏幕）；</li>
+				<li>⑥ 修复Bug，调整V2技能描述，重命名角色ID。</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>25.2.20更新</h3>
+			<ul class="update-list">
+				<li>① 偷偷加入了九班杀角色 林淼</li>
+				<li>② 重构代码，尤其是「无头」「骚话」「蛋壳」的屎山，几乎所有叁岛技能都使用async let改写</li>
+				<li>③ 优化ai与部分联机广播，改写部分联机修改代码，同时修复上个版本分包时产生的异常</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>25.2.12更新</h3>
+			<ul class="update-list">
+				<li>① 增加新模式：叁岛幻化。完成任务收灵力，灵力加持得技能，参悟卦象衡步履，起死回生逆乾坤！</li>
+				<li>② 分包重构代码，使用async异步代码以更好兼容新版本，同时整合"联机修改"等扩展的部分代码，改善联机体验</li>
+				<li>③ 继续平衡强度，着重修改了"曾品嘉""菠树""Rita"</li>
+				<li>④ 进一步优化复活功能，优化技能效果预期显示功能；修复少量技能结算Bug</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.1.28更新</h3>
+			<ul class="update-list">
+				<li>① 增加新角色：钱保灿；新吊卡技能：杰哥的地缝缝儿</li>
+				<li>② 预装技能效果提示，预装过长吊卡技能自动换行</li>
+				<li>③ 继续平衡强度，着重修改了"C张驰""钟雨桐的笔记"</li>
+				<li>④ 修改了吊卡技能获取机制：自高的背心、Qb之帽只能在存活人数&gt;4时获取，杰哥的地缝缝儿只能在2&lt;存活人数&lt;6时获取，通过吊卡获取小红他女儿概率翻倍</li>
+				<li>⑤ 修复联机ai的部分Bug，优化卡牌、技能以及帮助界面描述，优化升级后技能显示顺序</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.12.21更新</h3>
+			<ul class="update-list">
+				<li>① 增加全新角色：Rita、蒋海旭</li>
+				<li>② 较为激进地优化了AI的脑瘫行为，但愿不会衍生出更多bug</li>
+				<li>③ 继续平衡各角色强度，着重修改了"张盛杰""曾品嘉""自高""伍小戚"</li>
+				<li>④ 新增了升级条件，现在场上人数不足5人时全体升级</li>
+				<li>⑤ 排查了部分联机结算Bug，规范了复活写法，优化技能描述和标记显示</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.11.2更新</h3>
+			<ul class="update-list">
+				<li>① 增加了全新角色：胡峻玮、胡馨予 以及吊卡技能：Qb之帽</li>
+				<li>② 继续优化AI的脑瘫行为，某些时候的些微卡顿可能来源于此</li>
+				<li>③ 继续平衡各角色强度，着重修改了"菠树""胡畔""张盛杰"以及部分吊卡技能</li>
+				<li>④ 修复了复活Bug，部分杀的范围Bug，负面效果结算Bug，优化各类描述</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.10.3更新</h3>
+			<ul class="update-list">
+				<li>① 修复一系列因全新机制"升级"引入的Bug</li>
+				<li>② 优化少许AI，些微降低设备计算压力</li>
+				<li>③ 继续平衡各角色强度，提高可玩性</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.10.1更新</h3>
+			<ul class="update-list">
+				<li>① 加入了全新机制"升级"</li>
+				<li>② 平衡各角色强度</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.8.6更新</h3>
+			<ul class="update-list">
+				<li>停更</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.8.5更新</h3>
+			<ul class="update-list">
+				<li>  呼啊~~~修复了可有可无的bug</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.8.3更新</h3>
+			<ul class="update-list">
+				<li>① 修复了 曾哥的手肘等吊卡技能、鸡娃、守望 技能效果bug</li>
+				<li>② 修复了多版本表达方式不同导致版本号无法正常显示的bug</li>
+				<li>③ 优化了 逆天、脆弱、小红他女儿 的ai</li>
+				<li>④ 加强了 张盛杰（叁；更改游侠技能）、陈可（九；增加遗嘱技能）</li>
+				<li>⑤ 修复了"曾品嘉"上面的拼音为"cénɡ pǐn jiā"的bug</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.7.30更新</h3>
+			<ul class="update-list">
+				<li>① 新增复活检测</li>
+				<li>② 修复吊卡技能持有者战败后吊卡不归还的Bug</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.7.28更新</h3>
+			<ul class="update-list">
+				<li>优化了少量技能结算</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.7.27更新</h3>
+			<ul class="update-list">
+				<li>① 新增吊卡技能 小红他女儿</li>
+				<li>② 优化了少量技能结算，如：展示、遣退、誓仇</li>
+				<li>③ 联机聊天功能的优化已通过主机安装其他扩展实现，故取消了叁岛世界的相关设置</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.7.24更新</h3>
+			<ul class="update-list">
+				<li>① 新增角色 自高 同时引入九班杀角色 王灿</li>
+				<li>② 修复了大量ai结算Bug，如：骚话、守望、誓仇</li>
+				<li>③ 优化技能描述</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.7.22更新</h3>
+			<ul class="update-list">
+				<li>① 感谢这两天进行联机测试的各位提供了充足的改进意见</li>
+				<li>② （应该）修复了 快活、骚话联机时客机无法选中卡牌Bug，受激技能无效果的Bug，以及少量ai结算Bug</li>
+				<li>③ 修复 角色张钦奕没有称号的问题</li>
+				<li>④ 预修改了联机的聊天功能，不过还没实装，敬请期待</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.7.20更新</h3>
+			<ul class="update-list">
+				<li>① 修改了技能33、骚话、吊卡技能</li>
+				<li>② 修复了少量ai Bug和结算Bug</li>
+				<li>③ 新增角色：胡畔、兰柏勋；新增吊卡技能：张轩的MP5、1班的垃圾桶</li>
+				<li>④ 新增角色使用建议，详见角色简介</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.7.14更新</h3>
+			<ul class="update-list">
+				<li>① 修改了图片格式及引用代码</li>
+				<li>② 修复了隐藏bug，增加了更多在明面上但没人想发现的bug</li>
+				<li>③ 修改文件路径，建议本次更新前删除叁岛世界扩展</li>
+				<li>④ 优化技能描述</li>
+			</ul>
+		</div>
+
+		<div class="update-block">
+			<h3>24.7.8更新</h3>
+			<ul class="update-list">
+				<li>① 修改了部分代码格式，为之后的异步更新做好准备</li>
+				<li>② 加入了Qb、张盛杰、张钦奕、庞建龙、伍小戚、曾品嘉、菠树、刘晨沐、郑墨翰等角色，另引入了部分九班杀角色</li>
+				<li>③ 加入了吊卡、遣返牌等，并引入吊卡技能：自高的背心、曾哥的手肘、钱老师的加练、畔的键盘、钟雨桐的笔记、李洋的自由</li>
+				<li>④ 初步平衡技能强度以对标界限突破</li>
+				<li>⑤ 初步优化技能AI，尽量为单机游戏提供友好体验</li>
+			</ul>
+		</div>
+
+	</div>
+</body>
+</html>

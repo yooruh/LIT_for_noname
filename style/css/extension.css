@@ -1,0 +1,147 @@
+@keyframes fade-in {
+	0% {opacity: 0;}
+	40% {opacity: 0;}
+	100% {opacity: 1;}
+}
+@keyframes color-change {
+ 0% { --hue: 0; }
+ 100% { --hue: 360; }
+}
+@property --hue {
+	syntax: '<number>';
+	inherits: false;
+	initial-value: 0;
+}
+
+div[data-nature='nine'],
+span[data-nature='nine'] {
+	text-shadow: rgba(210, 210, 30, 1) 0 0 2px, rgba(210, 210, 30, 1) 0 0 5px, rgba(210, 210, 30, 1) 0 0 10px,
+		rgba(210, 210, 30, 1) 0 0 10px, rgba(210, 210, 30, 1) 0 0 20px, rgba(210, 210, 30, 1) 0 0 20px, black 0 0 1px;
+}
+div[data-nature='ninem'],
+span[data-nature='ninem'] {
+	text-shadow: rgba(210, 210, 30, 1) 0 0 2px, rgba(210, 210, 30, 1) 0 0 5px, rgba(210, 210, 30, 1) 0 0 5px,
+		rgba(210, 210, 30, 1) 0 0 5px, black 0 0 1px;
+}
+div[data-nature='ninemm'],
+span[data-nature='ninemm'] {
+	text-shadow: rgba(210, 210, 30, 1) 0 0 2px, rgba(210, 210, 30, 1) 0 0 2px, rgba(210, 210, 30, 1) 0 0 2px,
+		rgba(210, 210, 30, 1) 0 0 2px, black 0 0 1px;
+}
+
+div[data-nature='three'],
+span[data-nature='three'] {
+	text-shadow: rgb(25, 164, 200, 1) 0 0 2px, rgba(25, 164, 200, 1) 0 0 5px, rgba(25, 164, 200, 1) 0 0 10px,
+		rgba(25, 164, 200, 1) 0 0 10px, rgba(25, 164, 200, 1) 0 0 20px, rgba(25, 164, 200, 1) 0 0 20px, black 0 0 1px;
+}
+div[data-nature='threem'],
+span[data-nature='threem'] {
+	text-shadow: rgba(25, 164, 200, 1) 0 0 2px, rgba(25, 164, 200, 1) 0 0 5px, rgba(25, 164, 200, 1) 0 0 5px,
+		rgba(25, 164, 200, 1) 0 0 5px, black 0 0 1px;
+}
+div[data-nature='threemm'],
+span[data-nature='threemm'] {
+	text-shadow: rgba(25, 164, 200, 1) 0 0 2px, rgba(25, 164, 200, 1) 0 0 2px, rgba(25, 164, 200, 1) 0 0 2px,
+		rgba(25, 164, 200, 1) 0 0 2px, black 0 0 1px;
+}
+
+div[data-nature='one'],
+span[data-nature='one'] {
+	--hue: 0;
+	--glow-color: hsl(var(--hue), 100%, 50%);
+	text-shadow:
+		var(--glow-color) 0 0 3px, 
+		var(--glow-color) 0 0 3px, 
+		black 0 0 1px;
+	animation:
+		color-change 5s linear infinite,
+		fade-in 0.5s;
+}
+div[data-nature='onem'],
+span[data-nature='onem'] {
+	--hue: 0;
+	--glow-color: hsl(var(--hue), 100%, 45%);
+	text-shadow:
+		var(--glow-color) 0 0 3px, 
+		var(--glow-color) 0 0 7px, 
+		var(--glow-color) 0 0 7px, 
+		black 0 0 1px;
+	animation:
+		color-change 5s linear infinite,
+		fade-in 0.5s;
+}
+div[data-nature='onemm'],
+span[data-nature='onemm'] {
+	--hue: 0;
+	--glow-color: hsl(var(--hue), 100%, 40%);
+	text-shadow:
+		var(--glow-color) 0 0 3px, 
+		var(--glow-color) 0 0 7px, 
+		var(--glow-color) 0 0 15px,
+		var(--glow-color) 0 0 25px,
+		black 0 0 1px;
+	animation:
+		color-change 5s linear infinite,
+		fade-in 0.5s;
+}
+
+div[data-color='nine'],
+span[data-color='nine'] {
+	text-shadow: rgba(210, 210, 30, 1) 0 0 2px, rgba(210, 210, 30, 1) 0 0 5px, rgba(210, 210, 30, 1) 0 0 10px,
+		rgba(210, 210, 30, 1) 0 0 10px, rgba(210, 210, 30, 1) 0 0 20px, rgba(210, 210, 30, 1) 0 0 20px, black 0 0 1px;
+}
+div[data-color='three'],
+span[data-color='three'] {
+	text-shadow: rgb(25, 164, 200, 1) 0 0 2px, rgba(25, 164, 200, 1) 0 0 5px, rgba(25, 164, 200, 1) 0 0 10px,
+		rgba(25, 164, 200, 1) 0 0 10px, rgba(25, 164, 200, 1) 0 0 20px, rgba(25, 164, 200, 1) 0 0 20px, black 0 0 1px;
+}
+div[data-color='one'],
+span[data-color='one'] {
+	--hue: 0;
+	--glow-color: hsl(var(--hue), 100%, 50%);  
+	text-shadow:
+		var(--glow-color) 0 0 3px, 
+		var(--glow-color) 0 0 3px, 
+		black 0 0 1px;
+	animation:
+		color-change 5s linear infinite,
+		fade-in 0.5s;
+}
+
+cS {
+	color: #0e0;
+}
+cS+p {
+	font-size: 80%;
+	text-align: left;
+}
+#cxyFrame {
+	width: calc(50%);
+	height: calc(50%);
+	position: absolute;
+	left: calc(25%);
+	top: calc(25%);
+	border-radius: 15px;
+	border: 5px solid rgb(50, 50, 50);
+	box-shadow: 5px 5px 5px rgb(120, 120, 120), -5px 5px 5px rgb(120, 120, 120);
+	z-index: 5;
+	background-color: rgba(40, 40, 40, 0.8);
+	-webkit-animation: fade-in 0.5s;
+	animation: fade-in 0.5s;
+}
+
+.lit-link {
+    position: absolute;
+	right: 10px;
+	top: 10px;
+	color: #add8e6;
+	cursor: pointer;
+	text-Decoration: underline;
+	display: block;
+	width: auto;
+	min-Width: 280px;
+	text-Align: right;
+	z-Index: 1500;
+	white-Space: nowrap;
+	padding: 5px 10px;
+}
