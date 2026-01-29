@@ -8,7 +8,7 @@ export let type = 'extension';
 
 export default async function () {
 	// 特别提醒+最低版本限制
-	let litVersion = "26.1.14", minGameVersion = "1.11.0".split('.').slice(), gameVersion = lib.version.split('.').slice();
+	let litVersion = "26.1.20", minGameVersion = "1.11.0".split('.').slice(), gameVersion = lib.version.split('.').slice();
 	const alertsConfig = [
 		{
 			id: 'onlineFix',

@@ -3,7 +3,7 @@ import basic from './basic.js'
 
 /**
  * 提供样式隔离的对话框组件
- * 公开接口: loading, alert, confirm, choice, fileManager, showCountdownDialog, showDocModal, textEditor, closeAll
+ * 公开接口: loading, complexLoading, alert, confirm, choice, fileManager, showCountdownDialog, showDocModal, textEditor, closeAll
  */
 const DialogManager = (() => {
     // 私有变量
@@ -18,48 +18,9 @@ const DialogManager = (() => {
         const style = document.createElement('style');
         style.id = 'lit-ui-fallback-styles';
         style.textContent = `
-            .lit-ui-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.6);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 50000;
-            }
-            .lit-ui-dialog {
-                position: relative;
-                left: auto;
-                top: auto;
-                background: white;
-                border-radius: 15px;
-                padding: 25px;
-                box-sizing: border-box;
-                transition: none;
-                color: black;
-                text-shadow: none;
-                display: flex;
-                flex-direction: column;
-                min-width: 320px;
-                max-width: 90vw;
-                max-height: 85vh;
-            }
-            .lit-ui-content {
-                font-size: 16px;
-                line-height: 1.6;
-                color: #444;
-                display: block;
-                position: relative;
-                flex-grow: 1;
-                flex-shrink: 1;
-                overflow-y: auto;
-                margin-bottom: 20px;
-                white-space: pre-wrap;
-                height: auto;
-            }
+            .lit-ui-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 50000;}
+            .lit-ui-dialog { position: relative; left: auto; top: auto; background: white; border-radius: 15px; padding: 25px; box-sizing: border-box; transition: none; color: black; text-shadow: none; display: flex; flex-direction: column; min-width: 320px; max-width: 90vw; max-height: 85vh;}
+            .lit-ui-content { font-size: 16px; line-height: 1.6; color: #444; display: block; position: relative; flex-grow: 1; flex-shrink: 1; overflow-y: auto; margin-bottom: 20px; white-space: pre-wrap; height: auto;}
         `;
         document.head.appendChild(style);
         return true;
@@ -89,12 +50,12 @@ const DialogManager = (() => {
         const overlay = document.createElement('div');
         overlay.className = 'lit-ui-overlay';
         overlay.style.zIndex = `${_zIndex++}`;
-        
+
         // 阻止移动端的触摸穿透
         overlay.addEventListener('touchend', (e) => {
             e.preventDefault();
         });
-        
+
         return overlay;
     };
 
@@ -172,17 +133,6 @@ const DialogManager = (() => {
         return row;
     };
 
-    const _setupClickOutsideToClose = (overlay, closeCallback) => {
-        // 使用 pointerdown 替代 click，移动端更可靠
-        overlay.addEventListener('pointerdown', (e) => {
-            if (e.target === overlay && closeCallback && !_isClosing) {
-                e.stopPropagation();
-                e.preventDefault();
-                closeCallback();
-            }
-        });
-    };
-
     const _safeRemoveOverlay = (overlay) => {
         if (overlay && overlay.parentNode === document.body) {
             document.body.removeChild(overlay);
@@ -190,14 +140,10 @@ const DialogManager = (() => {
     };
 
     const _addDialogEventHandlers = (overlay, closeCallback, options = {}) => {
-        const {
-            enableEscClose = true,
-            enableBackClose = true,
-        } = options;
-
+        const { enableEsc = true, enableBack = true, enableOverlayClick = true } = options;
         const eventHandlers = [];
 
-        if (enableEscClose) {
+        if (enableEsc) {
             const handleEscKey = (e) => {
                 if (e.key === 'Escape' && !_isClosing) {
                     e.preventDefault(); // 阻止默认行为（如全屏退出）
@@ -210,7 +156,7 @@ const DialogManager = (() => {
             });
         }
 
-        if (enableBackClose) {
+        if (enableBack) {
             // 检查是否已存在对话框历史记录，防止重复
             const currentState = window.history.state || {};
             if (!currentState.dialogOpen) {
@@ -230,11 +176,25 @@ const DialogManager = (() => {
             window.addEventListener('popstate', handlePopState);
             eventHandlers.push(() => {
                 window.removeEventListener('popstate', handlePopState);
-                // 清理我们添加的历史记录
+                // 清理添加的历史记录
                 const state = window.history.state || {};
                 if (state.dialogOpen || state.modalOpen) {
                     window.history.back();
                 }
+            });
+        }
+
+        if (enableOverlayClick) {
+            const onPointer = (e) => {
+                if (e.target === overlay && !_isClosing) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    closeCallback();
+                }
+            }
+            overlay.addEventListener('pointerdown', onPointer);
+            eventHandlers.push(() => {
+                overlay.removeEventListener('pointerdown', onPointer);
             });
         }
 
@@ -258,23 +218,11 @@ const DialogManager = (() => {
 
     // 公开方法
     return {
-        async choice(title, message, buttons, closable = true) {
+        async choice(title, message, buttons) {
             await _initCSS();
             return new Promise((resolve) => {
                 const overlay = _createOverlay();
                 const dialog = _createDialog(title, message);
-                
-                if (!closable) {
-                    overlay.appendChild(dialog);
-                    document.body.appendChild(overlay);
-                    // 不可关闭的对话框也需要清理函数
-                    overlay._cleanup = _addDialogEventHandlers(overlay, () => {}, {
-                        enableEscClose: false,
-                        enableBackClose: false,
-                    });
-                    resolve(-1);
-                    return;
-                }
 
                 // 统一的关闭函数：移除DOM + 清理事件 + resolve
                 const closeDialog = (result) => {
@@ -282,35 +230,73 @@ const DialogManager = (() => {
                     if (overlay._cleanup) overlay._cleanup();
                     resolve(result);
                 };
-
                 const safeCloseDialog = _createSafeCallback(closeDialog);
 
                 // 按钮配置：点击后关闭对话框并返回索引
-                const btnConfigs = buttons.map((text, index) => ({
-                    text,
-                    isPrimary: index === buttons.length - 1 && text !== '取消' && text !== 'Cancel',
-                    onClick: () => safeCloseDialog(index)
-                }));
+                if (buttons.length) {
+                    const btnConfigs = buttons.map((text, index) => ({
+                        text,
+                        isPrimary: index === buttons.length - 1 && text !== '取消' && text !== 'Cancel',
+                        onClick: () => safeCloseDialog(index)
+                    }));
+                    dialog.appendChild(_createButtonRow(btnConfigs));
+                }
 
-                dialog.appendChild(_createButtonRow(btnConfigs));
                 overlay.appendChild(dialog);
                 document.body.appendChild(overlay);
 
                 // ESC/返回键/遮罩点击：关闭并返回 -1
                 const closeHandler = () => safeCloseDialog(-1);
-                
-                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler, {
-                    enableEscClose: true,
-                    enableBackClose: true,
+                if (buttons.length) {
+                    overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler);
+                } else {
+                    overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler, {
+                        enableEsc: false,
+                        enableBack: false,
+                        enableOverlayClickClose: false,
+                    });
+                }
+            });
+        },
+
+        async complexLoading(title, message) {
+            await _initCSS();
+            return new Promise((resolve) => {
+                const overlay = _createOverlay();
+
+                // 创建dialog，自己管理message元素以便更新
+                const dialog = _createDialog(title, "");
+                const msgEl = document.createElement('div');
+                msgEl.className = 'lit-dialog-message';
+                msgEl.textContent = message;
+                msgEl.style.margin = '10px 0';
+                dialog.appendChild(msgEl);
+                overlay.appendChild(dialog);
+                document.body.appendChild(overlay);
+
+                // 阻止所有关闭方式
+                overlay._cleanup = _addDialogEventHandlers(overlay, () => { }, {
+                    enableEscClose: false,
+                    enableBackClose: false,
+                    enableOverlayClickClose: false,
                 });
-                
-                // 单独设置遮罩点击关闭
-                _setupClickOutsideToClose(overlay, closeHandler);
+
+                // 返回控制器对象
+                resolve({
+                    updateText: (text) => {
+                        msgEl.textContent = text;
+                    },
+                    close: () => {
+                        _safeRemoveOverlay(overlay);
+                        if (overlay._cleanup) overlay._cleanup();
+                    }
+                });
+
             });
         },
 
         loading(title, message) {
-            return this.choice(title, message, [], false);
+            return this.choice(title, message, []);
         },
 
         alert(title, message) {
@@ -335,10 +321,10 @@ const DialogManager = (() => {
                 });
 
                 if (message) {
-                    const messageEl = document.createElement('div');
-                    messageEl.className = 'lit-ui-content lit-ui-message';
-                    messageEl.textContent = message;
-                    dialog.appendChild(messageEl);
+                    const msgEl = document.createElement('div');
+                    msgEl.className = 'lit-ui-content lit-ui-message';
+                    msgEl.textContent = message;
+                    dialog.appendChild(msgEl);
                 }
 
                 const listContainer = document.createElement('div');
@@ -354,7 +340,7 @@ const DialogManager = (() => {
                         const itemEl = document.createElement('div');
                         itemEl.className = 'lit-ui-list-item';
                         if (item.type) itemEl.dataset.type = item.type;
-                        
+
                         const number = document.createElement('span');
                         number.className = 'lit-ui-list-number';
                         number.textContent = `${index + 1}.`;
@@ -395,13 +381,8 @@ const DialogManager = (() => {
 
                 // ESC/返回键/遮罩点击：返回 null
                 const closeHandler = () => safeCloseDialog();
-                
-                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler, {
-                    enableEscClose: true,
-                    enableBackClose: true,
-                });
-                
-                _setupClickOutsideToClose(overlay, closeHandler);
+
+                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler);
             });
         },
 
@@ -415,11 +396,11 @@ const DialogManager = (() => {
                 });
 
                 if (message) {
-                    const messageEl = document.createElement('div');
-                    messageEl.className = 'lit-ui-content lit-ui-message';
-                    messageEl.style.marginBottom = '15px';
-                    messageEl.textContent = message;
-                    dialog.appendChild(messageEl);
+                    const msgEl = document.createElement('div');
+                    msgEl.className = 'lit-ui-content lit-ui-message';
+                    msgEl.style.marginBottom = '15px';
+                    msgEl.textContent = message;
+                    dialog.appendChild(msgEl);
                 }
 
                 const listContainer = document.createElement('div');
@@ -590,13 +571,8 @@ const DialogManager = (() => {
                     onCancel();
                     safeCloseDialog(false);
                 };
-                
-                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler, {
-                    enableEscClose: true,
-                    enableBackClose: true,
-                });
-                
-                _setupClickOutsideToClose(overlay, closeHandler);
+
+                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler);
 
                 let countdown = countdownTime;
                 let timerId = null;
@@ -670,13 +646,8 @@ const DialogManager = (() => {
 
                 // ESC/返回键/遮罩点击：关闭
                 const closeHandler = () => safeCloseDialog();
-                
-                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler, {
-                    enableEscClose: true,
-                    enableBackClose: true,
-                });
-                
-                _setupClickOutsideToClose(overlay, closeHandler);
+
+                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler);
 
                 const oReq = new XMLHttpRequest();
                 oReq.addEventListener('load', function () {
@@ -723,12 +694,12 @@ const DialogManager = (() => {
                 dialog.className += ' lit-text-editor-dialog';
 
                 if (message) {
-                    const messageEl = document.createElement('div');
-                    messageEl.className = 'lit-ui-content lit-ui-message';
-                    messageEl.style.fontSize = '14px';
-                    messageEl.style.color = '#666';
-                    messageEl.textContent = message;
-                    dialog.appendChild(messageEl);
+                    const msgEl = document.createElement('div');
+                    msgEl.className = 'lit-ui-content lit-ui-message';
+                    msgEl.style.fontSize = '14px';
+                    msgEl.style.color = '#666';
+                    msgEl.textContent = message;
+                    dialog.appendChild(msgEl);
                 }
 
                 const editorContainer = document.createElement('div');
@@ -809,11 +780,11 @@ const DialogManager = (() => {
 
                 // ESC/返回键关闭：编辑器不允许遮罩关闭
                 const closeHandler = () => safeCloseDialog(null);
-                
+
                 overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler, {
-                    enableEscClose: true,
-                    enableBackClose: true,
-                    enableOverlayClickClose: false
+                    enableEsc: false,
+                    enableBack: false,
+                    enableOverlayClickClose: false,
                 });
 
                 setTimeout(() => {

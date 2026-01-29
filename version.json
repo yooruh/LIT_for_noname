@@ -1,10 +1,10 @@
 {
   "versions": [
     {
-      "extensionVersion": "26.1.14",
-      "gameVersion": ">=1.11.0",
+      "extensionVersion": "26.1.20",
+      "gameVersion": "=1.11.0",
       "branch": "main",
-      "description": "支持无名杀1.11.0及以上版本"
+      "description": "支持无名杀1.11.0版本"
     }
   ]
 }
