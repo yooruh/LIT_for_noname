@@ -1,1641 +1,2057 @@
 import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
-import { Lit_Dialog as DialogManager } from './extraUI.js';
+import { Lit_Dialog } from './extraUI.js';
+import basic from './basic.js';
 
-// 配置定义
-const LIT_CONFIG = {
+// ==================== 配置与常量 ====================
+const CONFIG = {
     name: '叁岛世界',
-    github: 'https://github.com/yooruh/LIT_for_noname',
-    gitee: 'https://gitee.com/yooruh/LIT_for_noname',
-    maxRetries: 3,           // 最大重试次数
-    baseRetryDelay: 1000,    // 基础重试延迟
-    requestTimeout: 30000    // 请求超时时间
+    urls: {
+        github: 'https://github.com/yooruh/LIT_for_noname',
+        gitee: 'https://gitee.com/yooruh/LIT_for_noname'
+    },
+    files: {
+        directory: 'Directory.json',
+        version: 'version.json',
+        state: '.update_state.json'
+    },
+    limits: {
+        maxRetries: 3,
+        retryDelay: 1000,
+        timeout: 30000,
+        maxConcurrent: 3,
+        backupCount: 5,
+        maxTempAge: 7 * 86400000, // 7天
+        stateSaveDebounce: 1000   // 状态保存防抖(ms)
+    },
+    types: {
+        critical: ['extension.js', 'info.json', 'content.js'],
+        text: ['.js', '.json', '.css', '.html', '.md', '.txt', '.ts', '.xml', '.yml', '.yaml', '.csv'],
+        media: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp3', '.ogg', '.wav', '.mp4', '.zip']
+    }
 };
 
-// 环境检测（严格模式）
-const isNodeJs = typeof window !== 'undefined' &&
-    typeof window.process === 'object' &&
-    typeof window.__dirname === 'string';
-const isBrowser = typeof window !== 'undefined' && !isNodeJs;
+// ==================== 工具函数 ====================
+const utils = {
+    parseSize(bytes) {
+        if (!bytes || bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    },
 
-// 文件过滤规则
-const EXCLUDE_DIRS = ['.git', '.vscode', '__pycache__', 'node_modules', '.github'];
-const EXCLUDE_FILES = ['.gitkeep', '.DS_Store', 'Thumbs.db', '.gitignore', 'update.js'];
-const EXCLUDE_EXTS = ['.tmp', '.swp', '.log', '.bak'];
+    formatTime(seconds) {
+        if (!isFinite(seconds) || seconds < 0) return '计算中...';
+        if (seconds < 60) return Math.ceil(seconds) + '秒';
+        if (seconds < 3600) return Math.floor(seconds / 60) + '分' + Math.ceil(seconds % 60) + '秒';
+        return Math.floor(seconds / 3600) + '时' + Math.floor((seconds % 3600) / 60) + '分';
+    },
 
-class GitURLParser {
-    static detectPlatform(url) {
-        if (!url || typeof url !== 'string') return null;
-        if (url.includes('github.com')) return 'github';
-        if (url.includes('gitee.com')) return 'gitee';
+    compareVersion(v1, v2) {
+        const a = String(v1).replace(/^v/, '').split('.').map(Number);
+        const b = String(v2).replace(/^v/, '').split('.').map(Number);
+        for (let i = 0; i < Math.max(a.length, b.length); i++) {
+            const x = a[i] || 0, y = b[i] || 0;
+            if (x > y) return 1;
+            if (x < y) return -1;
+        }
+        return 0;
+    },
+
+    matchVersion(gameVer, rule) {
+        if (!rule || rule === '*') return true;
+        gameVer = String(gameVer).replace(/^v/, '');
+        if (rule.startsWith('>=')) return utils.compareVersion(gameVer, rule.slice(2)) >= 0;
+        if (rule.startsWith('<=')) return utils.compareVersion(gameVer, rule.slice(2)) <= 0;
+        if (rule.startsWith('>')) return utils.compareVersion(gameVer, rule.slice(1)) > 0;
+        if (rule.startsWith('<')) return utils.compareVersion(gameVer, rule.slice(1)) < 0;
+        if (/[\dxX*]/.test(rule)) {
+            const base = rule.split(/[xX*]/)[0];
+            return gameVer.startsWith(base);
+        }
+        return utils.compareVersion(gameVer, rule) === 0;
+    },
+
+    getFileType(filename) {
+        const ext = filename.slice(filename.lastIndexOf('.')).toLowerCase();
+        if (CONFIG.types.text.includes(ext)) return 'text';
+        if (CONFIG.types.media.includes(ext)) return 'media';
+        return 'binary';
+    },
+
+    isCritical(filename) {
+        return CONFIG.types.critical.some(c => filename.includes(c));
+    },
+
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    },
+
+    formatDate(timestamp) {
+        const date = new Date(timestamp);
+        return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    },
+
+    // 并发控制工具（Promise池）
+    async asyncPool(poolLimit, array, iteratorFn) {
+        const ret = [];
+        const executing = new Set();
+        for (const item of array) {
+            const p = Promise.resolve().then(() => iteratorFn(item));
+            ret.push(p);
+            executing.add(p);
+            const clean = () => executing.delete(p);
+            p.then(clean).catch(clean);
+            if (executing.size >= poolLimit) {
+                await Promise.race(executing);
+            }
+        }
+        return Promise.all(ret);
+    }
+};
+
+// ==================== 环境检测 ====================
+const Environment = {
+    isNode() {
+        return typeof window !== 'undefined' &&
+            typeof window.process === 'object' &&
+            typeof window.__dirname === 'string' &&
+            typeof window.require === 'function';
+    },
+
+    isElectronRenderer() {
+        return typeof window !== 'undefined' && 
+            window.process && 
+            window.process.type === 'renderer';
+    },
+
+    getEnvironmentType() {
+        if (this.isNode()) return 'node';
+        if (this.isElectronRenderer()) return 'electron-renderer';
+        return 'browser';
+    }
+};
+
+// ==================== Token 管理 ====================
+class TokenManager {
+    constructor() {
+        this.cache = new Map();
+        this.load();
+    }
+
+    load() {
+        try {
+            if (localStorage.getItem('noname_authorization')) {
+                this.cache.set('github', localStorage.getItem('noname_authorization'));
+            }
+            if (localStorage.getItem('noname_github_token')) {
+                this.cache.set('github', localStorage.getItem('noname_github_token'));
+            }
+            if (localStorage.getItem('noname_gitee_token')) {
+                this.cache.set('gitee', localStorage.getItem('noname_gitee_token'));
+            }
+        } catch (e) {
+            console.warn('[Token] 加载失败:', e);
+        }
+    }
+
+    get(platform) {
+        return this.cache.get(platform);
+    }
+
+    set(platform, token) {
+        this.cache.set(platform, token);
+        try {
+            if (platform === 'gitee') {
+                localStorage.setItem('noname_gitee_token', token);
+            } else {
+                localStorage.setItem('noname_authorization', token);
+                localStorage.setItem('noname_github_token', token);
+            }
+            return true;
+        } catch (e) {
+            console.error('[Token] 保存失败:', e);
+            return false;
+        }
+    }
+
+    clear(platform) {
+        this.cache.delete(platform);
+        if (platform === 'gitee') {
+            localStorage.removeItem('noname_gitee_token');
+        } else {
+            localStorage.removeItem('noname_authorization');
+            localStorage.removeItem('noname_github_token');
+        }
+    }
+
+    has(platform) {
+        return !!this.get(platform);
+    }
+}
+
+// ==================== Git 适配器 ====================
+class GitAdapter {
+    constructor(url) {
+        this.raw = null;
+        this.api = null;
+        this.fallback = null;
+        this.platform = null;
+        this.owner = null;
+        this.repo = null;
+        this.branch = 'main';
+        this.parse(url);
+    }
+
+    parse(url) {
+        if (!url) throw new Error('无效的仓库地址');
+        url = url.trim().replace(/\/+$/, '');
+
+        if (url.includes('github.com')) {
+            this.platform = 'github';
+            const match = url.match(/github\.com\/([^/]+)\/([^/]+)(?:\/tree\/([^/]+))?/);
+            if (!match) throw new Error('无法解析GitHub地址');
+            [, this.owner, this.repo, this.branch] = match;
+        } else if (url.includes('gitee.com')) {
+            this.platform = 'gitee';
+            const match = url.match(/gitee\.com\/([^/]+)\/([^/]+)(?:\/tree\/([^/]+))?/);
+            if (!match) throw new Error('无法解析Gitee地址');
+            [, this.owner, this.repo, this.branch] = match;
+        } else {
+            throw new Error('不支持的Git平台');
+        }
+
+        this.repo = this.repo.replace(/\.git$/, '');
+        this.branch = this.branch || 'main';
+        this.updateURLs();
+    }
+
+    updateURLs() {
+        const { platform, owner, repo, branch } = this;
+        if (platform === 'github') {
+            this.raw = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
+            this.api = `https://api.github.com/repos/${owner}/${repo}/contents/`;
+            this.fallback = `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}/`;
+        } else {
+            this.raw = `https://gitee.com/${owner}/${repo}/raw/${branch}/`;
+            this.api = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/`;
+            this.fallback = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
+        }
+    }
+
+    switchBranch(branch) {
+        this.branch = branch;
+        this.updateURLs();
+    }
+
+    getURL(path = '') {
+        return this.raw + path.replace(/^\/+/, '');
+    }
+
+    getFallbackURL(path = '') {
+        return this.fallback + path.replace(/^\/+/, '');
+    }
+}
+
+// ==================== 状态管理（含防抖） ====================
+class StateManager {
+    constructor(tempDir) {
+        this.path = `${tempDir}/${CONFIG.files.state}`;
+        this.data = null;
+        this.saveTimer = null;
+        this.pendingSave = false;
+    }
+
+    async load() {
+        try {
+            const exists = await game.promises.checkFile(this.path);
+            if (!exists) return null;
+
+            const content = await game.promises.readFileAsText(this.path);
+            this.data = JSON.parse(content);
+
+            if (Date.now() - (this.data.timestamp || 0) > CONFIG.limits.maxTempAge) {
+                await this.clear();
+                return null;
+            }
+            return this.data;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    // 防抖保存
+    async save(immediate = false) {
+        if (!this.data) return;
+        
+        if (this.saveTimer) {
+            clearTimeout(this.saveTimer);
+            this.saveTimer = null;
+        }
+
+        const doSave = async () => {
+            try {
+                const dir = this.path.substring(0, this.path.lastIndexOf('/'));
+                const name = this.path.substring(this.path.lastIndexOf('/') + 1);
+                await game.promises.writeFile(
+                    JSON.stringify(this.data, null, 2),
+                    dir,
+                    name
+                );
+            } catch (e) {
+                console.error('[State] 保存失败:', e);
+            }
+        };
+
+        if (immediate) {
+            await doSave();
+        } else {
+            this.saveTimer = setTimeout(doSave, CONFIG.limits.stateSaveDebounce);
+        }
+    }
+
+    async init(repo, branch, mode, files) {
+        this.data = {
+            timestamp: Date.now(),
+            repo: { platform: repo.platform, owner: repo.owner, repo: repo.repo, branch },
+            mode,
+            files: files.map(f => ({
+                path: f.remote,
+                size: f.size,
+                type: f.type,
+                critical: f.critical,
+                status: 'pending',
+                retries: 0,
+                error: null,
+                errorType: null, // 'cors' | 'token' | 'network' | 'disk'
+                downloadedBytes: 0
+            })),
+            stats: { total: files.length, success: 0, failed: 0, skipped: 0, bytes: 0, totalBytes: files.reduce((s, f) => s + (f.size || 0), 0) },
+            completed: false,
+            hasFailures: false
+        };
+        await this.save(true);
+    }
+
+    async updateFile(path, status, error = null, errorType = null, bytes = 0) {
+        if (!this.data) return;
+        const file = this.data.files.find(f => f.path === path);
+        if (file) {
+            const oldStatus = file.status;
+            file.status = status;
+            if (error) {
+                file.error = error;
+                file.errorType = errorType;
+            }
+
+            if (oldStatus !== status) {
+                if (status === 'success') {
+                    this.data.stats.success++;
+                    this.data.stats.bytes += bytes;
+                } else if (status === 'failed') {
+                    file.retries++;
+                    this.data.stats.failed++;
+                } else if (status === 'skipped') {
+                    this.data.stats.skipped++;
+                }
+
+                if (status === 'pending' && oldStatus === 'failed') {
+                    this.data.stats.failed--;
+                }
+            }
+            await this.save();
+        }
+    }
+
+    async updateProgress(path, bytes) {
+        if (!this.data) return;
+        const file = this.data.files.find(f => f.path === path);
+        if (file) {
+            file.downloadedBytes = bytes;
+        }
+    }
+
+    getPending() {
+        if (!this.data) return [];
+        return this.data.files.filter(f => f.status === 'pending');
+    }
+
+    getFailed() {
+        if (!this.data) return [];
+        return this.data.files.filter(f => f.status === 'failed');
+    }
+
+    getSkipped() {
+        if (!this.data) return [];
+        return this.data.files.filter(f => f.status === 'skipped');
+    }
+
+    canResume() {
+        if (!this.data) return false;
+        return this.data.files.some(f => f.status === 'pending' || f.status === 'failed');
+    }
+
+    isCompletedWithFailures() {
+        return this.data?.completed === true && this.data?.hasFailures === true;
+    }
+
+    async resetFailedToPending() {
+        if (!this.data) return false;
+        let changed = false;
+        for (const file of this.data.files) {
+            if (file.status === 'failed') {
+                file.status = 'pending';
+                file.error = null;
+                file.errorType = null;
+                file.downloadedBytes = 0;
+                changed = true;
+            }
+        }
+        if (changed) {
+            this.data.completed = false;
+            await this.save(true);
+        }
+        return changed;
+    }
+
+    async markAllFailedAsSkipped() {
+        if (!this.data) return;
+        for (const file of this.data.files) {
+            if (file.status === 'failed') {
+                file.status = 'skipped';
+            }
+        }
+        await this.save(true);
+    }
+
+    async clear() {
+        try {
+            await game.promises.removeFile(this.path);
+        } catch (e) { }
+        this.data = null;
+    }
+
+    complete(hasFailures = false) {
+        if (this.data) {
+            this.data.completed = true;
+            this.data.endTime = Date.now();
+            this.data.hasFailures = hasFailures;
+            this.save(true);
+        }
+    }
+}
+
+// ==================== 下载任务实体 ====================
+class DownloadTask {
+    constructor(info) {
+        this.remote = info.remote;
+        this.temp = info.temp;
+        this.target = info.target;
+        this.size = info.size || 0;
+        this.type = info.type;
+        this.critical = info.critical;
+        this.priority = info.priority || 0;
+        this.skip = info.skip || false;
+        this.downloadedBytes = 0;
+    }
+}
+
+// ==================== 智能下载器（合并优化版） ====================
+class SmartDownloader {
+    constructor(repo, tokenManager) {
+        this.repo = repo;
+        this.tokens = tokenManager;
+        this.env = Environment.getEnvironmentType();
+        this.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+        this.activeControllers = new Map();
+        this.isCancelled = false;
+        
+        // Node 环境预加载模块
+        if (this.env === 'node') {
+            this.nodeModules = {
+                http: window.require('http'),
+                https: window.require('https'),
+                url: window.require('url'),
+                fs: window.require('fs'),
+                path: window.require('path')
+            };
+        }
+    }
+
+    cancelAll() {
+        this.isCancelled = true;
+        for (const controller of this.activeControllers.values()) {
+            controller.abort();
+        }
+        this.activeControllers.clear();
+    }
+
+    // 统一错误分类
+    classifyError(error, platform) {
+        const msg = error.message || '';
+        if (msg.includes('401') || msg.includes('TOKEN_INVALID')) {
+            return { type: 'token', recoverable: true };
+        }
+        if (msg.includes('403') || msg.includes('CORS') || msg.includes('ECONNREFUSED')) {
+            return { type: 'cors', recoverable: platform === 'gitee' && this.env !== 'node' };
+        }
+        if (msg.includes('timeout') || msg.includes('ETIMEDOUT') || msg.includes('ECONNRESET')) {
+            return { type: 'network', recoverable: true };
+        }
+        if (msg.includes('ENOSPC') || msg.includes('EACCES') || msg.includes('PERMISSION')) {
+            return { type: 'disk', recoverable: false };
+        }
+        return { type: 'unknown', recoverable: true };
+    }
+
+    // Node 环境下载
+    async downloadNode(url, onProgress, signal) {
+        return new Promise((resolve, reject) => {
+            try {
+                const { url: urlModule, http, https } = this.nodeModules;
+                const parsed = urlModule.parse(encodeURI(url));
+                parsed.headers = {
+                    'User-Agent': this.userAgent,
+                    'Accept': '*/*',
+                    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'
+                };
+
+                const token = this.tokens.get(this.repo.platform);
+                if (token) {
+                    parsed.headers['Authorization'] = `token ${token}`;
+                }
+
+                const protocol = url.startsWith('https') ? https : http;
+                const requestId = Date.now() + Math.random();
+                
+                const req = protocol.get(parsed, (res) => {
+                    if (signal?.aborted) return;
+
+                    // 处理重定向
+                    if (res.statusCode === 301 || res.statusCode === 302) {
+                        const redirectUrl = res.headers.location;
+                        if (redirectUrl) {
+                            this.downloadNode(redirectUrl, onProgress, signal)
+                                .then(resolve)
+                                .catch(reject);
+                            return;
+                        }
+                    }
+
+                    if (res.statusCode !== 200) {
+                        reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
+                        return;
+                    }
+
+                    const chunks = [];
+                    let received = 0;
+                    const total = parseInt(res.headers['content-length']) || 0;
+
+                    res.on('data', (chunk) => {
+                        if (signal?.aborted) return;
+                        chunks.push(chunk);
+                        received += chunk.length;
+                        if (onProgress) onProgress(received, total);
+                    });
+
+                    res.on('end', () => {
+                        if (signal?.aborted) return;
+                        const buffer = Buffer.concat(chunks);
+                        resolve({
+                            data: buffer,
+                            size: buffer.length,
+                            headers: res.headers
+                        });
+                    });
+
+                    res.on('error', reject);
+                });
+
+                const controller = {
+                    abort: () => {
+                        req.destroy();
+                        reject(new Error('下载已取消'));
+                    }
+                };
+                this.activeControllers.set(requestId, controller);
+
+                if (signal) {
+                    signal.addEventListener('abort', controller.abort);
+                }
+
+                req.on('error', (err) => {
+                    this.activeControllers.delete(requestId);
+                    reject(err);
+                });
+                req.setTimeout(CONFIG.limits.timeout, () => {
+                    req.destroy();
+                    reject(new Error('请求超时'));
+                });
+
+            } catch (e) {
+                reject(new Error(`Node 下载初始化失败: ${e.message}`));
+            }
+        });
+    }
+
+    // Fetch 环境下载（浏览器/Electron）
+    async downloadFetch(url, onProgress, signal, token) {
+        const headers = {
+            'User-Agent': this.userAgent,
+            'Accept': '*/*',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'
+        };
+
+        if (token) {
+            headers['Authorization'] = `token ${token}`;
+        }
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers,
+            signal,
+            mode: 'cors',
+            cache: 'no-cache'
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) throw new Error('TOKEN_INVALID');
+            if (response.status === 403) throw new Error('CORS_OR_AUTH');
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        // 流式读取以支持进度
+        const reader = response.body.getReader();
+        const contentLength = +(response.headers.get('Content-Length') || 0);
+        const chunks = [];
+        let received = 0;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            chunks.push(value);
+            received += value.length;
+            if (onProgress) onProgress(received, contentLength);
+        }
+
+        // 合并 chunks
+        const allChunks = new Uint8Array(received);
+        let position = 0;
+        for (const chunk of chunks) {
+            allChunks.set(chunk, position);
+            position += chunk.length;
+        }
+
+        return {
+            data: allChunks.buffer,
+            size: received,
+            headers: response.headers
+        };
+    }
+
+    // 主下载方法
+    async download(task, onProgress) {
+        if (this.isCancelled) throw new Error('下载已取消');
+
+        const url = this.repo.getURL(task.remote);
+        const fallback = this.repo.getFallbackURL(task.remote);
+        const token = this.tokens.get(this.repo.platform);
+        const controller = new AbortController();
+        const requestId = Date.now() + Math.random();
+        this.activeControllers.set(requestId, controller);
+
+        const cleanup = () => {
+            this.activeControllers.delete(requestId);
+        };
+
+        try {
+            let result;
+
+            // 主源尝试
+            try {
+                if (this.env === 'node') {
+                    result = await this.downloadNode(url, onProgress, controller.signal);
+                } else {
+                    result = await this.downloadFetch(url, onProgress, controller.signal, token);
+                }
+            } catch (error) {
+                // 特定错误重试或切换备用源
+                const { type } = this.classifyError(error, this.repo.platform);
+                
+                // Token 错误，清除 Token 并重试一次
+                if (type === 'token' && token) {
+                    this.tokens.clear(this.repo.platform);
+                    game.print('🔄 Token 无效，清除后重试...');
+                    await utils.sleep(CONFIG.limits.retryDelay);
+                    if (this.env !== 'node') {
+                        result = await this.downloadFetch(url, onProgress, controller.signal, null);
+                    } else {
+                        throw error; // Node 环境下 Token 通常不影响，直接抛出
+                    }
+                } 
+                // 网络/CORS 错误，尝试备用源
+                else if (fallback && fallback !== url && (type === 'cors' || type === 'network')) {
+                    game.print('🔄 主源失败，尝试备用源...');
+                    result = await this.downloadFetch(fallback, onProgress, controller.signal, token);
+                } else {
+                    throw error;
+                }
+            }
+
+            // 保存文件
+            await this.saveFile(task.temp, result.data, task.type);
+            cleanup();
+            return { success: true, size: result.size, mode: this.env };
+
+        } catch (error) {
+            cleanup();
+            const { type } = this.classifyError(error, this.repo.platform);
+            return { 
+                success: false, 
+                error: error.message, 
+                errorType: type,
+                needToken: type === 'cors' && this.repo.platform === 'gitee' && this.env !== 'node'
+            };
+        }
+    }
+
+    async saveFile(path, data, type) {
+        const dir = path.substring(0, path.lastIndexOf('/'));
+        const name = path.substring(path.lastIndexOf('/') + 1);
+
+        await game.promises.ensureDirectory(dir);
+
+        if (type === 'text') {
+            const text = typeof data === 'string' ? data : new TextDecoder().decode(data);
+            await game.promises.writeFile(text, dir, name);
+        } else {
+            // 二进制数据
+            let buffer;
+            if (data instanceof ArrayBuffer) {
+                buffer = new Uint8Array(data);
+            } else if (Buffer.isBuffer(data)) {
+                buffer = data;
+            } else {
+                buffer = data;
+            }
+            await game.promises.writeFile(buffer, dir, name);
+        }
+    }
+}
+
+// ==================== 版本检查器 ====================
+class VersionChecker {
+    constructor(repo, tokens, env) {
+        this.repo = repo;
+        this.tokens = tokens;
+        this.env = env;
+        this.downloader = new SmartDownloader(repo, tokens);
+    }
+
+    async check(gameVersion) {
+        const url = this.repo.getURL(CONFIG.files.version);
+        try {
+            const task = new DownloadTask({
+                remote: CONFIG.files.version,
+                temp: `${basic.path}/temp_version.json`,
+                size: 0,
+                type: 'text'
+            });
+            
+            const result = await this.downloader.download(task);
+            if (!result.success) throw new Error(result.error);
+
+            const content = await game.promises.readFileAsText(task.temp);
+            await game.promises.removeFile(task.temp);
+            
+            const info = JSON.parse(content);
+
+            if (!info.versions || !Array.isArray(info.versions)) {
+                return { branch: this.repo.branch, compatible: true };
+            }
+
+            const sorted = info.versions
+                .filter(v => v.extensionVersion && v.gameVersion)
+                .sort((a, b) => utils.compareVersion(b.extensionVersion, a.extensionVersion));
+
+            for (const v of sorted) {
+                if (utils.matchVersion(gameVersion, v.gameVersion)) {
+                    return {
+                        extensionVersion: v.extensionVersion,
+                        gameVersion: v.gameVersion,
+                        branch: v.branch || info.defaultBranch || this.repo.branch,
+                        description: v.description || `兼容游戏版本 ${v.gameVersion}`,
+                        compatible: true
+                    };
+                }
+            }
+
+            const latest = sorted[0];
+            return {
+                extensionVersion: latest?.extensionVersion,
+                branch: latest?.branch || info.defaultBranch || this.repo.branch,
+                description: '使用最新版本',
+                compatible: false
+            };
+        } catch (e) {
+            console.warn('[版本检查] 失败:', e.message);
+            return { branch: this.repo.branch, compatible: true };
+        }
+    }
+}
+
+// ==================== UI 管理器（增强版） ====================
+class UIManager {
+    constructor() {
+        this.dialog = Lit_Dialog;
+        this.env = Environment.getEnvironmentType();
+    }
+
+    async showMainMenu(resumeInfo, hasToken) {
+        const buttons = ['检查更新'];
+        if (resumeInfo.canResume) buttons.push('⏸️ 继续上次更新');
+        if (resumeInfo.hasFailures) buttons.push('🔄 仅重试失败文件');
+        buttons.push('🔑 Token管理', '💾 版本回退', '取消');
+
+        const envText = this.env === 'node' 
+            ? '🖥️ 当前环境: Node.js（直连模式，速度最快）\n' 
+            : this.env === 'electron-renderer'
+            ? '⚠️ 当前环境: Electron（可能受网络限制）\n'
+            : '⚠️ 当前环境: 浏览器（建议配置Token）\n';
+
+        const index = await this.dialog.choice(
+            `${CONFIG.name} 更新中心`,
+            `请选择操作：\n\n` +
+            envText +
+            `${resumeInfo.canResume ? '⏸️ 发现未完成的下载任务\n' : ''}` +
+            `${resumeInfo.hasFailures ? '⚠️ 存在上次下载失败的文件\n' : ''}` +
+            `${!hasToken.github && !hasToken.gitee && this.env !== 'node' ? '💡 提示: 建议配置 Token 避免下载失败\n' : ''}`,
+            buttons
+        );
+
+        const choice = buttons[index];
+        if (choice === '取消' || index === -1) return null;
+        if (choice.includes('继续上次')) return 'resume';
+        if (choice.includes('重试失败')) return 'retry_failed';
+        if (choice.includes('Token')) return 'token';
+        if (choice.includes('版本回退')) return 'rollback';
+        return 'check';
+    }
+
+    async showTokenManager(tokens) {
+        const githubStatus = tokens.has('github') ? '✅ 已设置' : '❌ 未设置';
+        const giteeStatus = tokens.has('gitee') ? '✅ 已设置' : '❌ 未设置';
+        const envHint = this.env === 'node' 
+            ? 'Node 模式下通常无需 Token，但配置后可提高 API 限额' 
+            : '浏览器模式下强烈建议配置 Token，避免 Gitee 403 错误';
+
+        const index = await this.dialog.choice(
+            'Token 管理',
+            `GitHub Token: ${githubStatus}\n` +
+            `Gitee Token: ${giteeStatus}\n\n` +
+            `${envHint}\n\n` +
+            `GitHub: github.com/settings/tokens (需 repo 权限)\n` +
+            `Gitee: gitee.com/profile/personal_access_tokens`,
+            ['设置GitHub Token', '设置Gitee Token', '清除GitHub Token', '清除Gitee Token', '返回']
+        );
+
+        if (index === 0) return { action: 'set', platform: 'github' };
+        if (index === 1) return { action: 'set', platform: 'gitee' };
+        if (index === 2) return { action: 'clear', platform: 'github' };
+        if (index === 3) return { action: 'clear', platform: 'gitee' };
         return null;
     }
 
-    static parseRepoInfo(input) {
-        if (!input || typeof input !== 'string') {
-            throw new Error('URL必须是有效的字符串');
-        }
+    async inputToken(platform) {
+        const name = platform === 'gitee' ? 'Gitee' : 'GitHub';
+        const url = platform === 'gitee'
+            ? 'https://gitee.com/profile/personal_access_tokens'
+            : 'https://github.com/settings/tokens';
 
-        input = input.trim().replace(/\/+$/, '');
+        const result = await this.dialog.input(
+            `设置 ${name} Token`,
+            `请输入私人令牌(Token)\n获取地址：${url}\n\n留空可清除现有 Token`,
+            '',
+            { placeholder: 'ghp_xxxx 或 gitee_token_xxxx', selectAll: false }
+        );
 
-        // 处理raw URL（GitHub）
-        if (input.includes('raw.githubusercontent.com')) {
-            const match = input.match(/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)/);
-            if (match) {
-                const [, owner, repo, branch, path] = match;
-                return { owner, repo, branch: branch || 'main', platform: 'github', rawPath: path };
-            }
-        }
-
-        // 处理raw URL（Gitee）
-        if (input.includes('gitee.com') && input.includes('/raw/')) {
-            const match = input.match(/gitee\.com\/([^/]+)\/([^/]+)\/raw\/([^/]+)\/(.+)/);
-            if (match) {
-                const [, owner, repo, branch, path] = match;
-                return { owner, repo, branch: branch || 'main', platform: 'gitee', rawPath: path };
-            }
-        }
-
-        const platform = this.detectPlatform(input);
-        if (!platform) throw new Error(`无法识别的Git平台地址: ${input}`);
-
-        // 处理web URL（标准格式）
-        if (platform === 'github') {
-            const match = input.match(/github\.com\/([^/]+)\/([^/]+)(?:\/tree\/([^/]+))?/i);
-            if (match) {
-                const [, owner, repo, branch = 'main'] = match;
-                return { owner, repo, branch, platform };
-            }
-        } else if (platform === 'gitee') {
-            const match = input.match(/gitee\.com\/([^/]+)\/([^/]+)(?:\/tree\/([^/]+))?/i);
-            if (match) {
-                const [, owner, repo, branch = 'main'] = match;
-                return { owner, repo, branch, platform };
-            }
-        }
-
-        throw new Error(`无法解析仓库地址: ${input}`);
+        return result?.trim() || null;
     }
 
-    static getRawURL(repoInfo, filePath = '') {
-        const { owner, repo, branch, platform } = repoInfo;
-        const cleanPath = filePath ? filePath.replace(/^\/+/, '') : ''; // 移除前导斜杠
+    // 使用 fileManager 替代 choice 管理备份（优化点6）
+    async showRollbackManager(backups, currentVersion) {
+        if (backups.length === 0) {
+            await this.dialog.alert('版本回退', '暂无备份记录');
+            return null;
+        }
 
-        if (platform === 'github') {
-            return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${cleanPath}`;
+        const items = backups.map((b, i) => ({
+            text: `[${i === 0 ? '当前' : `#${i + 1}`}] ${utils.formatDate(b.timestamp)} - ${b.fileCount}个文件`,
+            value: b.timestamp.toString(),
+            type: i === 0 ? 'current' : 'backup'
+        }));
+
+        const result = await this.dialog.fileManager(
+            '版本回退管理',
+            '选择要恢复的备份（仅可选一个回退，可多选删除）：\n💡 回退会覆盖当前版本，请先确认已备份重要数据',
+            items
+        );
+
+        if (!result) return null;
+        
+        if (result.action === 'apply' && result.files.length === 1) {
+            const backup = backups.find(b => b.timestamp.toString() === result.files[0]);
+            return { action: 'rollback', backup };
+        }
+        
+        if (result.action === 'delete' && result.files.length > 0) {
+            const toDelete = result.files.map(ts => backups.find(b => b.timestamp.toString() === ts)).filter(Boolean);
+            return { action: 'delete', backups: toDelete };
+        }
+
+        return null;
+    }
+
+    async confirmRollback(backup) {
+        return await this.dialog.confirm(
+            '确认回退',
+            `确定要回退到以下版本吗？\n\n时间: ${utils.formatDate(backup.timestamp)}\n文件数: ${backup.fileCount}\n\n⚠️ 此操作将覆盖当前所有文件，且无法撤销！`,
+            '确认回退',
+            '取消'
+        );
+    }
+
+    async showUpdateConfig(platform, hasResume, hasFailed) {
+        const platforms = ['Gitee（国内推荐）', 'GitHub（国际）'];
+        const platIndex = await this.dialog.choice('选择更新源', '请选择下载服务器：', platforms);
+        if (platIndex === -1) return null;
+        const selectedPlatform = platIndex === 0 ? 'gitee' : 'github';
+
+        let modeMessage = '简易模式：仅更新文本文件，保留已有媒体文件（省流量）\n' +
+            '全局模式：完整覆盖所有文件（适合首次安装）';
+        let modeButtons = ['简易模式', '全局模式'];
+
+        if (hasFailed) {
+            modeMessage = '⚠️ 发现上次有失败的下载\n\n仅重试失败：只下载上次失败的文件\n' + modeMessage;
+            modeButtons.unshift('仅重试失败文件');
+        }
+
+        modeButtons.push('取消');
+
+        const modeIndex = await this.dialog.choice('选择更新模式', modeMessage, modeButtons);
+        if (modeIndex === -1 || modeIndex === modeButtons.length - 1) return null;
+
+        let mode = 'simple';
+        if (hasFailed && modeIndex === 0) {
+            mode = 'retry_failed';
         } else {
-            return `https://gitee.com/${owner}/${repo}/raw/${branch}/${cleanPath}`;
+            const offset = hasFailed ? 1 : 0;
+            mode = modeIndex === offset ? 'simple' : 'full';
         }
+
+        return { platform: selectedPlatform, mode };
     }
 
-    static getFallbackURL(repoInfo, filePath = '') {
-        const { owner, repo, branch, platform } = repoInfo;
-        const cleanPath = filePath ? filePath.replace(/^\/+/, '') : '';
-
-        if (platform === 'github') {
-            // GitHub失败时使用jsDelivr CDN
-            return `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}/${cleanPath}`;
-        } else {
-            // Gitee失败时切换到GitHub镜像（如果存在）或直接使用GitHub raw
-            // 注意：这里假设有对应的GitHub仓库，或者添加其他镜像逻辑
-            return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${cleanPath}`;
-        }
-    }
-}
-
-class RequestScheduler {
-    constructor() {
-        this.queue = [];
-        this.isProcessing = false;
-        this.retryDelay = LIT_CONFIG.baseRetryDelay;
-        this.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
-        this.activeRequests = new Map(); // 跟踪活跃请求以便取消
-    }
-
-    /**
-     * 下载数据（带自动重试和源切换）
-     * @param {string} url - 主URL
-     * @param {string} fallbackUrl - 备用URL（可选）
-     * @param {Function} onsuccess - 成功回调
-     * @param {Function} onerror - 错误回调
-     * @param {string} type - 内容类型（json/text/image/audio）
-     */
-    schedule(url, fallbackUrl, onsuccess, onerror, type = 'text') {
-        const task = {
-            id: Date.now() + Math.random(),
-            url,
-            fallbackUrl,
-            onsuccess,
-            onerror,
-            type,
-            retryCount: 0,
-            startTime: Date.now(),
-
-            execute: () => {
-                this.activeRequests.set(task.id, true);
-
-                const attemptDownload = (currentUrl, isFallback = false) => {
-                    console.log(`[下载] ${isFallback ? '[备用源]' : '[主源]'} 尝试: ${currentUrl}`);
-
-                    const handleSuccess = (content) => {
-                        this.activeRequests.delete(task.id);
-
-                        // 内容验证
-                        if (!this.validateContent(content, type)) {
-                            console.warn(`[下载] 内容验证失败: ${currentUrl}`);
-                            if (isFallback && task.retryCount >= LIT_CONFIG.maxRetries) {
-                                task.onerror(new Error('主源和备用源内容均无效'));
-                                return;
-                            }
-                            // 尝试备用源
-                            if (task.fallbackUrl && !isFallback) {
-                                attemptDownload(task.fallbackUrl, true);
-                            } else {
-                                this.retryTask(task, `内容验证失败`);
-                            }
-                            return;
-                        }
-
-                        try {
-                            task.onsuccess(content);
-                        } catch (e) {
-                            console.error('[下载] 回调执行错误:', e);
-                            task.onerror(e);
-                        }
-                    };
-
-                    const handleError = (err) => {
-                        this.activeRequests.delete(task.id);
-                        const errorMsg = err.message || String(err);
-                        console.warn(`[下载] 失败: ${currentUrl}, 错误: ${errorMsg}`);
-
-                        // 特定错误处理
-                        const is403 = errorMsg.includes('403') || errorMsg.includes('Forbidden');
-                        const is429 = errorMsg.includes('429') || errorMsg.includes('Too Many');
-                        const is404 = errorMsg.includes('404') || errorMsg.includes('Not Found');
-                        const isNetwork = errorMsg.includes('network') || errorMsg.includes('fetch');
-                        const isCORS = errorMsg.includes('CORS') || errorMsg.includes('cross-origin');
-
-                        // 如果是404且不是fallback，直接报错不重试（404通常是确实不存在）
-                        if (is404 && !isFallback) {
-                            task.onerror(new Error(`文件不存在(404): ${currentUrl}`));
-                            return;
-                        }
-
-                        // 403/429错误立即切换备用源
-                        if ((is403 || is429 || isCORS) && task.fallbackUrl && !isFallback) {
-                            console.log(`[下载] 遇到${is403 ? '403' : is429 ? '429' : 'CORS'}错误，切换到备用源`);
-                            attemptDownload(task.fallbackUrl, true);
-                            return;
-                        }
-
-                        task.retryCount++;
-
-                        if (task.retryCount <= LIT_CONFIG.maxRetries) {
-                            const delay = Math.min(
-                                Math.pow(2, task.retryCount) * this.retryDelay + Math.random() * 1000,
-                                10000 // 最大10秒延迟
-                            );
-                            console.log(`[下载] 将在${(delay / 1000).toFixed(1)}秒后第${task.retryCount}次重试...`);
-                            setTimeout(() => this.retryTask(task, errorMsg), delay);
-                        } else {
-                            task.onerror(new Error(`超过最大重试次数(${LIT_CONFIG.maxRetries}): ${errorMsg}`));
-                        }
-                    };
-
-                    this.performDownload(currentUrl, handleSuccess, handleError, type);
-                };
-
-                attemptDownload(task.url);
+    // 字节级进度计算（优化点5）
+    async createDownloadProgress(title, totalBytes, totalFiles, mode) {
+        const controller = await this.dialog.complexLoading(
+            title, 
+            mode === 'retry_failed' ? '正在重试失败的文件...' : '准备下载...',
+            {
+                width: 'min(520px, 92vw)',
+                minHeight: '280px',
+                indeterminate: false,
+                initialStatus: '连接中...',
+                initialDetail: `共 ${utils.parseSize(totalBytes)} (${totalFiles} 个文件)`
             }
-        };
+        );
 
-        this.queue.push(task);
-        this.processQueue();
-        return task.id; // 返回任务ID以便取消
-    }
+        let startTime = Date.now();
+        let lastUpdate = Date.now();
+        let downloadedBytes = 0;
 
-    /**
-     * 执行实际下载（区分Node和浏览器环境）
-     */
-    performDownload(url, onsuccess, onerror, type) {
-        if (isNodeJs) {
-            this.nodeDownload(url, onsuccess, onerror);
-        } else {
-            this.browserDownload(url, onsuccess, onerror);
-        }
-    }
-
-    /**
-     * Node.js环境下载（使用http/https模块）
-     */
-    nodeDownload(url, onsuccess, onerror) {
-        try {
-            const http = require("http");
-            const https = require("https");
-            const urlModule = require("url");
-
-            const parsed = urlModule.parse(encodeURI(url));
-            parsed.headers = {
-                "User-Agent": this.userAgent,
-                "Accept": "*/*",
-                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"
-            };
-            parsed.timeout = LIT_CONFIG.requestTimeout;
-
-            const protocol = url.startsWith("https") ? https : http;
-
-            const req = protocol.get(parsed, (res) => {
-                if (res.statusCode === 301 || res.statusCode === 302) {
-                    // 重定向处理
-                    const redirectUrl = res.headers.location;
-                    if (redirectUrl) {
-                        console.log(`[下载] 重定向到: ${redirectUrl}`);
-                        this.nodeDownload(redirectUrl, onsuccess, onerror);
-                        return;
-                    }
-                }
-
-                if (res.statusCode !== 200) {
-                    onerror(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
-                    return;
-                }
-
-                const chunks = [];
-                res.on('data', chunk => chunks.push(chunk));
-                res.on('end', () => {
-                    try {
-                        const buffer = Buffer.concat(chunks);
-                        onsuccess(buffer);
-                    } catch (e) {
-                        onerror(e);
-                    }
-                });
-                res.on('error', onerror);
-            });
-
-            req.on('error', onerror);
-            req.on('timeout', () => {
-                req.destroy();
-                onerror(new Error('请求超时'));
-            });
-
-        } catch (e) {
-            // Node模块不可用时回退到浏览器模式
-            console.warn('[下载] Node模块不可用，回退到浏览器模式');
-            this.browserDownload(url, onsuccess, onerror);
-        }
-    }
-
-    /**
-     * 浏览器环境下载（使用fetch API）
-     */
-    browserDownload(url, onsuccess, onerror) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), LIT_CONFIG.requestTimeout);
-
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'Accept': '*/*',
-                'Accept-Language': 'zh-CN,zh;q=0.9'
+        return {
+            setFile: (name, size) => {
+                controller.setDetail(`${name} (${utils.parseSize(size)})`);
             },
-            mode: 'cors', // 尝试CORS模式
-            signal: controller.signal,
-            cache: 'no-cache'
-        })
-            .then(response => {
-                clearTimeout(timeoutId);
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            // 基于字节的进度更新
+            updateProgress: (fileReceived, fileTotal, totalReceived, totalSize, currentFileIndex, totalFiles) => {
+                const now = Date.now();
+                const elapsed = (now - startTime) / 1000;
+                
+                // 总进度百分比（基于字节）
+                const totalPercent = totalSize > 0 
+                    ? Math.min(100, Math.round((totalReceived / totalSize) * 100))
+                    : Math.min(100, Math.round((currentFileIndex / totalFiles) * 100));
+
+                // 当前文件进度
+                const filePercent = fileTotal > 0 ? Math.round((fileReceived / fileTotal) * 100) : 0;
+
+                // 计算速度
+                const deltaTime = (now - lastUpdate) / 1000;
+                const deltaBytes = totalReceived - downloadedBytes;
+                const speed = deltaTime > 0 ? deltaBytes / deltaTime : 0;
+                
+                if (deltaTime >= 0.5) { // 每500ms更新一次
+                    downloadedBytes = totalReceived;
+                    lastUpdate = now;
                 }
 
-                // 根据内容类型决定返回格式
-                const contentType = response.headers.get('content-type') || '';
-                if (contentType.includes('application/json')) {
-                    return response.text(); // 返回文本以便验证
-                } else if (contentType.includes('image') || contentType.includes('audio')) {
-                    return response.arrayBuffer();
-                } else {
-                    return response.text();
-                }
-            })
-            .then(data => {
-                onsuccess(data);
-            })
-            .catch(error => {
-                clearTimeout(timeoutId);
-                if (error.name === 'AbortError') {
-                    onerror(new Error('请求超时'));
-                } else if (error.message.includes('Failed to fetch')) {
-                    // CORS或网络错误
-                    onerror(new Error(`网络/CORS错误: ${url}`));
-                } else {
-                    onerror(error);
-                }
-            });
-    }
+                const remainingBytes = totalSize - totalReceived;
+                const eta = speed > 0 ? remainingBytes / speed : 0;
 
-    validateContent(content, type) {
-        if (!content || content.length === 0) return false;
+                const status = speed > 0
+                    ? `${utils.parseSize(speed)}/s · 剩余 ${utils.formatTime(eta)} · 文件 ${currentFileIndex}/${totalFiles}`
+                    : `文件 ${currentFileIndex}/${totalFiles}`;
 
-        if (typeof content === 'string') {
-            const errorPatterns = [
-                '404 Not Found', '403 Forbidden', 'Rate limit',
-                '<!DOCTYPE html>', '<html', 'Repository not found',
-                'File path or ref empty', 'Route error'
-            ];
-            for (const pattern of errorPatterns) {
-                if (content.includes(pattern)) return false;
+                controller.updateProgress({
+                    percent: totalPercent,
+                    status: status,
+                    detail: `${utils.parseSize(totalReceived)}/${utils.parseSize(totalSize)} · 当前文件 ${filePercent}%`
+                });
+            },
+
+            setError: (msg) => controller.setError(msg),
+
+            complete: (msg, delay) => controller.complete(msg, delay),
+
+            close: () => controller.close(),
+
+            showRetry: (onRetry) => {
+                controller.setError('部分文件下载失败', true, onRetry);
             }
-
-            if (type === 'json') {
-                try { JSON.parse(content); } catch (e) { return false; }
-            }
-        }
-
-        return true;
-    }
-
-    retryTask(task, reason) {
-        console.log(`[下载] 重试任务 (${reason})`);
-        task.execute();
-    }
-
-    cancel(taskId) {
-        this.activeRequests.delete(taskId);
-    }
-
-    processQueue() {
-        if (this.isProcessing || this.queue.length === 0) return;
-        this.isProcessing = true;
-
-        const processNext = () => {
-            if (this.queue.length === 0) {
-                this.isProcessing = false;
-                return;
-            }
-
-            const task = this.queue.shift();
-            task.execute();
-
-            // 控制请求频率，避免429错误
-            setTimeout(processNext, 600);
         };
-
-        processNext();
-    }
-}
-
-class DownloadValidator {
-    static ERROR_PATTERNS = [
-        'Route error', 'File path or ref empty', '404 Not Found',
-        'Repository not found', '404 error', 'session-',
-        'Cannot GET', 'ENOENT', '无法找到页面', '<!DOCTYPE html>',
-        'Access Denied', 'Forbidden', 'Error 403', 'Error 429',
-        'Rate limit', 'Too Many Requests'
-    ];
-
-    static isValidContent(content, type) {
-        if (!content || content.length === 0) return false;
-
-        let contentStr;
-        if (typeof content === 'string') {
-            contentStr = content;
-        } else if (content instanceof ArrayBuffer) {
-            contentStr = new TextDecoder().decode(content.slice(0, 1000));
-        } else if (typeof Buffer !== 'undefined' && content instanceof Buffer) {
-            contentStr = content.toString('utf8', 0, 1000);
-        } else {
-            return true; // 无法检查的二进制数据默认为是
-        }
-
-        for (const pattern of this.ERROR_PATTERNS) {
-            if (contentStr.includes(pattern)) {
-                console.error(`[验证] 检测到错误内容模式: ${pattern}`);
-                return false;
-            }
-        }
-
-        if (type === 'json' && typeof content === 'string') {
-            try {
-                JSON.parse(content);
-                return true;
-            } catch (e) {
-                console.error('[验证] JSON解析失败:', e.message);
-                return false;
-            }
-        }
-
-        if (type === 'image' && (content instanceof ArrayBuffer || (typeof Buffer !== 'undefined' && content instanceof Buffer))) {
-            const arr = new Uint8Array(content.slice(0, 12));
-            const isJPEG = arr[0] === 0xFF && arr[1] === 0xD8;
-            const isPNG = arr[0] === 0x89 && arr[1] === 0x50 && arr[2] === 0x4E;
-            const isGIF = arr[0] === 0x47 && arr[1] === 0x49 && arr[2] === 0x46;
-            const isWebP = arr[0] === 0x52 && arr[1] === 0x49 && arr[8] === 0x57;
-            return isJPEG || isPNG || isGIF || isWebP;
-        }
-
-        if (type === 'audio' && (content instanceof ArrayBuffer || (typeof Buffer !== 'undefined' && content instanceof Buffer))) {
-            const arr = new Uint8Array(content.slice(0, 4));
-            const isMP3 = arr[0] === 0xFF && (arr[1] & 0xE0) === 0xE0;
-            const isOGG = arr[0] === 0x4F && arr[1] === 0x67 && arr[2] === 0x67;
-            return isMP3 || isOGG;
-        }
-
-        return true;
-    }
-}
-
-class VersionCompatibilityChecker {
-    constructor() {
-        this.cache = new Map();
-        this.scheduler = new RequestScheduler(); // 复用调度器
     }
 
-    async getVersionInfo(gitURLBase, gameVersion) {
-        const cacheKey = `${gitURLBase}|${gameVersion}`;
-        if (this.cache.has(cacheKey)) {
-            console.log('[版本检查] 使用缓存结果');
-            return this.cache.get(cacheKey);
+    async showCompleteResult(result, failedFiles) {
+        const { stats, elapsed, platform, mode } = result;
+        const totalSize = utils.parseSize(stats.bytes);
+        const isPartialSuccess = stats.failed > 0;
+
+        let title = isPartialSuccess ? '更新完成（部分成功）' : '更新完成';
+        
+        // 分析失败原因（优化点3细节）
+        const corsErrors = failedFiles.filter(f => f.errorType === 'cors');
+        const tokenErrors = failedFiles.filter(f => f.errorType === 'token');
+        const networkErrors = failedFiles.filter(f => f.errorType === 'network');
+        const diskErrors = failedFiles.filter(f => f.errorType === 'disk');
+
+        let message = `⏱️ 耗时: ${elapsed}秒\n` +
+            `✅ 成功: ${stats.success} 个文件 (${totalSize})\n`;
+
+        if (stats.skipped > 0) message += `⏭️ 跳过: ${stats.skipped} 个（已存在）\n`;
+        if (isPartialSuccess) message += `❌ 失败: ${stats.failed} 个文件\n\n`;
+
+        // 针对性提示
+        if (corsErrors.length > 0 && this.env !== 'node') {
+            message += `⚠️ ${corsErrors.length} 个文件因网络限制失败\n` +
+                `💡 建议：使用 Node.js 客户端，或配置 Gitee Token\n\n`;
+        } else if (tokenErrors.length > 0) {
+            message += `🔑 ${tokenErrors.length} 个文件因 Token 无效失败\n` +
+                `💡 建议：在 Token 管理中重新配置\n\n`;
+        } else if (networkErrors.length > 0) {
+            message += `🌐 ${networkErrors.length} 个文件因网络超时失败\n` +
+                `💡 建议：检查网络连接或稍后重试\n\n`;
+        } else if (diskErrors.length > 0) {
+            message += `💾 ${diskErrors.length} 个文件因磁盘错误失败（空间不足或无权限）\n\n`;
         }
 
-        const url = `${gitURLBase}version.json`;
-        console.log(`[版本检查] 从 ${url} 获取版本信息`);
+        if (isPartialSuccess) {
+            message += `失败文件示例：\n` +
+                failedFiles.slice(0, 3).map(f => `• ${f.path}`).join('\n') +
+                (failedFiles.length > 3 ? `\n...等${failedFiles.length}个` : '');
 
-        return new Promise((resolve, reject) => {
-            this.scheduler.schedule(
-                url,
-                null, // version.json不使用备用源，因为不同源可能版本不同
-                (data) => {
-                    try {
-                        let contentStr;
-                        if (data instanceof ArrayBuffer) {
-                            contentStr = new TextDecoder().decode(data);
-                        } else if (typeof Buffer !== 'undefined' && data instanceof Buffer) {
-                            contentStr = data.toString();
-                        } else {
-                            contentStr = String(data);
-                        }
-
-                        if (!DownloadValidator.isValidContent(contentStr, 'json')) {
-                            throw new Error('获取到的version.json内容无效');
-                        }
-
-                        const versionInfo = JSON.parse(contentStr);
-                        if (!versionInfo?.versions || !Array.isArray(versionInfo.versions)) {
-                            console.warn('[版本检查] version.json格式无效，使用默认分支');
-                            resolve({
-                                versions: [],
-                                defaultBranch: 'main',
-                                description: '使用仓库默认分支'
-                            });
-                            return;
-                        }
-
-                        this.cache.set(cacheKey, versionInfo);
-                        resolve(versionInfo);
-                    } catch (e) {
-                        console.error('[版本检查] 解析失败:', e);
-                        reject(new Error(`version.json解析失败: ${e.message}`));
-                    }
-                },
-                (err) => {
-                    console.warn('[版本检查] 获取失败:', err.message);
-                    // version.json失败不应阻断更新，使用默认配置
-                    resolve({
-                        versions: [],
-                        defaultBranch: null,
-                        description: '使用仓库默认分支'
-                    });
-                },
-                'json'
+            const choice = await this.dialog.choice(title, message,
+                ['🔄 立即重试失败项', '⏭️ 忽略失败并应用', '💾 保存进度稍后处理']
             );
-        });
+            return ['retry', 'ignore', 'later'][choice] || 'later';
+        } else {
+            const shouldRestart = await this.dialog.confirm(
+                title, 
+                message + '\n\n✨ 更新完全成功！建议立即重启以应用更改。',
+                '立即重启', 
+                '稍后手动重启'
+            );
+            return shouldRestart ? 'restart' : 'done';
+        }
     }
 
-    async getCompatibleVersion(gitURLBase, gameVersion) {
+    async confirmStart(info) {
+        const { version, branch, platform, mode, fileCount, skipCount, totalSize, envType } = info;
+
+        const modeText = mode === 'simple' ? '简易（仅文本）' : mode === 'retry_failed' ? '失败重试' : '全局（完整覆盖）';
+        const platformText = platform === 'gitee' ? 'Gitee（国内）' : 'GitHub（国际）';
+        const envText = envType === 'node' ? 'Node.js 直连' : '浏览器 Fetch';
+
+        let message = `📋 更新详情确认\n\n` +
+            `版本分支: ${branch}\n` +
+            `更新平台: ${platformText}\n` +
+            `运行环境: ${envText}\n` +
+            `更新模式: ${modeText}\n` +
+            `文件总数: ${fileCount}个`;
+
+        if (skipCount > 0) message += `（将跳过${skipCount}个媒体文件）`;
+        message += `\n预估大小: ${totalSize || '未知'}\n\n` +
+            `💾 自动备份: 更新前将创建完整备份\n` +
+            `🔄 断点续传: 支持中断后恢复下载`;
+
+        if (envType !== 'node' && platform === 'gitee') {
+            message += `\n\n⚠️ 注意：浏览器环境访问 Gitee 可能受限，如遇 403 请配置 Token`;
+        }
+
+        return await this.dialog.confirm('确认开始更新', message, '开始更新', '取消');
+    }
+
+    async promptForToken(platform, errorType) {
+        const name = platform === 'gitee' ? 'Gitee' : 'GitHub';
+        const reason = errorType === 'token' ? 'Token 无效或已过期' : '访问被限制（可能需要 Token）';
+        
+        const shouldSet = await this.dialog.confirm(
+            `${name} 访问受限`,
+            `${reason}\n\n是否立即配置 ${name} Token 以提高下载成功率？\n\n` +
+            `您可以：\n• 配置 Token 后自动继续下载\n• 取消并尝试备用源（可能失败）`,
+            `配置 ${name} Token`,
+            '取消并继续'
+        );
+
+        if (shouldSet) {
+            const token = await this.inputToken(platform);
+            if (token) return token;
+        }
+        return null;
+    }
+
+    async alert(title, message) {
+        await this.dialog.alert(title, message);
+    }
+
+    async confirm(title, message, confirmText = '确定', cancelText = '取消') {
+        return await this.dialog.confirm(title, message, confirmText, cancelText);
+    }
+}
+
+// ==================== 备份管理器 ====================
+class BackupManager {
+    constructor(targetDir, filesDir) {
+        this.targetDir = targetDir;
+        this.filesDir = filesDir;
+    }
+
+    async listBackups() {
         try {
-            const versionInfo = await this.getVersionInfo(gitURLBase, gameVersion);
+            const [folders] = await game.promises.getFileList(this.filesDir);
+            const backups = [];
 
-            if (!versionInfo.versions || versionInfo.versions.length === 0) {
-                return {
-                    extensionVersion: 'unknown',
-                    gameVersion: '*',
-                    branch: versionInfo.defaultBranch || null,
-                    description: versionInfo.description || '使用仓库默认分支'
-                };
-            }
+            for (const folder of folders) {
+                if (folder.startsWith('backup_')) {
+                    const timestamp = parseInt(folder.replace('backup_', ''));
+                    if (!isNaN(timestamp)) {
+                        let fileCount = 0;
+                        try {
+                            const [, files] = await game.promises.getFileList(`${this.filesDir}/${folder}`);
+                            fileCount = files.length;
+                        } catch (e) { }
 
-            // 按扩展版本号排序（从高到低）
-            const sortedVersions = versionInfo.versions
-                .filter(v => v.extensionVersion && v.gameVersion)
-                .sort((a, b) => this.compareVersions(b.extensionVersion, a.extensionVersion));
-
-            for (const version of sortedVersions) {
-                if (this.matchVersion(gameVersion, version.gameVersion)) {
-                    return {
-                        extensionVersion: version.extensionVersion,
-                        gameVersion: version.gameVersion,
-                        branch: version.branch || versionInfo.defaultBranch || 'main',
-                        description: version.description || `兼容游戏版本 ${version.gameVersion}`
-                    };
+                        backups.push({
+                            name: folder,
+                            timestamp,
+                            fileCount,
+                            path: `${this.filesDir}/${folder}`
+                        });
+                    }
                 }
             }
 
-            // 无匹配版本，使用最新版本（最兼容策略）
-            const latest = sortedVersions[0];
-            return {
-                extensionVersion: latest.extensionVersion,
-                gameVersion: latest.gameVersion,
-                branch: latest.branch || versionInfo.defaultBranch || 'main',
-                description: '使用最新可用版本'
-            };
+            return backups.sort((a, b) => b.timestamp - a.timestamp);
+        } catch (e) {
+            return [];
+        }
+    }
 
+    async createBackup() {
+        const backupDir = `${this.filesDir}/backup_${Date.now()}`;
+        try {
+            const dirExists = await game.promises.checkDir(this.targetDir);
+            if (dirExists === 1) {
+                game.print(`[备份] 创建备份: ${backupDir}`);
+                await this.copyDirectoryRecursive(this.targetDir, backupDir);
+                await this.cleanupOldBackups(CONFIG.limits.backupCount);
+                return { success: true, path: backupDir };
+            }
+            return { success: false, error: '目标目录不存在' };
         } catch (error) {
-            console.error('[版本检查] 错误:', error);
-            return {
-                extensionVersion: 'unknown',
-                gameVersion: '*',
-                branch: null,
-                description: '版本检查失败，使用默认分支'
-            };
+            return { success: false, error: error.message };
         }
     }
 
-    parseVersion(version) {
-        if (typeof version !== 'string') return [0, 0, 0];
-        const clean = version.replace(/[^\d.]/g, '');
-        const parts = clean.split('.').map(n => parseInt(n) || 0);
-        return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
+    async rollbackToBackup(backup) {
+        const tempBackup = `${this.filesDir}/rollback_temp_${Date.now()}`;
+
+        try {
+            const exists = await game.promises.checkDir(this.targetDir);
+            if (exists === 1) {
+                await this.copyDirectoryRecursive(this.targetDir, tempBackup);
+            }
+
+            await game.promises.removeDir(this.targetDir);
+            await this.copyDirectoryRecursive(backup.path, this.targetDir);
+
+            try {
+                await game.promises.removeDir(tempBackup);
+            } catch (e) { }
+
+            return { success: true };
+        } catch (error) {
+            // 回滚失败，恢复原状
+            try {
+                await game.promises.removeDir(this.targetDir);
+                await this.copyDirectoryRecursive(tempBackup, this.targetDir);
+                await game.promises.removeDir(tempBackup);
+            } catch (e) { }
+
+            return { success: false, error: error.message };
+        }
     }
 
-    compareVersions(v1, v2) {
-        const a = this.parseVersion(v1);
-        const b = this.parseVersion(v2);
-        for (let i = 0; i < 3; i++) {
-            if (a[i] !== b[i]) return a[i] > b[i] ? 1 : -1;
+    async deleteBackup(backup) {
+        try {
+            await game.promises.removeDir(backup.path);
+            return true;
+        } catch (e) {
+            return false;
         }
-        return 0;
     }
 
-    matchVersion(gameVersion, rule) {
-        if (!rule || typeof rule !== 'string') return true;
-        rule = rule.trim();
+    async cleanupOldBackups(maxCount) {
+        const backups = await this.listBackups();
+        if (backups.length <= maxCount) return;
 
-        // 精确匹配
-        if (!/[<>=]/.test(rule)) {
-            return this.compareVersions(gameVersion, rule) === 0;
-        }
-
-        // 通配符匹配 (1.9.x)
-        if (rule.includes('x') || rule.includes('X') || rule.includes('*')) {
-            const base = rule.replace(/[xX*].*$/, '');
-            const baseVersion = this.parseVersion(base);
-            const gv = this.parseVersion(gameVersion);
-            // 1.9.x 匹配 1.9.0, 1.9.1, 等等
-            return gv[0] === baseVersion[0] && gv[1] === baseVersion[1];
-        }
-
-        // 比较运算符匹配 (>=1.9.0, <2.0.0等)
-        const rules = rule.split(/\s+/).filter(r => r);
-        let result = true;
-
-        for (const r of rules) {
-            const match = r.match(/^(>=|<=|>|<|=|==)(.+)$/);
-            if (!match) continue;
-            const [, operator, target] = match;
-            const compare = this.compareVersions(gameVersion, target);
-
-            switch (operator) {
-                case '>=': result = result && compare >= 0; break;
-                case '>': result = result && compare > 0; break;
-                case '<=': result = result && compare <= 0; break;
-                case '<': result = result && compare < 0; break;
-                case '=': case '==': result = result && compare === 0; break;
+        const toDelete = backups.slice(maxCount);
+        for (const backup of toDelete) {
+            try {
+                await game.promises.removeDir(backup.path);
+                console.log(`[备份清理] 删除旧备份: ${backup.name}`);
+            } catch (e) {
+                console.warn(`[备份清理] 删除失败: ${backup.name}`);
             }
         }
-        return result;
+    }
+
+    async copyDirectoryRecursive(src, dest) {
+        const [folders, files] = await game.promises.getFileList(src);
+        await game.promises.createDir(dest);
+
+        for (const file of files) {
+            const content = await game.promises.readFile(`${src}/${file}`);
+            await game.promises.writeFile(content, dest, file);
+        }
+
+        for (const folder of folders) {
+            await this.copyDirectoryRecursive(`${src}/${folder}`, `${dest}/${folder}`);
+        }
+    }
+
+    // 清理过期临时目录（优化点4）
+    async cleanupOldTempDirs() {
+        try {
+            const [folders] = await game.promises.getFileList(this.targetDir);
+            const tempDirs = folders.filter(f => f.startsWith('__temp_'));
+            const now = Date.now();
+
+            for (const dir of tempDirs) {
+                try {
+                    const timestamp = parseInt(dir.replace('__temp_', ''));
+                    if (!isNaN(timestamp) && (now - timestamp > CONFIG.limits.maxTempAge)) {
+                        await game.promises.removeDir(`${this.targetDir}/${dir}`);
+                        console.log(`[清理] 删除过期临时目录: ${dir}`);
+                    }
+                } catch (e) {
+                    console.warn(`[清理] 无法删除临时目录 ${dir}:`, e);
+                }
+            }
+        } catch (e) {
+            console.warn('[清理] 扫描临时目录失败:', e);
+        }
     }
 }
 
+// ==================== 主更新器（事件驱动重构版） ====================
 class ExtensionUpdater {
     constructor() {
-        this.gitURL = null;        // 当前使用的Raw URL基础
-        this.repoInfo = null;      // 仓库信息对象（会被分支切换更新）
-        this.branch = null;        // 当前分支
-        this.tempDir = null;       // 临时目录
-        this.targetDir = null;     // 目标目录
-        this.fileList = [];        // 文件列表
-        this.stats = {
-            success: 0,
-            failed: 0,
-            total: 0,
-            skipped: 0,
-            bytesDownloaded: 0
-        };
-        this.versionChecker = new VersionCompatibilityChecker();
-        this.scheduler = new RequestScheduler();
-
-        // 确保目标目录始终稳定
-        this.targetDir = `extension/${LIT_CONFIG.name}`;
+        this.repo = null;
+        this.tempDir = null;
+        this.targetDir = basic.path;
+        this.filesDir = basic.files;
+        this.tokens = new TokenManager();
+        this.state = null;
+        this.ui = new UIManager();
+        this.backupManager = new BackupManager(this.targetDir, this.filesDir);
+        this.downloader = null;
+        this.tasks = []; // DownloadTask 数组
+        this.mode = 'simple';
+        this.startTime = 0;
+        this.shouldCleanup = true;
+        this.totalBytes = 0;
+        this.envType = Environment.getEnvironmentType();
+        this.eventHandlers = {};
     }
 
-    /**
-     * 初始化更新器
-     * @param {string} gitURL - GitHub/Gitee的web URL
-     */
-    async init(gitURL) {
-        if (!gitURL || typeof gitURL !== 'string') {
-            throw new Error('gitURL不能为空且必须是字符串');
+    // 事件订阅机制（解耦UI）
+    on(event, handler) {
+        if (!this.eventHandlers[event]) this.eventHandlers[event] = [];
+        this.eventHandlers[event].push(handler);
+    }
+
+    emit(event, data) {
+        if (this.eventHandlers[event]) {
+            this.eventHandlers[event].forEach(h => h(data));
         }
+    }
 
-        console.log(`[初始化] 解析仓库地址: ${gitURL}`);
+    async init(platform, mode = 'simple') {
+        const url = CONFIG.urls[platform];
+        if (!url) throw new Error('无效的平台');
 
+        this.repo = new GitAdapter(url);
+        this.mode = mode;
+        this.tempDir = `${this.targetDir}/__temp_${Date.now()}`;
+        this.state = new StateManager(this.tempDir);
+        this.downloader = new SmartDownloader(this.repo, this.tokens);
+        this.shouldCleanup = true;
+        this.totalBytes = 0;
+        this.tasks = [];
+
+        // 启动时清理旧临时目录
+        await this.backupManager.cleanupOldTempDirs();
+
+        console.log(`[更新器] 初始化: 平台=${platform}, 环境=${this.envType}, 模式=${mode}`);
+    }
+
+    async resumeFromState(tempDir) {
+        this.tempDir = tempDir;
+        this.state = new StateManager(this.tempDir);
+        const loaded = await this.state.load();
+
+        if (loaded) {
+            this.repo = new GitAdapter(CONFIG.urls[loaded.repo.platform]);
+            this.repo.switchBranch(loaded.repo.branch);
+            this.mode = loaded.mode;
+            this.downloader = new SmartDownloader(this.repo, this.tokens);
+            
+            // 恢复任务列表
+            this.tasks = loaded.files.map(f => new DownloadTask({
+                remote: f.path,
+                temp: `${this.tempDir}/${f.path}`,
+                target: `${this.targetDir}/${f.path}`,
+                size: f.size,
+                type: f.type,
+                critical: f.critical,
+                priority: f.type === 'text' ? 0 : (f.type === 'media' ? 2 : 1),
+                skip: f.status === 'skipped'
+            }));
+
+            this.totalBytes = this.tasks.reduce((sum, t) => sum + (t.size || 0), 0);
+            return true;
+        }
+        return false;
+    }
+
+    async checkResume() {
         try {
-            this.repoInfo = GitURLParser.parseRepoInfo(gitURL);
-            this.gitURL = GitURLParser.getRawURL(this.repoInfo, '');
-            this.branch = this.repoInfo.branch;
+            const [folders] = await game.promises.getFileList(this.targetDir);
+            const tempDirs = folders.filter(f => f.startsWith('__temp_'));
 
-            console.log(`[初始化] 平台: ${this.repoInfo.platform}, 仓库: ${this.repoInfo.owner}/${this.repoInfo.repo}`);
-            console.log(`[初始化] 默认分支: ${this.branch}`);
-            console.log(`[初始化] Raw URL: ${this.gitURL}`);
-            console.log(`[初始化] 目标目录: ${this.targetDir}`);
-
-            return this.repoInfo;
-        } catch (e) {
-            throw new Error(`初始化失败: ${e.message}`);
-        }
-    }
-
-    /**
-    * 检查扩展是否已安装
-    */
-    async checkInstalled() {
-        const extPath = `${this.targetDir}/extension.js`;
-        return new Promise((resolve) => {
-            game.checkFile(extPath,
-                (result) => resolve(result === 1),
-                () => resolve(false)
-            );
-        });
-    }
-
-    /**
-     * 【已修复】准备文件列表并同步分支信息
-     * 关键修复：确保分支切换后所有后续操作使用新分支
-     */
-    async prepareFileList(targetBranch) {
-        if (!this.repoInfo) throw new Error('未初始化仓库信息');
-
-        // 确定最终使用的分支
-        const finalBranch = targetBranch || this.repoInfo.branch;
-
-        // 如果分支改变，重新生成URL
-        if (finalBranch !== this.repoInfo.branch) {
-            console.log(`[分支切换] ${this.repoInfo.branch} -> ${finalBranch}`);
-
-            // 🔧 修复点1：更新repoInfo中的branch
-            this.repoInfo = { ...this.repoInfo, branch: finalBranch };
-
-            // 🔧 修复点2：同步更新gitURL基础路径
-            this.gitURL = GitURLParser.getRawURL(this.repoInfo, '');
-
-            // 更新实例branch记录
-            this.branch = finalBranch;
-        }
-
-        console.log(`[文件列表] 使用分支: ${this.branch}`);
-        console.log(`[文件列表] Raw base URL: ${this.gitURL}`);
-
-        // 获取Directory.json
-        const directory = await this.fetchDirectoryJson();
-        if (!directory || typeof directory !== 'object') {
-            throw new Error('无法获取有效的Directory.json，请检查仓库文件是否存在');
-        }
-
-        // 转换为文件列表
-        const files = [];
-        for (const [filePath, fileInfo] of Object.entries(directory)) {
-            if (!filePath || typeof filePath !== 'string') continue;
-
-            // 标准化路径（移除前导斜杠）
-            const normalizedPath = filePath.replace(/^\/+/, '');
-
-            if (this.shouldIncludeFile(normalizedPath)) {
-                files.push({
-                    remotePath: normalizedPath,                            // 远程路径
-                    tempPath: `${this.tempDir}/${normalizedPath}`,        // 临时路径
-                    targetPath: `${this.targetDir}/${normalizedPath}`,    // 最终路径
-                    type: fileInfo?.type || this.detectFileType(normalizedPath),
-                    size: fileInfo?.size || 0,
-                    hash: fileInfo?.hash || null
-                });
-            } else {
-                console.log(`[过滤] 排除文件: ${filePath}`);
-            }
-        }
-
-        this.fileList = files;
-        this.stats.total = files.length;
-        console.log(`[文件列表] 共 ${files.length} 个文件待下载`);
-
-        if (files.length === 0) {
-            throw new Error('文件列表为空，请检查Directory.json配置或过滤规则');
-        }
-
-        return files;
-    }
-
-    /**
-     * 获取Directory.json（带备用源自动切换）
-     */
-    async fetchDirectoryJson() {
-        const url = `${this.gitURL}Directory.json`;
-        const fallbackUrl = GitURLParser.getFallbackURL(this.repoInfo, 'Directory.json');
-
-        return new Promise((resolve, reject) => {
-            this.scheduler.schedule(
-                url,
-                fallbackUrl,
-                (data) => {
-                    try {
-                        let contentStr;
-                        if (data instanceof ArrayBuffer) {
-                            contentStr = new TextDecoder().decode(data);
-                        } else if (typeof Buffer !== 'undefined' && data instanceof Buffer) {
-                            contentStr = data.toString();
-                        } else {
-                            contentStr = String(data);
-                        }
-
-                        if (!DownloadValidator.isValidContent(contentStr, 'json')) {
-                            throw new Error('Directory.json内容验证失败（可能是404页面）');
-                        }
-
-                        const directory = JSON.parse(contentStr);
-                        if (Object.keys(directory).length === 0) {
-                            console.warn('[Directory] 文件列表为空');
-                        }
-                        resolve(directory);
-                    } catch (e) {
-                        reject(new Error(`Directory.json解析失败: ${e.message}`));
+            if (tempDirs.length > 0) {
+                tempDirs.sort().reverse();
+                for (const dir of tempDirs) {
+                    if (await this.resumeFromState(`${this.targetDir}/${dir}`)) {
+                        return {
+                            canResume: this.state.canResume(),
+                            hasFailures: this.state.isCompletedWithFailures(),
+                            tempDir: this.tempDir
+                        };
                     }
-                },
-                (err) => {
-                    reject(new Error(`获取Directory.json失败: ${err.message}`));
-                },
-                'json'
-            );
-        });
+                }
+            }
+        } catch (e) { }
+        return { canResume: false, hasFailures: false, tempDir: null };
     }
 
-    shouldIncludeFile(filePath) {
-        if (!filePath) return false;
+    async prepareFileList(targetBranch = null) {
+        if (targetBranch) this.repo.switchBranch(targetBranch);
 
-        const parts = filePath.split('/');
-        const fileName = parts.pop() || '';
+        const url = this.repo.getURL(CONFIG.files.directory);
+        
+        // 下载文件列表
+        const listTask = new DownloadTask({
+            remote: CONFIG.files.directory,
+            temp: `${this.tempDir}/Directory.json`,
+            size: 0,
+            type: 'json'
+        });
 
-        // 检查目录
-        for (const part of parts) {
-            if (EXCLUDE_DIRS.includes(part) || part.startsWith('.')) return false;
+        const result = await this.downloader.download(listTask);
+        if (!result.success) {
+            if (result.needToken) {
+                // 动态请求 Token（优化点3）
+                const token = await this.ui.promptForToken(this.repo.platform, 'cors');
+                if (token) {
+                    this.tokens.set(this.repo.platform, token);
+                    this.downloader = new SmartDownloader(this.repo, this.tokens);
+                    return this.prepareFileList(targetBranch); // 重试
+                }
+            }
+            throw new Error(`获取文件列表失败: ${result.error}`);
         }
 
-        // 检查文件名
-        if (EXCLUDE_FILES.includes(fileName) || fileName.startsWith('.')) return false;
-
-        // 检查扩展名
-        const ext = fileName.substring(fileName.lastIndexOf('.'));
-        if (EXCLUDE_EXTS.includes(ext)) return false;
-
-        return true;
-    }
-
-    detectFileType(filePath) {
-        if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(filePath)) return 'image';
-        if (/\.(mp3|ogg|wav|m4a)$/i.test(filePath)) return 'audio';
-        if (/\.(js|ts|json|css|html|md|txt)$/i.test(filePath)) return 'text';
-        return 'binary';
-    }
-
-    /**
-     * 【已修复】下载单个文件（改进路径处理和错误报告）
-     */
-    async downloadFile(fileInfo) {
-        const { remotePath, tempPath, type } = fileInfo;
-
-        if (!remotePath) {
-            return { success: false, file: 'unknown', error: '无效的远程路径' };
+        const content = await game.promises.readFileAsText(listTask.temp);
+        let directory;
+        try {
+            directory = JSON.parse(content);
+        } catch (e) {
+            throw new Error('文件列表格式错误');
         }
 
-        const url = GitURLParser.getRawURL(this.repoInfo, remotePath);
-        const fallbackUrl = GitURLParser.getFallbackURL(this.repoInfo, remotePath);
+        // 解析文件列表（复用原逻辑，改为 Task 对象）
+        const excludes = {
+            dirs: ['.git', '.vscode', 'node_modules', '__temp__'],
+            files: ['.gitignore', '.DS_Store', CONFIG.files.state],
+            exts: ['.tmp', '.log', '.bak']
+        };
 
-        return new Promise((resolve) => {
-            // 确保目录存在（改进的目录创建）
-            this.ensureDirectoryForPath(tempPath)
-                .then(() => {
-                    this.scheduler.schedule(
-                        url,
-                        fallbackUrl,
-                        (content) => {
-                            try {
-                                // 🔧 修复点3：改进验证逻辑，允许二进制数据
-                                let isValid = false;
-                                if (typeof content === 'string') {
-                                    isValid = DownloadValidator.isValidContent(content, type);
-                                } else if (content instanceof ArrayBuffer || (typeof Buffer !== 'undefined' && content instanceof Buffer)) {
-                                    if (type === 'image' || type === 'audio') {
-                                        isValid = DownloadValidator.isValidContent(content, type);
-                                    } else {
-                                        // 二进制文件默认有效，检查大小
-                                        isValid = content.byteLength > 0 || content.length > 0;
-                                    }
-                                }
+        this.tasks = [];
+        this.totalBytes = 0;
 
-                                if (!isValid) {
-                                    throw new Error('下载内容验证失败（可能是错误页面）');
-                                }
+        for (const [path, info] of Object.entries(directory)) {
+            if (!path) continue;
+            const parts = path.split('/').filter(p => p);
+            const fileName = parts[parts.length - 1];
 
-                                // 🔧 修复点4：统一写入逻辑，区分Node和浏览器
-                                this.writeFile(tempPath, content, type)
-                                    .then(() => {
-                                        const size = content.length || content.byteLength || 0;
-                                        this.stats.success++;
-                                        this.stats.bytesDownloaded += size;
-                                        resolve({
-                                            success: true,
-                                            file: remotePath,
-                                            size,
-                                            error: null
-                                        });
-                                    })
-                                    .catch(err => {
-                                        throw new Error(`写入失败: ${err.message}`);
-                                    });
+            if (parts.some(p => excludes.dirs.includes(p))) continue;
+            if (excludes.files.includes(fileName)) continue;
+            if (excludes.exts.some(ext => fileName.endsWith(ext))) continue;
+            if (fileName.startsWith('.')) continue;
 
-                            } catch (e) {
-                                console.error(`[下载] 处理失败: ${remotePath}`, e);
-                                this.stats.failed++;
-                                resolve({
-                                    success: false,
-                                    file: remotePath,
-                                    error: e.message
-                                });
-                            }
-                        },
-                        (err) => {
-                            console.error(`[下载] 调度失败: ${remotePath}`, err.message);
-                            this.stats.failed++;
-                            resolve({
-                                success: false,
-                                file: remotePath,
-                                error: err.message
-                            });
-                        },
-                        type
-                    );
-                })
-                .catch(err => {
-                    console.error(`[下载] 创建目录失败: ${tempPath}`, err);
-                    this.stats.failed++;
-                    resolve({
-                        success: false,
-                        file: remotePath,
-                        error: `创建目录失败: ${err.message}`
-                    });
-                });
+            const cleanPath = parts.join('/');
+            const type = utils.getFileType(fileName);
+            const size = info?.size || 0;
+
+            const task = new DownloadTask({
+                remote: cleanPath,
+                temp: `${this.tempDir}/${cleanPath}`,
+                target: `${this.targetDir}/${cleanPath}`,
+                size,
+                type,
+                critical: utils.isCritical(fileName),
+                priority: type === 'text' ? 0 : (type === 'media' ? 2 : 1)
+            });
+
+            // 简易模式：标记已存在的媒体文件为跳过
+            if (this.mode === 'simple' && task.priority > 0) {
+                try {
+                    const exists = await game.promises.checkFile(task.target);
+                    if (exists === 1) {
+                        task.skip = true;
+                    }
+                } catch (e) { }
+            }
+
+            this.tasks.push(task);
+            if (!task.skip) this.totalBytes += size;
+        }
+
+        // 按优先级排序（关键文件优先）
+        this.tasks.sort((a, b) => {
+            if (a.critical !== b.critical) return a.critical ? -1 : 1;
+            return a.priority - b.priority;
         });
+
+        const skipCount = this.tasks.filter(t => t.skip).length;
+        await this.state.init(this.repo, this.repo.branch, this.mode, this.tasks);
+        
+        return { 
+            fileCount: this.tasks.length, 
+            skipCount, 
+            totalBytes: this.totalBytes 
+        };
     }
 
-    /**
-     * 为指定路径创建目录（Promise化）
-     */
-    async ensureDirectoryForPath(filePath) {
-        return new Promise((resolve, reject) => {
-            const dir = lib.path.dirname(filePath);
-            if (!dir || dir === '.' || dir === filePath) {
-                resolve(); // 无需创建
+    // 核心下载逻辑（真正的并发控制）
+    async downloadFiles(onProgress, onFileStart) {
+        const pending = this.state.getPending()
+            .map(p => this.tasks.find(t => t.remote === p.path))
+            .filter(Boolean);
+
+        if (pending.length === 0) return this.state.data.stats;
+
+        let completedCount = this.tasks.length - pending.length;
+        let totalDownloadedBytes = this.state.data.stats.bytes;
+        
+        // 并发下载（使用 asyncPool）
+        await utils.asyncPool(CONFIG.limits.maxConcurrent, pending, async (task) => {
+            if (task.skip) {
+                await this.state.updateFile(task.remote, 'skipped');
+                completedCount++;
                 return;
             }
 
-            // 🔧 修复：使用game.ensureDirectory，传入相对路径（不要__dirname）
-            // game.ensureDirectory内部会自动处理Node.js下的__dirname拼接
-            game.ensureDirectory(dir, () => {
-                resolve();
-            }, (err) => {
-                reject(new Error(`创建目录失败: ${err}`));
-            }, true);
-        });
-    }
+            if (onFileStart) onFileStart(task.remote, task.size);
 
-    /**
-     * 统一文件写入（Node.js和浏览器环境）
-     */
-    async writeFile(filePath, content, type) {
-        return new Promise((resolve, reject) => {
-            const dir = lib.path.dirname(filePath);
-            const fileName = lib.path.basename(filePath);
-
-            if (isNodeJs) {
-                try {
-                    // 统一数据格式：本体game.writeFile接收字符串或File对象
-                    // 对于二进制数据（ArrayBuffer/Buffer），转为Uint8Array或字符串
-                    let dataToWrite;
-                    if (content instanceof ArrayBuffer) {
-                        // 转为Uint8Array，在Node环境下本体writeFile会通过zip处理
-                        dataToWrite = new Uint8Array(content);
-                    } else if (typeof Buffer !== 'undefined' && content instanceof Buffer) {
-                        dataToWrite = content.toString(); // 转为字符串
-                    } else {
-                        dataToWrite = content;
+            let lastReportedBytes = 0;
+            
+            const result = await this.downloader.download(task, (received, total) => {
+                // 细粒度进度
+                task.downloadedBytes = received;
+                const delta = received - lastReportedBytes;
+                if (delta > 65536 || received === total) { // 每64KB或完成时更新
+                    totalDownloadedBytes += delta;
+                    lastReportedBytes = received;
+                    this.state.updateProgress(task.remote, received);
+                    
+                    if (onProgress) {
+                        onProgress(received, total, totalDownloadedBytes, this.totalBytes, completedCount, pending.length);
                     }
-
-                    game.writeFile(dataToWrite, dir, fileName, resolve, reject);
-                } catch (e) {
-                    reject(e);
                 }
+            });
+
+            if (result.success) {
+                completedCount++;
+                await this.state.updateFile(task.remote, 'success', null, null, result.size);
             } else {
-                // 浏览器环境
-                let dataToWrite;
-                if (content instanceof ArrayBuffer) {
-                    // 可能需要转换为字符串存储，取决于game.writeFile的实现
-                    // 假设game.writeFile支持ArrayBuffer或字符串
-                    dataToWrite = content;
-                } else if (typeof Buffer !== 'undefined' && content instanceof Buffer) {
-                    dataToWrite = content.toString();
-                } else {
-                    dataToWrite = content;
+                await this.state.updateFile(task.remote, 'failed', result.error, result.errorType);
+                
+                // 动态 Token 提示（优化点3）
+                if (result.needToken && !this._tokenPrompted) {
+                    this._tokenPrompted = true; // 防止重复提示
+                    const token = await this.ui.promptForToken(this.repo.platform, result.errorType);
+                    if (token) {
+                        this.tokens.set(this.repo.platform, token);
+                        this.downloader = new SmartDownloader(this.repo, this.tokens);
+                    }
                 }
-
-                game.writeFile(
-                    dataToWrite,
-                    dir,
-                    fileName,
-                    () => resolve(),
-                    (err) => reject(new Error(err || '写入失败'))
-                );
             }
         });
+
+        return this.state.data.stats;
     }
 
-    /**
-     * 转换ArrayBuffer为字符串（用于浏览器环境写入）
-     */
-    arrayBufferToString(buffer) {
-        const decoder = new TextDecoder('utf-8');
-        return decoder.decode(buffer);
+    // 仅重试失败文件（优化点1）
+    async retryFailedFiles(onProgress, onFileStart) {
+        const failed = this.state.getFailed();
+        if (failed.length === 0) return this.state.data.stats;
+
+        // 重置失败状态为 pending
+        await this.state.resetFailedToPending();
+        
+        // 重新计算总字节数（仅失败文件）
+        this.totalBytes = failed.reduce((sum, f) => sum + (f.size || 0), 0);
+        
+        return this.downloadFiles(onProgress, onFileStart);
     }
 
-    /**
-     * 创建临时目录
-     */
-    async createTempDirectory() {
-        this.tempDir = this.targetDir + "/__temp_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+    async applyUpdate() {
+        // 创建备份
+        const backupResult = await this.backupManager.createBackup();
+        if (!backupResult.success) {
+            console.warn('[备份] 创建失败，继续更新:', backupResult.error);
+        }
 
-        return new Promise((resolve, reject) => {
-            console.log(`[目录] 创建临时目录: ${this.tempDir}`);
-
-            // 🔧 修复：所有环境都传相对路径给game.ensureDirectory
-            game.ensureDirectory(this.tempDir, () => {
-                console.log(`[目录] 创建成功: ${this.tempDir}`);
-                resolve();
-            }, (err) => {
-                reject(new Error(`创建临时目录失败: ${err}`));
-            }, true);
-        });
+        // 移动文件
+        await this.moveDirectory(this.tempDir, this.targetDir);
+        
+        // 清理
+        this.state.complete(false);
+        this.shouldCleanup = true;
+        await this.cleanup();
     }
 
-    /**
-     * 清理临时目录
-     */
-    async cleanupTemp() {
-        if (!this.tempDir) return;
+    async moveDirectory(src, dest) {
+        const [folders, files] = await game.promises.getFileList(src);
+        await game.promises.createDir(dest);
 
-        return new Promise((resolve) => {
-            // 🔧 修复：直接传相对路径，game.checkDir内部会处理__dirname
-            game.checkDir(this.tempDir, (exists) => {
-                if (exists === 1) {
-                    console.log(`[清理] 删除临时目录: ${this.tempDir}`);
-                    game.removeDir(this.tempDir, () => resolve(), () => resolve());
-                } else {
-                    resolve();
-                }
-            }, () => resolve());
-        });
+        for (const file of files) {
+            const content = await game.promises.readFile(`${src}/${file}`);
+            await game.promises.writeFile(content, dest, file);
+            await game.promises.removeFile(`${src}/${file}`);
+        }
+
+        for (const folder of folders) {
+            await this.moveDirectory(`${src}/${folder}`, `${dest}/${folder}`);
+        }
+
+        try {
+            await game.promises.removeDir(src);
+        } catch (e) { }
     }
 
-    /**
-     * 提交更新（移动临时目录到正式位置）
-     */
-    async commitUpdate() {
-        console.log(`[提交] 开始提交更新: ${this.tempDir} -> ${this.targetDir}`);
-
-        // 1. 备份旧版本（可选，先删除旧目录）
-        await this.removeDirectory(this.targetDir);
-
-        // 2. 移动临时目录到正式位置
-        if (isNodeJs) {
-            return this.moveDirectoryNode(this.tempDir, this.targetDir);
-        } else {
-            return this.moveDirectoryBrowser(this.tempDir, this.targetDir);
+    async cleanup() {
+        if (!this.tempDir || !this.shouldCleanup) return;
+        try {
+            const exists = await game.promises.checkDir(this.tempDir);
+            if (exists === 1) {
+                await game.promises.removeDir(this.tempDir);
+                console.log(`[清理] 已删除临时目录: ${this.tempDir}`);
+            }
+        } catch (e) {
+            console.warn('[清理] 删除临时目录失败:', e);
         }
     }
 
-    async removeDirectory(dirPath) {
-        return new Promise((resolve) => {
-            game.checkDir(dirPath, (exists) => {
-                if (exists === 1) {
-                    console.log(`[提交] 删除旧目录: ${dirPath}`);
-                    game.removeDir(dirPath, () => resolve(), () => resolve());
-                } else {
-                    resolve();
+    // Token 管理
+    async manageTokens() {
+        while (true) {
+            const action = await this.ui.showTokenManager(this.tokens);
+            if (!action) break;
+
+            if (action.action === 'set') {
+                const token = await this.ui.inputToken(action.platform);
+                if (token !== null) {
+                    if (token === '') {
+                        this.tokens.clear(action.platform);
+                        await this.ui.alert('清除成功', `${action.platform} Token 已清除`);
+                    } else {
+                        this.tokens.set(action.platform, token);
+                        await this.ui.alert('设置成功', `${action.platform} Token 已保存`);
+                    }
                 }
-            }, () => resolve());
-        });
-    }
-
-    /**
-     * Node.js环境下移动目录
-     */
-    async moveDirectoryNode(src, dest) {
-        return new Promise((resolve, reject) => {
-            try {
-                const fs = lib.node.fs;
-                const srcPath = `${__dirname}/${src}`;
-                const destPath = `${__dirname}/${dest}`;
-
-                // 如果目标存在，先删除
-                if (fs.existsSync(destPath)) {
-                    fs.rmSync(destPath, { recursive: true, force: true });
-                }
-
-                fs.renameSync(srcPath, destPath);
-                console.log(`[提交] Node.js移动完成: ${src} -> ${dest}`);
-                resolve();
-            } catch (e) {
-                reject(new Error(`Node.js移动失败: ${e.message}`));
+            } else if (action.action === 'clear') {
+                this.tokens.clear(action.platform);
+                await this.ui.alert('清除成功', `${action.platform} Token 已清除`);
             }
-        });
+        }
     }
 
-    /**
-     * 【已修复】浏览器环境下递归移动目录（改进错误处理）
-     */
-    async moveDirectoryBrowser(src, dest) {
-        console.log(`[提交] 浏览器环境移动: ${src} -> ${dest}`);
+    // 版本回退（使用 fileManager）
+    async manageRollback() {
+        while (true) {
+            const backups = await this.backupManager.listBackups();
+            const currentVersion = 'current'; // 可扩展为读取当前版本
+            
+            const action = await this.ui.showRollbackManager(backups, currentVersion);
+            if (!action) break;
 
-        return new Promise((resolve, reject) => {
-            game.getFileList(src,
-                (folders, files) => {
-                    console.log(`[提交] 发现 ${folders.length} 个目录, ${files.length} 个文件`);
-
-                    // 递归创建所有子目录
-                    const createAllDirs = async () => {
-                        for (const folder of folders) {
-                            if (!folder) continue;
-                            const destFolder = `${dest}/${folder}`;
-                            await new Promise((res) => {
-                                game.ensureDirectory(destFolder, res, res, true);
-                            });
+            if (action.action === 'rollback') {
+                const confirmed = await this.ui.confirmRollback(action.backup);
+                if (confirmed) {
+                    const result = await this.backupManager.rollbackToBackup(action.backup);
+                    if (result.success) {
+                        await this.ui.alert('回退成功', '版本已回退，建议立即重启游戏');
+                        if (await this.ui.confirm('重启确认', '是否立即重启？', '立即重启', '稍后')) {
+                            game.reload();
                         }
-                    };
-
-                    // 移动所有文件（带错误处理）
-                    const moveAllFiles = async () => {
-                        const errors = [];
-                        for (const file of files) {
-                            if (!file) continue;
-
-                            const srcPath = `${src}/${file}`;
-                            const destPath = `${dest}/${file}`;
-
-                            try {
-                                await new Promise((res, rej) => {
-                                    game.readFile(srcPath,
-                                        (content) => {
-                                            game.writeFile(
-                                                content,
-                                                lib.path.dirname(destPath),
-                                                lib.path.basename(destPath),
-                                                () => res(),
-                                                (err) => rej(new Error(err || `写入失败: ${file}`))
-                                            );
-                                        },
-                                        (err) => rej(new Error(err || `读取失败: ${file}`))
-                                    );
-                                });
-                            } catch (e) {
-                                console.error(`[移动] 文件失败: ${file}`, e);
-                                errors.push({ file, error: e.message });
-                            }
-                        }
-                        return errors;
-                    };
-
-                    createAllDirs()
-                        .then(() => moveAllFiles())
-                        .then((errors) => {
-                            // 无论是否有错误，都尝试清理临时目录
-                            game.removeDir(src, () => { }, () => { });
-
-                            if (errors.length > 0) {
-                                console.warn(`[提交] 部分文件移动失败:`, errors);
-                                // 只要不是全部失败就算成功
-                                if (errors.length < files.length) {
-                                    resolve();
-                                } else {
-                                    reject(new Error('所有文件移动失败'));
-                                }
-                            } else {
-                                console.log(`[提交] 所有文件移动成功`);
-                                resolve();
-                            }
-                        })
-                        .catch((err) => {
-                            game.removeDir(src, () => { }, () => { });
-                            reject(err);
-                        });
-                },
-                (err) => reject(new Error(`读取临时目录失败: ${err}`))
-            );
-        });
+                        break;
+                    } else {
+                        await this.ui.alert('回退失败', result.error);
+                    }
+                }
+            } else if (action.action === 'delete') {
+                const confirm = await this.ui.confirm(
+                    '删除确认', 
+                    `确定删除选中的 ${action.backups.length} 个备份吗？此操作不可恢复。`,
+                    '删除', '取消'
+                );
+                if (confirm) {
+                    for (const backup of action.backups) {
+                        await this.backupManager.deleteBackup(backup);
+                    }
+                    await this.ui.alert('删除成功', `已删除 ${action.backups.length} 个备份`);
+                }
+            }
+        }
     }
 
-    /**
-     * 【主流程】执行完整更新
-     */
-    async update() {
-        // 重置统计
-        this.stats = {
-            success: 0,
-            failed: 0,
-            total: 0,
-            skipped: 0,
-            bytesDownloaded: 0
-        };
+    // 主更新流程
+    async update(force = false, retryMode = false) {
+        this.startTime = Date.now();
+        let progressUI = null;
+        this._tokenPrompted = false;
 
         try {
-            // 1. 清理旧临时目录（如果有）
-            await this.cleanupTemp();
+            // 恢复模式或重试模式
+            if (!force && this.state.data && !retryMode) {
+                // 恢复现有任务（断点续传）
+            } else if (retryMode) {
+                // 重试模式：使用现有状态，不重新初始化
+            } else {
+                // 全新下载：版本检查与文件列表准备
+                const gameVer = lib.version || '1.0.0';
+                const verInfo = await new VersionChecker(this.repo, this.tokens, this.envType).check(gameVer);
 
-            // 2. 创建新临时目录
-            await this.createTempDirectory();
+                if (verInfo.branch !== this.repo.branch) {
+                    this.repo.switchBranch(verInfo.branch);
+                }
 
-            // 3. 准备文件列表（分支已在此步骤同步）
-            await this.prepareFileList(this.branch);
+                const { fileCount, skipCount, totalBytes } = await this.prepareFileList();
 
-            // 验证文件列表
-            if (!this.fileList || this.fileList.length === 0) {
-                throw new Error('文件列表为空，更新无法继续');
+                const confirmed = await this.ui.confirmStart({
+                    version: verInfo.extensionVersion,
+                    branch: this.repo.branch,
+                    platform: this.repo.platform,
+                    mode: this.mode,
+                    fileCount,
+                    skipCount,
+                    totalSize: utils.parseSize(totalBytes),
+                    envType: this.envType
+                });
+
+                if (!confirmed) {
+                    await this.cleanup();
+                    return { cancelled: true };
+                }
             }
 
-            // 4. 用户确认
-            const shouldContinue = await DialogManager.confirm(
-                '确认更新',
-                `扩展: ${LIT_CONFIG.name}\n` +
-                `分支: ${this.branch}\n` +
-                `环境: ${isNodeJs ? 'Node.js' : '浏览器'}\n` +
-                `文件数: ${this.fileList.length}\n\n` +
-                `策略: 事务性更新（全部成功后覆盖）\n\n` +
-                `${this.fileList.slice(0, 5).map(f => `• ${f.remotePath}`).join('\n')}\n` +
-                `${this.fileList.length > 5 ? `\n...及其他 ${this.fileList.length - 5} 个文件` : ''}`,
-                '开始下载',
-                '取消'
+            // 获取待下载文件数（用于UI）
+            const pendingCount = retryMode 
+                ? this.state.getFailed().length 
+                : this.state.getPending().length;
+            
+            const totalBytes = retryMode 
+                ? this.state.getFailed().reduce((s, f) => s + (f.size || 0), 0)
+                : this.totalBytes;
+
+            if (pendingCount === 0) {
+                return { success: true, stats: this.state.data.stats, message: '所有文件已是最新' };
+            }
+
+            progressUI = await this.ui.createDownloadProgress(
+                retryMode ? '重试失败文件' : '下载更新',
+                totalBytes,
+                pendingCount,
+                this.mode
             );
 
-            if (!shouldContinue) {
-                await this.cleanupTemp();
-                return { cancelled: true, stats: this.stats };
-            }
-
-            // 5. 下载所有文件（带进度）
-            const failedFiles = [];
-            const progressDialog = await DialogManager.complexLoading('正在更新', '准备下载...');
-
-            for (let i = 0; i < this.fileList.length; i++) {
-                const file = this.fileList[i];
-                const progress = `[${i + 1}/${this.fileList.length}]`;
-
-                progressDialog.updateText(`${progress} ${file.remotePath}`);
-
-                // 每10个文件更新一次控制台输出，减少日志刷屏
-                if (i % 10 === 0) {
-                    console.log(`${progress} 下载进度...`);
-                }
-
-                const result = await this.downloadFile(file);
-
-                if (result.success) {
-                    game.print(`✓ ${file.remotePath} (${(result.size / 1024).toFixed(1)}KB)`);
-                } else {
-                    game.print(`✗ ${file.remotePath}: ${result.error}`);
-                    failedFiles.push({ ...file, error: result.error });
-                }
-            }
-
-            progressDialog.close();
-
-            // 6. 下载结果检查
-            if (failedFiles.length === this.fileList.length) {
-                throw new Error('所有文件下载失败，请检查网络连接和仓库配置');
-            }
-
-            if (failedFiles.length > 0) {
-                const critical = ['extension.js', 'info.json'].some(f =>
-                    failedFiles.some(failed => failed.remotePath.includes(f))
-                );
-
-                const errorDetails = failedFiles.slice(0, 3).map(f => `• ${f.remotePath}: ${f.error}`).join('\n');
-                const continueMsg = critical
-                    ? '关键文件下载失败，更新可能无法正常使用。'
-                    : '部分非关键文件失败，不影响核心功能。';
-
-                const shouldCommit = await DialogManager.confirm(
-                    '部分文件下载失败',
-                    `${continueMsg}\n\n成功: ${this.stats.success}/${this.stats.total}\n` +
-                    `失败: ${failedFiles.length}\n\n${errorDetails}\n${failedFiles.length > 3 ? `\n...及其他 ${failedFiles.length - 3} 个` : ''}\n\n是否继续应用更新？`,
-                    '继续更新',
-                    '取消更新'
-                );
-
-                if (!shouldCommit) {
-                    await this.cleanupTemp();
-                    return { cancelled: true, stats: this.stats, failed: failedFiles };
-                }
-            }
-
-            // 7. 应用更新（移动文件）
-            const applyingDialog = await DialogManager.complexLoading('正在应用更新', '移动文件到扩展目录...');
-            await this.commitUpdate();
-            applyingDialog.close();
-
-            // 8. 清理
-            await this.cleanupTemp();
-
-            return {
-                cancelled: false,
-                success: true,
-                stats: this.stats,
-                failed: failedFiles,
-                hasCriticalFailure: failedFiles.some(f => ['extension.js', 'info.json'].includes(f.remotePath))
+            // 绑定取消事件
+            const onCancel = () => {
+                this.downloader.cancelAll();
+                this.shouldCleanup = false;
             };
 
+            let currentFileIndex = 0;
+            
+            // 执行下载（区分正常下载和重试下载）
+            const downloadMethod = retryMode 
+                ? () => this.retryFailedFiles(
+                    (fileRec, fileTot, totalRec, totalTot, idx, tot) => {
+                        progressUI.updateProgress(fileRec, fileTot, totalRec, totalTot, idx, tot);
+                    },
+                    (name, size) => {
+                        currentFileIndex++;
+                        progressUI.setFile(name, size);
+                    }
+                )
+                : () => this.downloadFiles(
+                    (fileRec, fileTot, totalRec, totalTot, idx, tot) => {
+                        progressUI.updateProgress(fileRec, fileTot, totalRec, totalTot, idx, tot);
+                    },
+                    (name, size) => {
+                        currentFileIndex++;
+                        progressUI.setFile(name, size);
+                    }
+                );
+
+            await downloadMethod();
+            progressUI.close();
+
+            const failed = this.state.getFailed();
+            if (failed.length > 0) {
+                this.shouldCleanup = false;
+                this.state.complete(true);
+
+                const action = await this.ui.showCompleteResult(
+                    {
+                        stats: this.state.data.stats,
+                        elapsed: ((Date.now() - this.startTime) / 1000).toFixed(1),
+                        platform: this.repo.platform,
+                        mode: this.mode
+                    },
+                    failed.map(f => ({
+                        path: f.path,
+                        error: f.error,
+                        errorType: f.errorType
+                    }))
+                );
+
+                if (action === 'retry') {
+                    // 仅重试失败（优化点1）
+                    return await this.update(true, true);
+                } else if (action === 'ignore') {
+                    await this.state.markAllFailedAsSkipped();
+                    await this.applyUpdate();
+                    return {
+                        success: true,
+                        partial: true,
+                        stats: this.state.data.stats,
+                        message: '已跳过失败文件完成更新'
+                    };
+                } else {
+                    return { retryLater: true, failed };
+                }
+            } else {
+                await this.applyUpdate();
+                const result = {
+                    success: true,
+                    partial: false,
+                    stats: this.state.data.stats,
+                    elapsed: ((Date.now() - this.startTime) / 1000).toFixed(1),
+                    platform: this.repo.platform,
+                    mode: this.mode
+                };
+
+                const action = await this.ui.showCompleteResult(result, []);
+                if (action === 'restart') {
+                    game.reload();
+                }
+                return result;
+            }
+
         } catch (error) {
-            // 🔧 修复点5：确保错误被捕获且清理资源
-            console.error('[更新] 流程错误:', error);
-            await this.cleanupTemp();
+            if (progressUI) progressUI.close();
+            
+            if (error.message === '下载已取消') {
+                this.shouldCleanup = false;
+                return { cancelled: true, canResume: true };
+            }
+
             throw error;
         }
     }
 }
 
-const UpdateFlow = (() => {
-    const showExtensionInfo = async (updater) => {
-        try {
-            const installed = await updater.checkInstalled();
-            let localVersion = 'unknown';
-
-            if (installed) {
-                try {
-                    localVersion = await new Promise((resolve) => {
-                        const path = `${updater.targetDir}/info.json`;
-                        game.readFileAsText(path,
-                            (data) => {
-                                try {
-                                    const info = JSON.parse(data);
-                                    resolve(info.version || 'unknown');
-                                } catch {
-                                    resolve('unknown');
-                                }
-                            },
-                            () => resolve('unknown')
-                        );
-                    });
-                } catch (e) {
-                    console.warn('[信息] 读取本地版本失败:', e);
-                }
-            }
-
-            const info = `扩展名称: ${LIT_CONFIG.name}\n` +
-                `安装状态: ${installed ? '✓ 已安装' : '✗ 未安装'}\n` +
-                `本地版本: ${localVersion}\n` +
-                `运行环境: ${isNodeJs ? 'Node.js' : '浏览器'}\n` +
-                `下载策略: 事务性更新（失败自动回滚）`;
-
-            await DialogManager.alert('扩展信息', info);
-        } catch (error) {
-            await DialogManager.alert('错误', `无法获取扩展信息: ${error.message}`);
-        }
-    };
-
-    const selectPlatform = async () => {
-        const choice = await DialogManager.choice(
-            '选择更新源',
-            `请选择《${LIT_CONFIG.name}》的更新源：\n\n` +
-            `推荐选择适合您网络环境的源以获得最佳速度`,
-            ['Gitee（国内推荐）', 'GitHub（国际）', '取消']
-        );
-
-        if (choice === 2 || choice === undefined) return null;
-        return choice === 0 ? 'gitee' : 'github';
-    };
-
-    const performUpdate = async (force = false) => {
+// ==================== 对外接口 ====================
+const Lit_update = {
+    async showUI() {
         const updater = new ExtensionUpdater();
+        let autoRetryCount = 0;
 
         try {
-            // 1. 选择平台
-            const platform = await selectPlatform();
-            if (!platform) return;
+            // 启动时自动清理过期临时文件
+            await updater.backupManager.cleanupOldTempDirs();
 
-            const baseURL = platform === 'gitee' ? LIT_CONFIG.gitee : LIT_CONFIG.github;
+            const resumeInfo = await updater.checkResume();
+            const hasToken = {
+                github: updater.tokens.has('github'),
+                gitee: updater.tokens.has('gitee')
+            };
 
-            console.log(`[更新] 选择平台: ${platform}, URL: ${baseURL}`);
-            await updater.init(baseURL);
+            const choice = await updater.ui.showMainMenu(resumeInfo, hasToken);
+            if (!choice) return;
 
-            // 2. 检查安装状态（仅提示，不阻断）
-            const installed = await updater.checkInstalled();
-            if (!installed && !force) {
-                const shouldInstall = await DialogManager.confirm(
-                    '全新安装',
-                    `未检测到《${LIT_CONFIG.name}》扩展。\n\n是否执行全新安装？`,
-                    '安装',
-                    '取消'
-                );
-                if (!shouldInstall) return;
-            }
-
-            // 3. 版本兼容性检查
-            let versionInfo;
-            try {
-                versionInfo = await updater.versionChecker.getCompatibleVersion(
-                    updater.gitURL,
-                    lib.version || '1.0.0'
-                );
-
-                console.log('[更新] 版本信息:', versionInfo);
-
-                if (versionInfo.description) {
-                    await DialogManager.alert(
-                        '版本匹配',
-                        `分支: ${versionInfo.branch || '默认'}\n` +
-                        `说明: ${versionInfo.description}`
-                    );
-                }
-            } catch (e) {
-                console.warn('[更新] 版本检查失败:', e);
-                versionInfo = { branch: updater.branch, description: '使用默认分支' };
-            }
-
-            // 🔧 关键：使用版本检查返回的分支
-            const targetBranch = versionInfo.branch || updater.branch;
-            updater.branch = targetBranch;
-
-            // 4. 执行更新
-            const result = await updater.update();
-
-            // 5. 处理结果
-            if (result.cancelled) {
-                await DialogManager.alert('已取消', '更新已取消，未做更改。');
+            if (choice === 'token') {
+                await updater.manageTokens();
                 return;
             }
 
-            if (result.hasCriticalFailure) {
-                await DialogManager.alert(
-                    '⚠️ 更新完成（有警告）',
-                    `更新已成功应用，但以下关键文件下载失败：\n` +
-                    `${result.failed.filter(f => ['extension.js', 'info.json'].includes(f.remotePath)).map(f => `• ${f.remotePath}`).join('\n')}\n\n` +
-                    `扩展可能无法正常工作，建议检查后重试。`
-                );
-            } else if (result.failed.length > 0) {
-                await DialogManager.alert(
-                    '✓ 更新完成',
-                    `成功更新 ${result.stats.success} 个文件\n` +
-                    `${result.failed.length} 个文件下载失败（非关键）\n\n` +
-                    `扩展已更新至可用状态。`
-                );
-            } else {
-                await DialogManager.alert('✅ 更新成功', `所有 ${result.stats.success} 个文件已成功更新！`);
+            if (choice === 'rollback') {
+                await updater.manageRollback();
+                return;
             }
 
-            // 6. 询问重启
-            if (await DialogManager.confirm(
-                '重启游戏',
-                '扩展更新完成，需要重启游戏才能生效。\n\n是否立即重启？',
-                '立即重启',
-                '稍后'
-            )) {
-                game.reload();
+            let mode = 'simple';
+            let isRetryMode = false;
+
+            if (choice === 'resume') {
+                // 断点续传：复用现有状态
+                await updater.init(updater.repo.platform, updater.mode);
+            } else if (choice === 'retry_failed') {
+                // 仅重试失败
+                await updater.init(updater.repo.platform, updater.mode);
+                isRetryMode = true;
+            } else {
+                // 新任务
+                const config = await updater.ui.showUpdateConfig(
+                    'github',
+                    resumeInfo.canResume,
+                    resumeInfo.hasFailures
+                );
+                if (!config) return;
+
+                // 清理旧临时目录（如果用户选择重新开始）
+                if (resumeInfo.tempDir && config.mode !== 'retry_failed') {
+                    await updater.backupManager.cleanupOldTempDirs();
+                }
+
+                await updater.init(config.platform, config.mode);
+            }
+
+            const result = await updater.update(false, isRetryMode);
+
+            if (result.cancelled) {
+                game.print('[更新] 已取消，进度已保存');
+                return;
+            }
+
+            if (result.retryLater) {
+                let msg = '已保留下载进度，下次可继续';
+                await updater.ui.alert('进度已保存', msg);
+                return;
+            }
+
+            if (result.success && result.partial) {
+                game.print(`[更新] 部分完成: ${result.message}`);
             }
 
         } catch (error) {
-            console.error('更新流程错误:', error);
-            await DialogManager.alert(
-                '❌ 更新失败',
-                `错误信息：${error.message}\n\n` +
-                `可能原因：\n` +
-                `1. 网络连接不稳定（403/429错误）\n` +
-                `2. 仓库地址配置错误\n` +
-                `3. 缺少Directory.json文件\n` +
-                `4. 游戏文件系统权限不足\n\n` +
-                `建议：检查网络后重试，或切换更新源。`
-            );
-            await updater.cleanupTemp();
-        }
-    };
+            console.error('[更新失败]', error);
+            
+            // 细化错误提示
+            let errorMsg = error.message;
+            if (error.message.includes('CORS') || error.message.includes('403')) {
+                errorMsg += '\n\n建议解决方案：\n1. 使用 Node.js 版本客户端\n2. 配置 Gitee Token\n3. 切换为 GitHub 源';
+            }
+            
+            await updater.ui.alert('更新失败', errorMsg);
 
-    const showMainMenu = async () => {
-        const installed = await new ExtensionUpdater().checkInstalled();
-
-        const action = await DialogManager.choice(
-            '叁岛世界更新工具',
-            `《${LIT_CONFIG.name}》扩展管理器\n\n` +
-            `${installed ? '✓ 已安装' : '✗ 未安装'}\n` +
-            `更新策略: 事务性更新（安全）`,
-            ['检查更新', '查看信息', '强制重装', '删除扩展', '取消']
-        );
-        return action;
-    };
-
-    return {
-        async main() {
-            try {
-                const action = await showMainMenu();
-
-                switch (action) {
-                    case 0:
-                        await performUpdate(false);
-                        break;
-                    case 1: {
-                        const updater = new ExtensionUpdater();
-                        await updater.init(LIT_CONFIG.gitee);
-                        await showExtensionInfo(updater);
-                        break;
-                    }
-                    case 2:
-                        if (await DialogManager.confirm('强制重装', '将删除现有文件并重新下载，确定？', '确定', '取消')) {
-                            await performUpdate(true);
-                        }
-                        break;
-                    case 3: {
-                        if (await DialogManager.confirm('删除扩展', '确定要删除《叁岛世界》扩展吗？', '删除', '取消')) {
-                            const updater = new ExtensionUpdater();
-                            await updater.removeDirectory(updater.targetDir);
-                            await DialogManager.alert('已删除', '扩展已删除，重启游戏生效。');
-                        }
-                        break;
-                    }
-                    default:
-                        return;
+            if (error.message !== '下载已取消' && updater.tempDir) {
+                const canResume = await updater.ui.confirm(
+                    '恢复提示',
+                    '是否保留当前进度以便稍后重试？',
+                    '保留进度',
+                    '清空临时文件'
+                );
+                if (!canResume) {
+                    await updater.cleanup();
                 }
-            } catch (error) {
-                console.error('UI流程错误:', error);
-                await DialogManager.alert('流程错误', error.message);
             }
         }
-    };
-})();
-
-const Lit_update = {
-    /**
-     * 显示更新UI
-     */
-    async showUI() {
-        await UpdateFlow.main();
     },
 
-    /**
-     * 快速更新（无UI，直接执行）
-     */
-    async quickUpdate(platform = 'gitee') {
-        console.log('[快速更新] 开始...');
+    // 快速更新（后台模式）
+    async quickUpdate(platform = 'gitee', mode = 'simple', force = false) {
         const updater = new ExtensionUpdater();
-
         try {
-            const baseURL = platform === 'gitee' ? LIT_CONFIG.gitee : LIT_CONFIG.github;
-            await updater.init(baseURL);
-
-            // 检查版本兼容性
-            const versionInfo = await updater.versionChecker.getCompatibleVersion(
-                updater.gitURL,
-                lib.version || '1.0.0'
-            );
-
-            if (versionInfo.branch) {
-                updater.branch = versionInfo.branch;
+            await updater.init(platform, mode);
+            
+            const resumeInfo = await updater.checkResume();
+            if (resumeInfo.canResume && !force) {
+                game.print('[更新] 发现未完成任务，继续下载...');
             }
 
-            const result = await updater.update();
-
-            if (!result.cancelled && result.success) {
-                game.print('✅ 快速更新成功');
-                if (result.failed.length > 0) {
-                    game.print(`⚠️ 警告: ${result.failed.length} 个文件失败`);
-                }
+            const result = await updater.update(force);
+            
+            if (result.retryLater) {
+                game.print(`[${CONFIG.name}] 部分文件下载失败，已保存进度`);
+                return result;
             }
 
+            if (result.success) {
+                const msg = result.partial ?
+                    `部分完成: ${result.stats.success}成功, ${result.stats.failed}失败` :
+                    `更新完成: ${result.stats.success}个文件`;
+                game.print(`[${CONFIG.name}] ${msg}`);
+            }
             return result;
         } catch (error) {
-            game.print(`❌ 快速更新失败: ${error.message}`);
+            game.print(`[${CONFIG.name}] 更新失败: ${error.message}`);
             throw error;
         }
     },
 
-    /**
-     * 测试函数：验证Git URL解析
-     */
-    testURLParser(url) {
-        console.group('🔍 URL解析测试');
-        try {
-            const info = GitURLParser.parseRepoInfo(url);
-            console.log('解析结果:', info);
-            console.log('Raw URL:', GitURLParser.getRawURL(info, 'test.js'));
-            console.log('Fallback URL:', GitURLParser.getFallbackURL(info, 'test.js'));
-        } catch (e) {
-            console.error('解析失败:', e.message);
-        }
-        console.groupEnd();
-    },
-
-    /**
-     * 测试函数：下载单个文件（调试用）
-     */
-    testDownload(filePath = 'Directory.json', platform = 'gitee') {
-        console.group(`📥 下载测试: ${filePath}`);
-
-        const scheduler = new RequestScheduler();
-        const repoInfo = GitURLParser.parseRepoInfo(
-            platform === 'gitee' ? LIT_CONFIG.gitee : LIT_CONFIG.github
-        );
-
-        const url = GitURLParser.getRawURL(repoInfo, filePath);
-        const fallback = GitURLParser.getFallbackURL(repoInfo, filePath);
-
-        console.log('主URL:', url);
-        console.log('备用URL:', fallback);
-
-        scheduler.schedule(
-            url,
-            fallback,
-            (data) => {
-                console.log('✅ 下载成功');
-                if (typeof data === 'string') {
-                    console.log('内容预览:', data.substring(0, 200));
-                } else {
-                    console.log('数据大小:', data.byteLength || data.length, 'bytes');
-                }
-            },
-            (err) => {
-                console.error('❌ 下载失败:', err.message);
-            }
-        );
-
-        console.groupEnd();
-    },
-
-    /**
-     * 测试函数：完整流程测试（下载Directory.json）
-     */
-    testFullFlow(platform = 'gitee') {
-        console.group('🚀 完整流程测试');
-
+    // 快速下载指定文件（新增接口）
+    async quickDownload(fileList, options = {}) {
+        const { platform = 'gitee', onProgress, silent = false } = options;
         const updater = new ExtensionUpdater();
-        const url = platform === 'gitee' ? LIT_CONFIG.gitee : LIT_CONFIG.github;
-
-        updater.init(url)
-            .then(() => updater.prepareFileList('main')) // 测试默认分支
-            .then(files => {
-                console.log(`✅ 成功获取文件列表: ${files.length} 个文件`);
-                files.slice(0, 5).forEach(f => console.log(' •', f.remotePath));
-            })
-            .catch(err => {
-                console.error('❌ 测试失败:', err.message);
-            })
-            .finally(() => {
-                console.groupEnd();
+        
+        try {
+            await updater.init(platform, 'full');
+            const tasks = fileList.map((file, index) => {
+                if (typeof file === 'string') {
+                    return new DownloadTask({
+                        remote: file,
+                        temp: `${updater.tempDir}/${file}`,
+                        target: `${updater.targetDir}/${file}`,
+                        size: 0,
+                        type: utils.getFileType(file),
+                        priority: index
+                    });
+                } else {
+                    return new DownloadTask({
+                        remote: file.path || file.remote,
+                        temp: `${updater.tempDir}/${file.path || file.remote}`,
+                        target: file.target || `${updater.targetDir}/${file.path || file.remote}`,
+                        size: file.size || 0,
+                        type: file.type || utils.getFileType(file.path || file.remote),
+                        priority: file.priority || index
+                    });
+                }
             });
+
+            updater.tasks = tasks;
+            updater.totalBytes = tasks.reduce((s, t) => s + (t.size || 0), 0);
+            
+            if (!silent) game.print(`[快速下载] 开始下载 ${tasks.length} 个文件...`);
+
+            let progressUI = null;
+            if (!silent) {
+                progressUI = await updater.ui.createDownloadProgress('快速下载', updater.totalBytes, tasks.length, 'full');
+            }
+
+            await utils.asyncPool(CONFIG.limits.maxConcurrent, tasks, async (task) => {
+                const result = await updater.downloader.download(task, (rec, tot) => {
+                    if (onProgress) onProgress(task.remote, rec, tot);
+                    if (progressUI) {
+                        progressUI.updateProgress(rec, tot, rec, tot, 0, tasks.length);
+                    }
+                });
+
+                if (!result.success && !silent) {
+                    console.warn(`[快速下载] 失败: ${task.remote} - ${result.error}`);
+                }
+                return result;
+            });
+
+            if (progressUI) progressUI.close();
+            
+            // 应用下载（直接移动到目标位置，不备份）
+            for (const task of tasks) {
+                try {
+                    const exists = await game.promises.checkFile(task.temp);
+                    if (exists) {
+                        await game.promises.ensureDirectory(task.target.substring(0, task.target.lastIndexOf('/')));
+                        const content = await game.promises.readFile(task.temp);
+                        await game.promises.writeFile(content, task.target.substring(0, task.target.lastIndexOf('/') || '.'), task.target.split('/').pop());
+                        await game.promises.removeFile(task.temp);
+                    }
+                } catch (e) {
+                    console.warn(`[快速下载] 移动文件失败: ${task.remote}`);
+                }
+            }
+
+            // 清理临时目录
+            await updater.cleanup();
+
+            if (!silent) game.print('[快速下载] 完成');
+            return { success: true, tasks };
+        } catch (error) {
+            console.error('[快速下载] 失败:', error);
+            throw error;
+        }
     },
 
-    /**
-     * 获取配置信息
-     */
-    get config() {
-        return { ...LIT_CONFIG };
+    async manageTokens() {
+        const updater = new ExtensionUpdater();
+        await updater.manageTokens();
     },
 
-    /**
-     * 获取当前运行环境信息
-     */
-    get environment() {
+    async manageRollback() {
+        const updater = new ExtensionUpdater();
+        await updater.manageRollback();
+    },
+
+    token: {
+        set: (platform, token) => new TokenManager().set(platform, token),
+        get: (platform) => new TokenManager().get(platform),
+        clear: (platform) => new TokenManager().clear(platform),
+        has: (platform) => new TokenManager().has(platform)
+    },
+
+    getEnvironment() {
         return {
-            isNodeJs,
-            isBrowser,
-            version: lib.version || 'unknown',
-            platform: isNodeJs ? 'Node.js' : (isBrowser ? 'Browser' : 'Unknown')
+            type: Environment.getEnvironmentType(),
+            details: Environment
         };
     }
 };
 
-// 默认导出
 export default Lit_update;

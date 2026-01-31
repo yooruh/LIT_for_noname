@@ -39,8 +39,8 @@ export const translate = {
     "lit_fushu": "腹书",
     "lit_fushu_info": "锁定技；你的手牌数小于x时，你将手牌补至x张。（x为你已失去的体力且至少为1）",
     // 9钟雨桐
-    "lit_gaoshang": "高尚",
-    "lit_gaoshang_info": "若你在出牌阶段没有使用过“杀”，则你可以跳过弃牌阶段；锁定技；死亡时<span class='redtext' style='color:Red'>所有人</span>-1点体力。",
+    "lit_jinshan": "尽善",
+    "lit_jinshan_info": "若你在出牌阶段没有使用过“杀”，则你可以跳过弃牌阶段；锁定技；死亡时<span class='redtext' style='color:Red'>所有人</span>-1点体力。",
     "lit_danchun": "单纯",
     "lit_danchun_info": "出牌阶段限1次，你可以观看其他1人手牌并可以将其1张♥牌拿走或放至牌堆顶。",
     "lit_cidi": "次第",

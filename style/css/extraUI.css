@@ -12,7 +12,6 @@
     align-items: center;
     justify-content: center;
     z-index: 50000;
-    transition: none;
 }
 
 /* 对话框容器样式 */
@@ -54,9 +53,16 @@
     flex-grow: 1;
     flex-shrink: 1;
     overflow-y: auto;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     white-space: pre-wrap;
     height: auto;
+}
+
+/* 消息区域样式 */
+.lit-ui-message {
+    flex: none;
+    max-height: 100px;
+    margin-bottom: 8px;
 }
 
 /* 按钮行样式 */
@@ -71,11 +77,10 @@
     position: relative;
     top: auto;
     left: auto;
-    width: 100%;
     height: auto;
+    width: 100%;
     flex-wrap: wrap;
 }
-
 /* 按钮基础样式 */
 .lit-ui-button {
     padding: 10px 22px;
@@ -87,10 +92,10 @@
     position: relative;
     display: inline-block;
     transition: all 0.2s ease;
-    min-width: 80px;
+    min-height: 40px;
+    box-sizing: border-box;
 }
 
-/* 主要按钮样式 */
 .lit-ui-button.primary {
     background: #2196F3;
     color: white;
@@ -99,50 +104,75 @@
 
 .lit-ui-button.primary:hover {
     background: #1976D2;
-    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
-    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(33, 150, 243, 0.4);
 }
 
-.lit-ui-button.primary:active {
-    transform: translateY(1px);
-}
-
-/* 次要按钮样式 */
+/* 取消按钮 */
+.lit-ui-button[data-cancel="true"],
 .lit-ui-button.secondary {
     background: #f5f5f5;
     color: #333;
     border: 1px solid #ddd;
 }
+
+.lit-ui-button[data-cancel="true"]:hover,
 .lit-ui-button.secondary:hover {
     background: #e0e0e0;
-    border-color: #b0b0b0;
-    transform: translateY(-1px);
-}
-.lit-ui-button.secondary:active {
-    transform: translateY(1px);
 }
 
-/* 取消按钮特殊标记 */
-.lit-ui-button[data-cancel="true"] {
-    background: #f5f5f5;
-    color: #333;
+/* 禁用状态 */
+.lit-ui-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ========== 输入框样式 ========== */
+
+.lit-ui-input-container {
+    position: relative;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.lit-ui-input {
+    width: 100%;
+    padding: 12px 16px;
     border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+    background: #fff;
+    box-sizing: border-box;
+    outline: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    resize: vertical;
 }
 
-/* 消息区域样式 */
-.lit-ui-message {
-    flex: none;
-    max-height: 100px;
-    margin-bottom: 15px;
+.lit-ui-input:focus {
+    border-color: #2196F3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
 }
 
-/* 列表容器样式 */
+/* 多行文本输入框 */
+.lit-ui-input[rows]:not([rows="1"]) {
+    min-height: 100px;
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: pre;
+}
+
+/* ========== 列表组件样式 ========== */
+
 .lit-ui-list {
     min-height: 50px;
     max-height: 350px;
+    overflow-y: auto;
+    margin-bottom: 20px;
 }
 
-/* 列表项样式 */
 .lit-ui-list-item {
     padding: 12px 16px;
     border: 1px solid #eee;
@@ -161,7 +191,6 @@
     min-height: 40px;
     box-sizing: border-box;
     position: relative;
-    float: none;
 }
 .lit-ui-list-item[data-type="editing"] {
     background: #fff9e6;
@@ -170,47 +199,116 @@
 .lit-ui-list-item:hover {
     background: #e8f4ff;
     border-color: #2196F3;
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
 }
 .lit-ui-list-item[data-type="editing"]:hover {
     background: #fff3cd;
     border-color: #ffb300;
 }
-
-/* 列表项编号 */
 .lit-ui-list-number {
     color: #666;
     font-weight: 500;
     min-width: 24px;
-    text-align: right;
 }
-
-/* 列表项文本 */
 .lit-ui-list-text {
     flex: 1;
-    word-break: break-all;
-    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
-/* 倒计时显示 */
-.lit-ui-countdown {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    margin: 0;
-    padding: 0;
-    font-size: 20px;
+/* ========== 复杂加载进度条样式 ========== */
+
+/* 进度信息行 */
+.lit-complex-loading-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    font-size: 14px;
+    min-height: 24px;
+}
+.lit-complex-loading-percent {
     font-weight: bold;
     color: #2196F3;
-    width: auto;
-    min-width: 60px;
-    height: 30px;
+    font-family: monospace;
+    min-width: 50px;
+    text-align: right;
+}
+.lit-complex-loading-status {
+    color: #666;
+    flex: 1;
+    text-align: left;
+    padding-right: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 进度条容器 */
+.lit-complex-loading-bar-container {
+    width: 100%;
+    height: 10px;
+    background: #e8e8e8;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 15px;
+}
+/* 实体进度条 */
+.lit-complex-loading-bar-fill {
+    height: 100%;
+    background: #2196F3;
+    border-radius: 5px;
+    transition: width 0.3s ease;
+    width: 0%;
+    z-index: 2;
+}
+/* 不确定(循环)进度条 */
+.lit-complex-loading-indeterminate {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, #2196F3, transparent);
+    animation: lit-progress-indeterminate 1.2s infinite ease-in-out;
+    z-index: 1;
+    display: none;
+}
+/* 操作按钮区域 */
+.lit-complex-loading-actions {
     display: flex;
-    align-items: center;
     justify-content: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+/* 状态颜色 */
+.lit-state-success {
+    background-color: #4CAF50 !important;
+    color: #fff !important;
+}
+.lit-state-error {
+    background-color: #f44336 !important;
+    color: #fff !important;
+}
+
+/* 错误动画 */
+.lit-loading-error {
+    animation: lit-shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* ========== 倒计时样式 ========== */
+
+.lit-ui-countdown {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #2196F3;
     background: rgba(33, 150, 243, 0.1);
     border-radius: 15px;
-    padding: 4px 12px;
+    padding: 6px 15px;
     border: 1px solid rgba(33, 150, 243, 0.3);
     z-index: 10;
 }
@@ -220,25 +318,16 @@
 .lit-doc-modal-dialog {
     width: min(1200px, 90vw);
     height: 90vh;
-    max-width: 90vw;
     max-height: 90vh;
-    border-radius: 8px;
     padding: 0;
     padding-top: 3px;
 }
-.lit-doc-modal-header {
-    flex-shrink: 0;
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #fafafa;
-}
 .lit-doc-modal-content {
-    flex-grow: 1;
+    flex: 1;
     width: 100%;
     overflow: hidden;
+    padding: 0;
+    margin: 0;
 }
 .lit-doc-modal-iframe {
     width: 100%;
@@ -247,10 +336,9 @@
     display: block;
 }
 
-/* 关闭按钮样式 */
+/* 右上角关闭X */
 .lit-doc-modal-close {
     position: absolute !important;
-    display: flex;
     right: -3% !important;
     top: -3% !important;
     width: 50px;
@@ -260,113 +348,78 @@
     box-shadow: 2px 2px 5px 0px black;
     cursor: pointer;
     z-index: 100;
+    border: none;
+    padding: 0;
 }
 .lit-doc-modal-close:hover {
     background: red;
 }
-.lit-doc-modal-close:before {
-    position: absolute;
-    content: '';
-    width: 30px;
-    height: 10px;
-    background: white;
-    transform: rotate(45deg);
-    top: 20px;
-    left: 10px;
-}
+.lit-doc-modal-close:before,
 .lit-doc-modal-close:after {
     content: '';
     position: absolute;
     width: 30px;
     height: 10px;
     background: white;
-    transform: rotate(-45deg);
     top: 20px;
     left: 10px;
 }
+.lit-doc-modal-close:before {
+    transform: rotate(45deg);
+}
+.lit-doc-modal-close:after {
+    transform: rotate(-45deg);
+}
 
-/* ========== 文本编辑器专用样式 ========== */
+/* ========== 文本编辑器样式 ========== */
 
-/* 编辑器对话框 */
 .lit-text-editor-dialog {
     width: min(900px, 95vw);
     max-height: 95vh;
-    box-sizing: border-box;
 }
-
-/* 编辑器容器 */
 .lit-ui-editor-container {
-    position: relative;
-    flex-grow: 1;
+    flex: 1;
     display: flex;
     flex-direction: column;
+    min-height: 400px;
 }
 
-/* 文本编辑区域 */
 .lit-ui-textarea {
     width: 100%;
-    height: 60vh;
-    min-height: 30vh;
-    max-height: 70vh;
-    resize: vertical;
-    font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+    flex: 1;
+    min-height: 300px;
+    font-family: 'Courier New', 'Consolas', monospace;
     font-size: 13px;
-    line-height: 1.2;
-    padding: 5px;
+    line-height: 1.4;
+    padding: 12px;
     border: 1px solid #ddd;
     border-radius: 8px;
     background: #f8f9fa;
     color: #333;
     white-space: pre;
     overflow-wrap: normal;
-    overflow-x: auto;
-    outline: none;
-    transition: border-color 0.2s;
+    resize: vertical;
     box-sizing: border-box;
+    outline: none;
 }
 .lit-ui-textarea:focus {
     border-color: #2196F3;
     box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
 }
 
-/* 编辑器右上角选项区域 */
 .lit-ui-editor-options {
     position: absolute;
+    display: flex;
     top: -40px;
     right: 0;
-    display: flex;
     align-items: center;
     gap: 8px;
     font-size: 13px;
     color: #666;
-    background: white;
-    padding: 4px 12px;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    z-index: 10;
 }
 .lit-ui-editor-options input[type="checkbox"] {
     margin: 0;
     cursor: pointer;
-}
-.lit-ui-editor-options label {
-    cursor: pointer;
-    user-select: none;
-}
-
-/* 编辑器消息提示 */
-.lit-text-editor-dialog .lit-ui-message {
-    flex: none;
-    min-height: 20px;
-    max-height: 10vh;
-    overflow-y: auto;
-    margin: 0 0 10px 0;
-    font-size: 13px;
-    color: #555;
-    line-height: 1.1;
-    padding: 10px;
-    background: #f0f8ff;
-    border-left: 3px solid #2196F3;
 }
 
 /* ========== 滚动条样式 ========== */
@@ -394,87 +447,60 @@
 
 /* ========== 动画样式 ========== */
 
-@keyframes lit-ui-pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7);
-    }
+@keyframes lit-progress-indeterminate {
+    0% { left: -40%; opacity: 0; }
+    50% { opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+}
 
-    70% {
-        box-shadow: 0 0 0 10px rgba(33, 150, 243, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
-    }
+@keyframes lit-shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
 /* ========== 响应式调整 ========== */
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .lit-ui-dialog {
         padding: 20px;
         margin: 10px;
-        min-width: auto;
-        width: calc(100% - 20px);
+        width: calc(100% - 20px) !important;
     }
-
+    .lit-complex-loading-dialog {
+        min-width: auto;
+        padding: 20px;
+    }
     .lit-ui-button-row {
         flex-direction: column-reverse;
     }
-
     .lit-ui-button {
         width: 100%;
-        min-width: auto;
     }
-}
-
-@media (max-width: 768px) {
     .lit-text-editor-dialog {
-        padding: 20px;
-        width: calc(100% - 20px) !important;
+        padding: 15px;
     }
-
-    .lit-ui-editor-options {
-        position: static;
-        margin-bottom: 10px;
-        justify-content: flex-end;
-        background: transparent;
-        box-shadow: none;
-        padding: 0;
+    .lit-ui-textarea {
+        min-height: 250px;
     }
 }
 
-/* ========== 加载状态样式 ========== */
-
-/* 加载对话框 */
-.lit-ui-loading-dialog {
-    min-width: 280px;
-    text-align: center;
-    padding: 30px;
-}
-/* 加载动画 */
-.lit-ui-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #2196F3;
-    border-radius: 50%;
-    animation: lit-ui-spin 1s linear infinite;
-    margin: 20px auto;
-}
-@keyframes lit-ui-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* ========== 空状态提示 ========== */
-
-.lit-ui-empty {
-    padding: 40px 20px;
-    text-align: center;
-    color: #888;
-    font-size: 14px;
-    background: #f9f9f9;
-    border-radius: 6px;
-    border: 1px dashed #ddd;
+@media (max-width: 480px) {
+    .lit-ui-dialog {
+        padding: 15px;
+        border-radius: 10px;
+    }
+    .lit-ui-title {
+        font-size: 18px;
+        margin-bottom: 12px;
+    }
+    .lit-ui-content {
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+    .lit-ui-input {
+        font-size: 16px; /* 防止iOS自动缩放 */
+        padding: 10px 12px;
+    }
 }

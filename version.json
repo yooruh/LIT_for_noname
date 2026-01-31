@@ -1,4 +1,5 @@
 {
+  "defaultBranch": "main",
   "versions": [
     {
       "extensionVersion": "26.1.20",

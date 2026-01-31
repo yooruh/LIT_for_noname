@@ -758,8 +758,8 @@ export const skill = {
     },
 
     // 9钟雨桐
-    lit_gaoshang: {
-        group: ["lit_gaoshang_die"],
+    lit_jinshan: {
+        group: ["lit_jinshan_die"],
         trigger: {
             player: "phaseDiscardBefore",
         },
@@ -814,7 +814,7 @@ export const skill = {
                     threaten: 0.9,
                 },
                 sub: true,
-                sourceSkill: "lit_gaoshang",
+                sourceSkill: "lit_jinshan",
             },
         },
     },

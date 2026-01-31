@@ -121,7 +121,7 @@ export const skill = {
                             player["addSkill"]('lit_jijinV2');//修改“受激”：伤害越高，受激叠层越多
                             break;
                         case 'zmh':
-                            player["addSkill"]('lit_jianrenV2');//于“坚韧”末尾增加：横置时属性伤+1
+                            player["addSkill"]('lit_rennai');//获得：“忍耐”
                             break;
                         case 'rita':
                             if (player.hasSkill('lit_dafang')) {
@@ -3750,28 +3750,31 @@ export const skill = {
             return name === "tiesuo" && player.countCards("hes") > 0;
         },
         enable: "chooseToUse",
-        check: (event) => {
-            var player = event.player,
-                targets = [];
-            game.countPlayer(current => {
-                if (current.isLinked()) targets.push(current);
-            });
-            if (targets.length === 0) return 1;
-            let res = [0, 0, 0];
-            for (let i in targets) {
-                let eff = get.recoverEffect(targets[i], player, player);
-                if (eff < 0) res[1] += 1;
-                else if (eff > 0) res[2] += 1;
-                res[0] += eff;
-            }
-            if (res[1] > 0 && res[2] === 0) return 0;
-            return res[1] > 2 ? res[0] : 1;
+        check(card, player) {
+            let use = false, targets = [];
+            use = !!(() => {
+                game.countPlayer(current => {
+                    if (current.isLinked()) targets.push(current);
+                });
+                if (targets.length === 0) return 1;
+                let res = [0, 0, 0];// [总收益, 负收益数, 正收益数]
+                for (let i in targets) {
+                    let eff = get.recoverEffect(targets[i], player, player);
+                    if (eff < 0) res[1] += 1;
+                    else if (eff > 0) res[2] += 1;
+                    res[0] += eff;
+                }
+                if (res[1] > 0 && res[2] === 0) return 0;
+                return res[1] > 2 ? res[0] : 1;
+            })
+            if (use) return 6 - get.value(card);
         },
         filter: (event, player) => {
             if (player.countCards("hes") === 0) return false;
             return event.type === "phase" || event.filterCard(get.autoViewAs({ name: "tiesuo" }, "unsure"), player, event);
         },
         position: "hes",
+        selectCard: [1, Infinity],
         filterCard(card, player, event) {
             if (!event) event = _status.event;
             if (event.type === "phase" && get.position(card) != "s" && player.canRecast(card)) {
@@ -3815,16 +3818,13 @@ export const skill = {
                 player = event.player,
                 backup = event._backup;
             const selected = ui.selected.targets.length;
-            let recast = false,
-                use = false;
+            let use = false;
             const cardx = get.autoViewAs({ name: "tiesuo" }, [card]);
-            if (event.type === "phase" && player.canRecast(card)) recast = true;
             if (game.checkMod(card, player, "unchanged", "cardEnabled2", player) !== false) {
                 if (backup.filterCard(cardx, player, event)) use = true;
             }
-            if (recast && selected === 0) {
-                return true;
-            } else if (use) {
+            if (event.type === "phase" && selected === 0) return true;
+            if (use) {
                 const select = backup.selectTarget(cardx, player);
                 if (select[0] <= -1) return true;
                 return selected >= select[0] && selected <= select[1];
@@ -3838,7 +3838,8 @@ export const skill = {
             if (result.targets.length > 0) result.card = get.autoViewAs({ name: "tiesuo" }, result.cards);
         },
         async content(event, trigger, player) {
-            await player.recast(event.cards);
+            await player.discard(event.cards, true);
+            await player.draw(event.cards.length);
         },
         group: 'lit_mensao_after',
         ai: {
@@ -3861,6 +3862,7 @@ export const skill = {
                 },
                 direct: true,
                 async content(event, trigger, player) {
+                    if (trigger.name === "useCard" && trigger.cards?.length) await player.draw(trigger.cards.length);
                     game.countPlayer(async current => {
                         if (current.isLinked()) await current.recover();
                     });
@@ -3935,6 +3937,9 @@ export const skill = {
                 sourceSkill: "lit_jianrenV2",
             },
         },
+    },
+    lit_rennai: {
+
     },
     // Rita
     lit_dafang: {

@@ -21,14 +21,14 @@ export const config = {
 			}
 		}
 	},
-	// lit_updateOnline: {
-	// 	name: '<button>在线更新扩展</button>',
-	// 	intro: "从GitHub/Gitee在线获取扩展并更新",
-	// 	clear: true,
-	// 	async onclick() {
-	// 		await Lit_update.showUI();
-	// 	}
-	// },
+	lit_updateOnline: {
+		name: '<button>在线更新扩展(测试)</button>',
+		intro: "从GitHub/Gitee在线获取扩展并更新",
+		clear: true,
+		async onclick() {
+			await Lit_update.showUI();
+		}
+	},
 	lit_recommendConfig: {
 		name: '<button>应用推荐的无名杀全局设置</button>',
 		intro: "载入相对适配《叁岛世界》的“无名杀全局设置”，同时可备份当前配置到files目录",

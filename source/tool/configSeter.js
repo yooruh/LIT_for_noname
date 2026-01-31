@@ -1,6 +1,6 @@
 import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
+import { Lit_Dialog } from './extraUI.js';
 import basic from './basic.js'
-import { Lit_Dialog as DialogManager } from './extraUI.js';
 
 /**
  * 处理配置的加载、备份、恢复等操作
@@ -333,7 +333,7 @@ const ConfigFlow = (() => {
             ? '该配置针对桌面端优化，包含：\n• 角色候选个数调整\n• 修改样式展示细节\n• 开启/关闭部分武将包、卡包和其他扩展'
             : '该配置针对移动端优化，包含：\n• 角色候选个数调整\n• 滑动手势调出菜单\n• 界面布局适配宽屏\n• 保持屏幕常亮\n• 开启/关闭部分武将包、卡包和其他扩展';
 
-        const confirmAction = await DialogManager.choice(
+        const confirmAction = await Lit_Dialog.choice(
             '确认应用',
             `即将应用【${displayName}】\n\n${description}\n\n是否备份当前配置？`,
             ['备份并应用', '直接应用', '取消']
@@ -346,10 +346,10 @@ const ConfigFlow = (() => {
             try {
                 backupName = await ConfigService.backupCurrentConfig();
                 if (backupName) {
-                    await DialogManager.alert("✅ 配置已备份！", `备份文件名：${backupName}\n保存位置：资源根目录/files`);
+                    await Lit_Dialog.alert("✅ 配置已备份！", `备份文件名：${backupName}\n保存位置：资源根目录/files/lit`);
                 }
             } catch (backupError) {
-                const continueAnyway = await DialogManager.confirm(
+                const continueAnyway = await Lit_Dialog.confirm(
                     '备份失败',
                     `备份配置时出错：${backupError.message}\n\n是否继续应用新配置？（建议先手动备份）`,
                     '继续应用',
@@ -359,7 +359,7 @@ const ConfigFlow = (() => {
             }
         }
 
-        const finalConfirm = await DialogManager.confirm(
+        const finalConfirm = await Lit_Dialog.confirm(
             '最终确认',
             `确定要应用【${displayName}】吗？\n\n应用后游戏将自动重启。`,
             '确定应用',
@@ -369,15 +369,15 @@ const ConfigFlow = (() => {
         if (!finalConfirm) return;
 
         try {
-            DialogManager.loading('请稍候', '正在应用配置...');
+            Lit_Dialog.loading('请稍候', '正在应用配置...');
             await ConfigService.loadAndApplyConfig(filename);
-            DialogManager.closeAll();
+            Lit_Dialog.closeAll();
             await _showSuccessAndReload('配置应用成功！', displayName);
         } catch (applyError) {
-            DialogManager.closeAll();
+            Lit_Dialog.closeAll();
 
             if (backupName) {
-                const restore = await DialogManager.confirm(
+                const restore = await Lit_Dialog.confirm(
                     '应用配置失败',
                     `应用配置时出错：${applyError.message}\n\n检测到有备份文件 ${backupName}，是否恢复备份？`,
                     '恢复备份',
@@ -387,13 +387,13 @@ const ConfigFlow = (() => {
                 if (restore) {
                     try {
                         await ConfigService.applyFromBackupFile(`${basic.files}/${backupName}`);
-                        await DialogManager.alert('✅ 成功', '已恢复备份配置！');
+                        await Lit_Dialog.alert('✅ 成功', '已恢复备份配置！');
                     } catch (restoreError) {
-                        await DialogManager.alert('❌ 恢复备份失败', `错误详情：${restoreError.message}`);
+                        await Lit_Dialog.alert('❌ 恢复备份失败', `错误详情：${restoreError.message}`);
                     }
                 }
             } else {
-                await DialogManager.alert('❌ 应用配置失败', `${applyError.message}\n\n请检查配置文件是否完整。`);
+                await Lit_Dialog.alert('❌ 应用配置失败', `${applyError.message}\n\n请检查配置文件是否完整。`);
             }
         }
     };
@@ -403,11 +403,11 @@ const ConfigFlow = (() => {
             const { items, backupDir } = await ConfigService.getAvailableConfigFiles();
 
             if (items.length === 0) {
-                await DialogManager.alert('未找到配置文件', '请先创建备份文件。');
+                await Lit_Dialog.alert('未找到配置文件', '请先创建备份文件。');
                 return;
             }
 
-            const result = await DialogManager.fileManager(
+            const result = await Lit_Dialog.fileManager(
                 '配置文件管理',
                 `找到 ${items.length} 个配置文件：\n\n请选择文件并点击下方按钮执行操作：`,
                 items
@@ -433,8 +433,8 @@ const ConfigFlow = (() => {
                     break;
             }
         } catch (error) {
-            DialogManager.closeAll();
-            await DialogManager.alert('❌ 操作失败', `错误详情：${error.message}`);
+            Lit_Dialog.closeAll();
+            await Lit_Dialog.alert('❌ 操作失败', `错误详情：${error.message}`);
         }
     };
 
@@ -453,7 +453,7 @@ const ConfigFlow = (() => {
         while (true) {
             try {
                 if (!jsonFilePath) {
-                    DialogManager.loading('请稍候', '正在读取文件内容...');
+                    Lit_Dialog.loading('请稍候', '正在读取文件内容...');
 
                     try {
                         if (filePath.endsWith('.json')) {
@@ -466,11 +466,11 @@ const ConfigFlow = (() => {
                             isNewEdit = true;
                         }
                     } finally {
-                        DialogManager.closeAll();
+                        Lit_Dialog.closeAll();
                     }
 
                     if (!jsonContent) {
-                        await DialogManager.alert('❌ 错误', '文件内容为空或无法读取');
+                        await Lit_Dialog.alert('❌ 错误', '文件内容为空或无法读取');
                         if (isNewEdit) {
                             await game.promises.removeFile(jsonFilePath).catch(() => { });
                         }
@@ -480,7 +480,7 @@ const ConfigFlow = (() => {
 
                 const originalFileName = filePath.split('/').pop();
 
-                const editResult = await DialogManager.textEditor(
+                const editResult = await Lit_Dialog.textEditor(
                     '配置文件编辑器',
                     `正在编辑：${originalFileName}\n编辑提示：\n• 请勿修改JSON的整体结构\n• 确保键名和格式正确\n• 语法错误将导致编码失败\n• 闪退后可在文件管理器中找到临时文件继续编辑`,
                     jsonContent,
@@ -510,7 +510,7 @@ const ConfigFlow = (() => {
                     const filename = jsonFilePath.split('/').pop();
                     await game.promises.writeFile(editResult.content, dir, filename);
 
-                    await DialogManager.alert(
+                    await Lit_Dialog.alert(
                         '✅ 暂存成功！',
                         `文件已暂存：${filename}\n您可以稍后继续编辑此文件。`
                     );
@@ -520,7 +520,7 @@ const ConfigFlow = (() => {
                 try {
                     JSON.parse(editResult.content);
                 } catch (jsonError) {
-                    await DialogManager.alert(
+                    await Lit_Dialog.alert(
                         `❌ JSON格式验证失败\n\n错误位置：${jsonError.message}\n\n请修正语法错误后再试。`,
                         '错误提示'
                     );
@@ -542,7 +542,7 @@ const ConfigFlow = (() => {
                 try {
                     newFilePath = await ConfigService.encodeJsonToNewConfig(jsonFilePath);
                 } catch (encodeError) {
-                    await DialogManager.alert(
+                    await Lit_Dialog.alert(
                         '❌ 编码失败', `错误详情：${encodeError.message}\n\n请检查JSON内容格式，修正后重试。`
                     );
                     continue;
@@ -558,7 +558,7 @@ const ConfigFlow = (() => {
                     }
                 }
 
-                await DialogManager.alert(
+                await Lit_Dialog.alert(
                     '✅ 编码完成！',
                     `配置文件已成功处理！\n\n新文件：${newFileName}\n保存位置：${basic.files}\n${editResult.deleteTempFile
                         ? '临时JSON文件已自动删除。'
@@ -569,8 +569,8 @@ const ConfigFlow = (() => {
                 return true;
 
             } catch (error) {
-                DialogManager.closeAll();
-                await DialogManager.alert(
+                Lit_Dialog.closeAll();
+                await Lit_Dialog.alert(
                     '❌ 编辑配置失败', `错误详情：${error.message}`
                 );
                 return false;
@@ -580,7 +580,7 @@ const ConfigFlow = (() => {
 
     const _applyConfigFile = async (filePath) => {
         try {
-            DialogManager.loading('请稍候', '正在应用配置...');
+            Lit_Dialog.loading('请稍候', '正在应用配置...');
 
             if (filePath.endsWith('.json')) {
                 const jsonContent = await game.promises.readFileAsText(filePath);
@@ -590,18 +590,18 @@ const ConfigFlow = (() => {
                 await ConfigService.applyFromBackupFile(filePath);
             }
 
-            DialogManager.closeAll();
+            Lit_Dialog.closeAll();
             await _showSuccessAndReload('配置应用成功！');
         } catch (error) {
-            DialogManager.closeAll();
-            await DialogManager.alert(`❌ 应用配置失败：${error.message}`);
+            Lit_Dialog.closeAll();
+            await Lit_Dialog.alert(`❌ 应用配置失败：${error.message}`);
         }
     };
 
     const _deleteFiles = async (filePaths) => {
         const fileNames = filePaths.map(p => p.split('/').pop()).join('\n• ');
 
-        const confirm = await DialogManager.confirm(
+        const confirm = await Lit_Dialog.confirm(
             '确认删除',
             `确定要删除以下 ${filePaths.length} 个文件吗？\n\n• ${fileNames}\n\n删除后无法恢复！`,
             '确定删除',
@@ -620,7 +620,7 @@ const ConfigFlow = (() => {
             }
         }
 
-        await DialogManager.alert(
+        await Lit_Dialog.alert(
             `✅ 删除完成`,
             `成功删除 ${successCount}/${filePaths.length} 个文件。`
         );
@@ -635,7 +635,7 @@ const ConfigFlow = (() => {
             ? `${message}\n\n${detail}\n\n游戏将在 ${countdown} 秒后自动重启...`
             : `${message}\n\n游戏将在 ${countdown} 秒后自动重启...`;
 
-        DialogManager.showCountdownDialog('操作成功', fullMessage, {
+        Lit_Dialog.showCountdownDialog('操作成功', fullMessage, {
             onConfirm: _executeReload,
             onCancel: () => {
                 _isReloading = false;
@@ -660,7 +660,7 @@ const ConfigFlow = (() => {
             }
             _isReloading = false;
 
-            const mainAction = await DialogManager.choice(
+            const mainAction = await Lit_Dialog.choice(
                 '配置方案选择',
                 '请选择配置方案：\n\n1. Windows端推荐 - 针对桌面端优化的配置\n2. Android端推荐 - 针对移动端优化的配置\n3. 恢复或编辑配置 - 管理备份文件（删除/编辑/应用）\n\n注：应用新配置后会重启游戏',
                 ['Windows端推荐', 'Android端推荐', '恢复或编辑配置', '取消']

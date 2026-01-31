@@ -1,5 +1,4 @@
 import { lib, game, ui, get, ai, _status } from '../../../../../noname.js';
-import basic from '../../tool/basic.js';
 
 export const connectBanned = [];
 export const characterSort = {
@@ -10,7 +9,6 @@ export const characterSort = {
         'lit_sdp': ['lit_wuxiaoqi伍小戚', 'lit_boshu菠树'],
         // 羲烨、牉
         'lit_jbs': ['lit_zhangchi9张驰', 'lit_wangcan9王灿', 'lit_liyang9李洋', 'lit_zhangshengjie9张盛杰', 'lit_chenke陈可', 'lit_linmiao林淼'],
-        'lit_test':[],
     },
 };
 

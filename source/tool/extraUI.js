@@ -3,7 +3,7 @@ import basic from './basic.js'
 
 /**
  * 提供样式隔离的对话框组件
- * 公开接口: loading, complexLoading, alert, confirm, choice, fileManager, showCountdownDialog, showDocModal, textEditor, closeAll
+ * 公开接口: loading, complexLoading, alert, confirm, choice, input, fileManager, showCountdownDialog, showDocModal, textEditor, closeAll
  */
 const DialogManager = (() => {
     // 私有变量
@@ -259,39 +259,230 @@ const DialogManager = (() => {
             });
         },
 
-        async complexLoading(title, message) {
+        async complexLoading(title, message, options = {}) {
             await _initCSS();
             return new Promise((resolve) => {
                 const overlay = _createOverlay();
 
-                // 创建dialog，自己管理message元素以便更新
-                const dialog = _createDialog(title, "");
+                // 创建 dialog，添加特定类名以便样式定制
+                const dialog = _createDialog(title, "", {
+                    width: options.width || 'min(480px, 90vw)',
+                    minHeight: options.minHeight || 'auto'
+                });
+
+                // 主消息文本
                 const msgEl = document.createElement('div');
-                msgEl.className = 'lit-dialog-message';
+                msgEl.className = 'lit-ui-content lit-ui-message';
                 msgEl.textContent = message;
-                msgEl.style.margin = '10px 0';
                 dialog.appendChild(msgEl);
+
+                // 进度信息行（百分比 + 状态）
+                const infoRow = document.createElement('div');
+                infoRow.className = 'lit-ui-content lit-complex-loading-info';
+                const percentEl = document.createElement('span');
+                percentEl.className = 'lit-complex-loading-percent';
+                percentEl.textContent = '0%';
+                const statusEl = document.createElement('span');
+                statusEl.className = 'lit-complex-loading-status';
+                statusEl.textContent = options.initialStatus || '准备就绪';
+
+                infoRow.appendChild(statusEl);
+                infoRow.appendChild(percentEl);
+                dialog.appendChild(infoRow);
+
+                // 进度条容器
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'lit-complex-loading-bar-container';
+
+                // 确定性进度填充条
+                const progressFill = document.createElement('div');
+                progressFill.className = 'lit-complex-loading-bar-fill';
+                progressFill.style.width = '0%';
+
+                // 不确定进度动画条（无限循环）
+                const indeterminateBar = document.createElement('div');
+                indeterminateBar.className = 'lit-complex-loading-indeterminate';
+                indeterminateBar.style.display = options.indeterminate ? 'block' : 'none';
+
+                progressContainer.appendChild(progressFill);
+                progressContainer.appendChild(indeterminateBar);
+                dialog.appendChild(progressContainer);
+
+                // 详细信息/文件名显示区域
+                const detailEl = document.createElement('div');
+                detailEl.className = 'lit-ui-content';
+                detailEl.style.display = options.initialDetail ? 'block' : 'none';
+                if (options.initialDetail) detailEl.textContent = options.initialDetail;
+                dialog.appendChild(detailEl);
+
+                // 操作按钮区域（可选）
+                const actionRow = document.createElement('div');
+                actionRow.className = 'lit-complex-loading-actions';
+                actionRow.style.display = 'none';
+                dialog.appendChild(actionRow);
+
                 overlay.appendChild(dialog);
                 document.body.appendChild(overlay);
 
                 // 阻止所有关闭方式
                 overlay._cleanup = _addDialogEventHandlers(overlay, () => { }, {
-                    enableEscClose: false,
-                    enableBackClose: false,
-                    enableOverlayClickClose: false,
+                    enableEsc: false,
+                    enableBack: false,
+                    enableOverlayClick: false,
                 });
+
+                // 内部状态
+                let currentProgress = 0;
+                let isIndeterminate = options.indeterminate || false;
 
                 // 返回控制器对象
                 resolve({
+                    // 更新主标题下的描述文本
                     updateText: (text) => {
                         msgEl.textContent = text;
                     },
+
+                    // 核心进度更新方法，支持多种调用方式：
+                    // updateProgress(50) - 直接设置 50%
+                    // updateProgress(30, 100) - 计算为 30%
+                    // updateProgress({percent: 50, status: '下载中...', detail: 'file.zip'})
+                    updateProgress: (value, total, opts = {}) => {
+                        let percent = 0;
+
+                        if (typeof value === 'object') {
+                            // 对象参数模式：{percent, status, detail, state}
+                            opts = value;
+                            percent = opts.percent !== undefined ? opts.percent : currentProgress;
+                        } else if (total !== undefined && total > 0) {
+                            // 数值对模式：current/total
+                            percent = Math.round((value / total) * 100);
+                        } else {
+                            // 直接百分比模式：0-100
+                            percent = Math.round(value);
+                        }
+
+                        // 限制在 0-100 范围内
+                        percent = Math.max(0, Math.min(100, percent));
+                        currentProgress = percent;
+
+                        // 如果不是不确定模式，更新进度条视觉
+                        if (!isIndeterminate) {
+                            progressFill.style.width = `${percent}%`;
+                            percentEl.textContent = `${percent}%`;
+                            percentEl.style.display = 'block';
+                        } else {
+                            percentEl.style.display = 'none';
+                        }
+
+                        // 更新状态文本（如"正在下载..."）
+                        if (opts.status) {
+                            statusEl.textContent = opts.status;
+                        }
+
+                        // 更新详细信息（如文件名、速度等）
+                        if (opts.detail !== undefined) {
+                            detailEl.textContent = opts.detail;
+                            detailEl.style.display = opts.detail ? 'block' : 'none';
+                        }
+
+                        // 更新进度条颜色状态：'success', 'error', 'warning', 'info'
+                        if (opts.state || opts.type) {
+                            const state = opts.state || opts.type;
+                            // 清除旧状态
+                            progressFill.classList.remove('lit-state-success', 'lit-state-error');
+                            percentEl.classList.remove('lit-state-success', 'lit-state-error');
+                            if (state) {
+                                progressFill.classList.add(`lit-state-${state}`);
+                                percentEl.classList.add(`lit-state-${state}`);
+                            }
+                        }
+                    },
+
+                    // 切换不确定进度模式（无限循环动画，用于无法计算进度时）
+                    setIndeterminate: (enable = true, statusText) => {
+                        isIndeterminate = enable;
+                        if (enable) {
+                            progressFill.style.display = 'none';
+                            indeterminateBar.style.display = 'block';
+                            percentEl.style.display = 'none';
+                            if (statusText) statusEl.textContent = statusText;
+                        } else {
+                            progressFill.style.display = 'block';
+                            indeterminateBar.style.display = 'none';
+                            percentEl.style.display = 'block';
+                            progressFill.style.width = `${currentProgress}%`;
+                            percentEl.textContent = `${currentProgress}%`;
+                        }
+                    },
+
+                    // 快速完成状态（100% + 绿色）
+                    complete: (message, autoCloseDelay = 0) => {
+                        this.setIndeterminate(false);
+                        currentProgress = 100;
+                        progressFill.style.width = '100%';
+                        percentEl.textContent = '100%';
+                        progressFill.classList.add('lit-state-success');
+                        percentEl.classList.add('lit-state-success');
+                        if (message) {
+                            msgEl.textContent = message;
+                            statusEl.textContent = '完成';
+                        }
+                        if (autoCloseDelay > 0) {
+                            setTimeout(() => {
+                                _safeRemoveOverlay(overlay);
+                                if (overlay._cleanup) overlay._cleanup();
+                            }, autoCloseDelay);
+                        }
+                    },
+
+                    // 错误状态（红色 + 抖动动画）
+                    setError: (message, showRetryButton = false, onRetry) => {
+                        isIndeterminate = false;
+                        progressFill.style.display = 'block';
+                        indeterminateBar.style.display = 'none';
+                        percentEl.style.visibility = 'visible';
+
+                        progressFill.classList.add('lit-state-error');
+                        percentEl.classList.add('lit-state-error');
+                        dialog.classList.add('lit-loading-error');
+
+                        if (message) {
+                            msgEl.textContent = message;
+                            statusEl.textContent = '失败';
+                        }
+
+                        // 可选：显示重试按钮
+                        if (showRetryButton && onRetry) {
+                            actionRow.style.display = 'flex';
+                            actionRow.innerHTML = '';
+                            const retryBtn = _createButton('重试', {
+                                isPrimary: true,
+                                onClick: onRetry
+                            });
+                            actionRow.appendChild(retryBtn);
+                        }
+                    },
+
+                    // 更新状态文本的快捷方法
+                    setStatus: (text) => {
+                        statusEl.textContent = text;
+                    },
+
+                    // 更新详细信息的快捷方法
+                    setDetail: (text) => {
+                        detailEl.textContent = text;
+                        detailEl.style.display = text ? 'block' : 'none';
+                    },
+
+                    // 获取当前进度值
+                    getProgress: () => currentProgress,
+
+                    // 关闭对话框
                     close: () => {
                         _safeRemoveOverlay(overlay);
                         if (overlay._cleanup) overlay._cleanup();
                     }
                 });
-
             });
         },
 
@@ -311,78 +502,109 @@ const DialogManager = (() => {
             });
         },
 
-        async listChoice(title, message, items) {
+        async input(title, message, initialValue = '', options = {}) {
             await _initCSS();
             return new Promise((resolve) => {
                 const overlay = _createOverlay();
                 const dialog = _createDialog(title, null, {
-                    width: 'min(550px, 90vw)',
-                    maxHeight: '85vh'
+                    width: options.width || 'min(500px, 90vw)',
+                    minHeight: options.minHeight || 'auto'
                 });
 
+                // 添加消息提示
                 if (message) {
                     const msgEl = document.createElement('div');
                     msgEl.className = 'lit-ui-content lit-ui-message';
+                    msgEl.style.marginBottom = '15px';
                     msgEl.textContent = message;
                     dialog.appendChild(msgEl);
                 }
 
-                const listContainer = document.createElement('div');
-                listContainer.className = 'lit-ui-content lit-ui-scrollable lit-ui-list';
+                // 创建输入容器
+                const inputContainer = document.createElement('div');
+                inputContainer.className = 'lit-ui-input-container';
 
-                if (items.length === 0) {
-                    const emptyEl = document.createElement('div');
-                    emptyEl.className = 'lit-ui-empty';
-                    emptyEl.textContent = '暂无可用选项';
-                    listContainer.appendChild(emptyEl);
+                let inputEl;
+                const rows = options.rows || (options.password ? 1 : 3);
+
+                // 根据配置创建 input 或 textarea
+                if (options.password) {
+                    inputEl = document.createElement('input');
+                    inputEl.type = 'password';
+                    inputEl.className = 'lit-ui-input';
+                } else if (rows === 1) {
+                    inputEl = document.createElement('input');
+                    inputEl.type = 'text';
+                    inputEl.className = 'lit-ui-input';
                 } else {
-                    items.forEach((item, index) => {
-                        const itemEl = document.createElement('div');
-                        itemEl.className = 'lit-ui-list-item';
-                        if (item.type) itemEl.dataset.type = item.type;
-
-                        const number = document.createElement('span');
-                        number.className = 'lit-ui-list-number';
-                        number.textContent = `${index + 1}.`;
-
-                        const textSpan = document.createElement('span');
-                        textSpan.className = 'lit-ui-list-text';
-                        textSpan.textContent = item.text;
-
-                        itemEl.appendChild(number);
-                        itemEl.appendChild(textSpan);
-                        itemEl.addEventListener('click', _createSafeCallback(() => {
-                            _safeRemoveOverlay(overlay);
-                            if (overlay._cleanup) overlay._cleanup();
-                            resolve(item.value);
-                        }));
-                        listContainer.appendChild(itemEl);
-                    });
+                    inputEl = document.createElement('textarea');
+                    inputEl.className = 'lit-ui-input lit-ui-input-textarea';
+                    inputEl.rows = rows;
+                    inputEl.style.resize = 'vertical';
                 }
-                dialog.appendChild(listContainer);
+
+                inputEl.value = initialValue;
+                if (options.placeholder) {
+                    inputEl.placeholder = options.placeholder;
+                }
+
+                inputContainer.appendChild(inputEl);
+                dialog.appendChild(inputContainer);
 
                 // 统一的关闭函数
-                const closeDialog = () => {
+                const closeDialog = (result) => {
                     _safeRemoveOverlay(overlay);
                     if (overlay._cleanup) overlay._cleanup();
-                    resolve(null);
+                    resolve(result);
                 };
                 const safeCloseDialog = _createSafeCallback(closeDialog);
 
-                const cancelBtnConfig = {
-                    text: '取消',
-                    isPrimary: false,
-                    onClick: safeCloseDialog
-                };
+                // 按钮配置
+                dialog.appendChild(_createButtonRow([
+                    {
+                        text: options.cancelText || '取消',
+                        isPrimary: false,
+                        isCancel: true,
+                        onClick: () => safeCloseDialog(null)
+                    },
+                    {
+                        text: options.confirmText || '确定',
+                        isPrimary: true,
+                        onClick: () => safeCloseDialog(inputEl.value)
+                    }
+                ]));
 
-                dialog.appendChild(_createButtonRow([cancelBtnConfig]));
                 overlay.appendChild(dialog);
                 document.body.appendChild(overlay);
 
-                // ESC/返回键/遮罩点击：返回 null
-                const closeHandler = () => safeCloseDialog();
+                // ESC/返回键/遮罩点击：取消并返回 null
+                const closeHandler = () => safeCloseDialog(null);
+                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler, {
+                    enableEsc: true,
+                    enableBack: true,
+                    enableOverlayClick: options.closeOnOverlay !== false
+                });
 
-                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler);
+                // 自动聚焦并定位光标
+                setTimeout(() => {
+                    inputEl.focus();
+                    if (options.selectAll) {
+                        inputEl.select();
+                    } else {
+                        const len = inputEl.value.length;
+                        inputEl.setSelectionRange(len, len);
+                    }
+                }, 100);
+
+                // 单行输入时支持回车键快捷确认
+                if (rows === 1 || options.password) {
+                    inputEl.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            safeCloseDialog(inputEl.value);
+                        }
+                    });
+                }
             });
         },
 
