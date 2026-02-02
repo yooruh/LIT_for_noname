@@ -4,11 +4,11 @@ export async function content(config, pack) {
 	lib.extensionPack['叁岛世界'].author = "一个月惹";
 	lib.extensionPack['叁岛世界'].version = game.getExtensionConfig('叁岛世界', 'version');
 	let str = [
-		{ type: "players", data: ['lit_yangxiangling杨湘铃', 'lit_hupan胡畔', 'lit_hupan9胡畔', 'lit_zhengmohan9郑墨翰', 'lit_zengpinjia9曾品嘉', 'lit_wangsiyuan王思媛', 'lit_zhongyutong9钟雨桐', 'lit_pengliying彭丽颖'] },
+		{ type: "players", data: ['lit_yangxiangling杨湘铃', 'lit_hupan胡畔', 'lit_zhengmohan郑墨翰', 'lit_hupan9胡畔', 'lit_zhengmohan9郑墨翰', 'lit_zengpinjia9曾品嘉', 'lit_wangsiyuan王思媛', 'lit_zhongyutong9钟雨桐', 'lit_pengliying彭丽颖'] },
 		{
 			type: "text", addText: true, data: `<p style="text-align: left;">
 ① 加入角色：王荣 以及吊卡技能：荣少的剑、杨湘铃的追随者；<br>
-② 调整了杨湘铃、胡畔的强度及AI逻辑；<br>
+② 调整了杨湘铃、胡畔、郑墨翰的强度及部分技能的AI逻辑；<br>
 ③ 叁岛国战：重构导入逻辑（由于本体国战模式正在重做，故暂停叁岛国战的更新）；<br>
 ④ "叁岛测试"角色包上线：其中的6个《九班杀》老角色默认关闭，需手动开启。注意：强度、AI、兼容性均未完成优化，极可能存在Bug；<br>
 ⑤ 引入了新UI以代替部分老代码，加入“应用推荐的无名杀全局设置”功能。此外，本体已加入名词解释超链接和复活事件，本扩展不再额外重复；<br>

@@ -222,7 +222,7 @@ export const skill = {
                     nothunder: true,
                     effect: {
                         target(card) {
-                            if (game.hasNature(card, "linked")) return "zerotarget";
+                            if (get.tag(card, "natureDamage")) return "zerotarget";
                         },
                     },
                 },
@@ -252,7 +252,7 @@ export const skill = {
             damageBonus: true,
             skillTagFilter: (player, tag, arg) => {
                 if (tag === "damageBonus") {
-                    return arg && arg.card && game.hasNature(arg.card, "linked");
+                    return arg && arg.card && get.tag(arg.card, "natureDamage");
                 }
             },
         },
