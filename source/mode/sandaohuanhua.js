@@ -104,7 +104,7 @@ export let info = {
                 if (!lib.character[name]) continue;
                 if (lib.filter.characterDisabled(name)) continue;
                 if (!game.getExtensionConfig('叁岛世界', 'lit_huanhuaLimit')) {
-                    if (name.indexOf("lit_") != 0 && name.indexOf("sdhh_") != 0) continue;
+                    if (!name.startsWith("lit_") && !name.startsWith("sdhh_")) continue;
                 }
                 let skillsx = lib.character[name][3].slice(0);
                 lib.character[name].hp = 4;
@@ -125,7 +125,7 @@ export let info = {
                     else if (Array.isArray(info.derivation)) list.addArray(info.derivation);
                 }
                 for (let j = 0; j < list.length; j++) {
-                    if (skills.includes(list[j]) || list[j].endsWith('V2') || list[j].endsWith('_append') || banned.includes(list[j])) continue;
+                    if (skills.includes(list[j]) || list[j].endsWith('V2') || list[j].endsWith('_append') || list[j].endsWith("_faq") || banned.includes(list[j])) continue;
                     let info = get.info(list[j]);
                     if (
                         !info ||

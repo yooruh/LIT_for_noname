@@ -2,16 +2,17 @@ import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
 import basic from './basic.js'
 
 /**
- * 提供样式隔离的对话框组件
+ * 样式隔离的对话框组件 - 重构版
  * 公开接口: loading, complexLoading, alert, confirm, choice, input, fileManager, showCountdownDialog, showDocModal, textEditor, closeAll
  */
 const DialogManager = (() => {
-    // 私有变量
+    // ========== 私有变量 ==========
     let _zIndex = 50000;
     let _cssLoaded = false;
-    let _isClosing = false; // 防止重复关闭的标志
+    let _dialogStack = []; // 对话框堆栈，用于管理多层对话框
+    let _isClosing = false;
 
-    // 私有方法
+    // ========== 基础私有方法==========
     const _injectFallbackStyles = () => {
         if (document.getElementById('lit-ui-fallback-styles')) return true;
 
@@ -46,6 +47,169 @@ const DialogManager = (() => {
         }
     };
 
+    // ========== 关闭管理方法 ==========
+    /**
+     * 统一关闭入口 - 所有关闭方式都经过这里
+     * @param {HTMLElement} overlay - 遮罩层元素
+     * @param {Function} callback - 关闭后的回调
+     * @param {string} reason - 关闭原因：'esc' | 'back' | 'overlay' | 'button' | 'programmatic'
+     * @param {*} result - 关闭时返回的结果
+     */
+    const _close = (overlay, callback, reason = 'programmatic', result) => {
+        if (_isClosing || !overlay || overlay._isClosed) return Promise.resolve(false);
+        _isClosing = true;
+        overlay._isClosed = true;
+
+        // 从堆栈中移除
+        const stackIndex = _dialogStack.findIndex(d => d.overlay === overlay);
+        if (stackIndex > -1) {
+            _dialogStack.splice(stackIndex, 1);
+        }
+
+        // 执行清理
+        const cleanup = overlay._cleanup;
+        if (typeof cleanup === 'function') {
+            try {
+                cleanup(reason);
+            } catch (e) {
+                console.error('Cleanup error:', e);
+            }
+        }
+
+        // 移除 DOM
+        _safeRemoveOverlay(overlay);
+
+        // 执行回调
+        if (typeof callback === 'function') {
+            try {
+                callback(result);
+            } catch (e) {
+                console.error('Close callback error:', e);
+            }
+        }
+
+        // 延迟释放锁，防止连续触发
+        // setTimeout(() => {
+        //     debugger;
+        //     _isClosing = false;
+        // }, 50);
+        _isClosing = false;
+        return Promise.resolve(true);
+    };
+
+    /**
+     * 设置事件处理器 - 统一绑定所有关闭方式
+     */
+    const _bindEvents = (overlay, onClose, options = {}) => {
+        // 统一关闭配置
+        const defaultOptions = {
+            enableEsc: true,
+            enableBack: true,
+            enableOverlayClick: true,
+            closeOnConfirm: true,  // 点击确认按钮后是否关闭
+            closeOnCancel: true,   // 点击取消按钮后是否关闭
+            preventDefault: false  // 是否阻止默认关闭行为（用于自定义处理）
+        };
+        const opts = { ...defaultOptions, ...options };
+        const handlers = [];
+
+        // ESC 键关闭
+        if (opts.enableEsc) {
+            const handler = (e) => {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    _close(overlay, onClose, 'esc');
+                }
+            };
+            document.addEventListener('keydown', handler);
+            handlers.push(() => document.removeEventListener('keydown', handler));
+        }
+
+        // 返回键/历史记录管理
+        if (opts.enableBack) {
+            const backHandler = _createBackHandler(overlay, onClose);
+            handlers.push(backHandler);
+        }
+
+        // 遮罩点击关闭
+        if (opts.enableOverlayClick) {
+            const handler = (e) => {
+                if (e.target === overlay) {
+                    e.stopPropagation();
+                    _close(overlay, onClose, 'overlay');
+                }
+            };
+            overlay.addEventListener('pointerdown', handler);
+            handlers.push(() => overlay.removeEventListener('pointerdown', handler));
+        }
+
+        // 返回统一的清理函数
+        return (reason) => {
+            handlers.forEach(cleanup => {
+                try {
+                    cleanup(reason);
+                } catch (e) {
+                    console.error('Handler cleanup error:', e);
+                }
+            });
+        };
+    };
+
+    /**
+     * 重写返回键处理 - 使用 Hash 方案替代 History API
+     * 避免历史记录污染，移动端兼容性更好
+     */
+    const _createBackHandler = (overlay, onClose) => {
+        // 使用 hash 变化来捕获返回键，更可靠
+        const hashKey = `dialog-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+
+        // 如果当前没有 hash，添加一个
+        const originalHash = window.location.hash;
+        const needPushHash = !originalHash.includes('dialog=');
+
+        if (needPushHash) {
+            window.location.hash = `dialog=${hashKey}`;
+        }
+
+        const handleHashChange = (e) => {
+            // 如果 hash 被移除（用户点击返回），关闭对话框
+            if (!window.location.hash.includes(`dialog=${hashKey}`)) {
+                // 阻止默认返回行为
+                if (e) e.preventDefault();
+
+                _close(overlay, onClose, 'back');
+
+                // 恢复原始 hash（如果需要）
+                if (originalHash && window.history.length > 1) {
+                    window.history.replaceState(null, '', originalHash);
+                }
+            }
+        };
+
+        // 监听 hash 变化
+        window.addEventListener('hashchange', handleHashChange);
+
+        // 同时保留 popstate 作为后备方案
+        const handlePopState = (e) => {
+            if (overlay._isClosed) return;
+            // 如果检测到回退且当前对话框还在，关闭它
+            handleHashChange(e);
+        };
+        window.addEventListener('popstate', handlePopState);
+
+        return (reason) => {
+            window.removeEventListener('hashchange', handleHashChange);
+            window.removeEventListener('popstate', handlePopState);
+
+            // 清理 hash，但只有在不是被其他对话框使用时
+            if (window.location.hash.includes(`dialog=${hashKey}`) && reason !== 'back') {
+                // 使用 replaceState 避免产生新的历史记录
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        };
+    };
+
+    // ========== UI窗口方法 ==========
     const _createOverlay = () => {
         const overlay = document.createElement('div');
         overlay.className = 'lit-ui-overlay';
@@ -53,9 +217,10 @@ const DialogManager = (() => {
 
         // 阻止移动端的触摸穿透
         overlay.addEventListener('touchend', (e) => {
-            e.preventDefault();
-        });
-
+            if (e.target === overlay) {
+                e.preventDefault();
+            }
+        }, { passive: false });
         return overlay;
     };
 
@@ -102,11 +267,12 @@ const DialogManager = (() => {
 
         if (options.isCancel) button.dataset.cancel = 'true';
         if (options.minWidth) button.style.minWidth = `${options.minWidth}`;
+        if (options.disabled) button.disabled = true;
 
         let clicked = false;
         button.onclick = (e) => {
             e.stopPropagation();
-            if (!clicked) {
+            if (!clicked && !options.disabled) {
                 clicked = true;
                 if (options.onClick) options.onClick();
                 setTimeout(() => { clicked = false; }, 500);
@@ -125,7 +291,8 @@ const DialogManager = (() => {
                 isPrimary: config.isPrimary,
                 minWidth: config.minWidth,
                 isCancel: config.isCancel || config.text === '取消' || config.text === 'Cancel',
-                onClick: config.onClick
+                onClick: config.onClick,
+                disabled: config.disabled
             });
             row.appendChild(button);
         });
@@ -137,70 +304,6 @@ const DialogManager = (() => {
         if (overlay && overlay.parentNode === document.body) {
             document.body.removeChild(overlay);
         }
-    };
-
-    const _addDialogEventHandlers = (overlay, closeCallback, options = {}) => {
-        const { enableEsc = true, enableBack = true, enableOverlayClick = true } = options;
-        const eventHandlers = [];
-
-        if (enableEsc) {
-            const handleEscKey = (e) => {
-                if (e.key === 'Escape' && !_isClosing) {
-                    e.preventDefault(); // 阻止默认行为（如全屏退出）
-                    closeCallback();
-                }
-            };
-            document.addEventListener('keydown', handleEscKey);
-            eventHandlers.push(() => {
-                document.removeEventListener('keydown', handleEscKey);
-            });
-        }
-
-        if (enableBack) {
-            // 检查是否已存在对话框历史记录，防止重复
-            const currentState = window.history.state || {};
-            if (!currentState.dialogOpen) {
-                window.history.pushState({
-                    dialogOpen: true,
-                    timestamp: Date.now()
-                }, '');
-            }
-
-            const handlePopState = (event) => {
-                // popstate 无法阻止导航，只能响应
-                if (overlay.parentNode === document.body && !_isClosing) {
-                    closeCallback();
-                }
-            };
-
-            window.addEventListener('popstate', handlePopState);
-            eventHandlers.push(() => {
-                window.removeEventListener('popstate', handlePopState);
-                // 清理添加的历史记录
-                const state = window.history.state || {};
-                if (state.dialogOpen || state.modalOpen) {
-                    window.history.back();
-                }
-            });
-        }
-
-        if (enableOverlayClick) {
-            const onPointer = (e) => {
-                if (e.target === overlay && !_isClosing) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    closeCallback();
-                }
-            }
-            overlay.addEventListener('pointerdown', onPointer);
-            eventHandlers.push(() => {
-                overlay.removeEventListener('pointerdown', onPointer);
-            });
-        }
-
-        return () => {
-            eventHandlers.forEach(cleanup => cleanup());
-        };
     };
 
     const _createSafeCallback = (callback) => {
@@ -216,46 +319,94 @@ const DialogManager = (() => {
         };
     };
 
-    // 公开方法
+    // ========== 重构后的公开方法 ==========
+
     return {
-        async choice(title, message, buttons) {
+        /**
+         * 统一创建对话框的基础方法
+         * 所有具体对话框类型都基于此方法构建
+         */
+        async createBaseDialog(config) {
             await _initCSS();
+
             return new Promise((resolve) => {
                 const overlay = _createOverlay();
-                const dialog = _createDialog(title, message);
+                const dialog = _createDialog(config.title, config.message, config.dialogOptions || {});
 
-                // 统一的关闭函数：移除DOM + 清理事件 + resolve
-                const closeDialog = (result) => {
-                    _safeRemoveOverlay(overlay);
-                    if (overlay._cleanup) overlay._cleanup();
-                    resolve(result);
-                };
-                const safeCloseDialog = _createSafeCallback(closeDialog);
-
-                // 按钮配置：点击后关闭对话框并返回索引
-                if (buttons.length) {
-                    const btnConfigs = buttons.map((text, index) => ({
-                        text,
-                        isPrimary: index === buttons.length - 1 && text !== '取消' && text !== 'Cancel',
-                        onClick: () => safeCloseDialog(index)
-                    }));
-                    dialog.appendChild(_createButtonRow(btnConfigs));
+                // 构建自定义内容
+                if (config.buildContent) {
+                    config.buildContent(dialog, overlay);
                 }
+
+                // 统一的关闭处理
+                const handleClose = (result) => {
+                    if (overlay.exCleanup) overlay.exCleanup();
+                    resolve(result);
+                }
+
+                // 绑定按钮
+                if (config.buttons && config.buttons.length > 0) {
+                    const buttonRow = _createButtonRow(
+                        config.buttons.map(btn => ({
+                            ...btn,
+                            onClick: () => {
+                                if (btn.closeOnClick !== false) {
+                                    _close(overlay, handleClose, 'button',
+                                        typeof btn.result === 'function' ? btn.result() : btn.result
+                                    );
+                                } else if (btn.onClick) {
+                                    btn.onClick();
+                                }
+                            }
+                        }))
+                    );
+                    dialog.appendChild(buttonRow);
+                }
+
+                // 设置事件
+                const closeOptions = {
+                    enableEsc: config.closeOnEsc !== false,
+                    enableBack: config.closeOnBack !== false,
+                    enableOverlayClick: config.closeOnOverlay !== false
+                };
+
+                // 暴露关闭方法供外部调用
+                overlay._cleanup = _bindEvents(overlay, handleClose, closeOptions);
+                overlay.close = (result) => _close(overlay, handleClose, 'programmatic', result);
+
+                // 添加到堆栈
+                _dialogStack.push({ overlay, config });
 
                 overlay.appendChild(dialog);
                 document.body.appendChild(overlay);
 
-                // ESC/返回键/遮罩点击：关闭并返回 -1
-                const closeHandler = () => safeCloseDialog(-1);
-                if (buttons.length) {
-                    overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler);
-                } else {
-                    overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler, {
-                        enableEsc: false,
-                        enableBack: false,
-                        enableOverlayClickClose: false,
-                    });
+                if (config.onDialogCreated) {
+                    config.onDialogCreated(overlay, dialog);
                 }
+            });
+        },
+
+        // ========== 基于统一基础方法重构具体对话框 ==========
+
+        async choice(title, message, buttons) {
+            return await this.createBaseDialog({
+                title,
+                message,
+                buttons: buttons.map((text, index) => ({
+                    text,
+                    isPrimary: index === buttons.length - 1 && !['取消', 'Cancel'].includes(text),
+                    result: index  // 返回按钮索引
+                }))
+            });
+        },
+
+        async loading(title, message) {
+            return await this.createBaseDialog({
+                title,
+                message,
+                closeOnEsc: false,
+                closeOnBack: false,
+                closeOnOverlay: false
             });
         },
 
@@ -264,7 +415,6 @@ const DialogManager = (() => {
             return new Promise((resolve) => {
                 const overlay = _createOverlay();
 
-                // 创建 dialog，添加特定类名以便样式定制
                 const dialog = _createDialog(title, "", {
                     width: options.width || 'min(480px, 90vw)',
                     minHeight: options.minHeight || 'auto'
@@ -324,12 +474,15 @@ const DialogManager = (() => {
                 overlay.appendChild(dialog);
                 document.body.appendChild(overlay);
 
-                // 阻止所有关闭方式
-                overlay._cleanup = _addDialogEventHandlers(overlay, () => { }, {
+                // 绑定事件（禁用所有关闭方式）
+                overlay._cleanup = _bindEvents(overlay, () => { }, {
                     enableEsc: false,
                     enableBack: false,
                     enableOverlayClick: false,
                 });
+
+                // 添加到堆栈
+                _dialogStack.push({ overlay, config: { type: 'complexLoading' } });
 
                 // 内部状态
                 let currentProgress = 0;
@@ -337,35 +490,25 @@ const DialogManager = (() => {
 
                 // 返回控制器对象
                 resolve({
-                    // 更新主标题下的描述文本
                     updateText: (text) => {
                         msgEl.textContent = text;
                     },
 
-                    // 核心进度更新方法，支持多种调用方式：
-                    // updateProgress(50) - 直接设置 50%
-                    // updateProgress(30, 100) - 计算为 30%
-                    // updateProgress({percent: 50, status: '下载中...', detail: 'file.zip'})
                     updateProgress: (value, total, opts = {}) => {
                         let percent = 0;
 
                         if (typeof value === 'object') {
-                            // 对象参数模式：{percent, status, detail, state}
                             opts = value;
                             percent = opts.percent !== undefined ? opts.percent : currentProgress;
                         } else if (total !== undefined && total > 0) {
-                            // 数值对模式：current/total
                             percent = Math.round((value / total) * 100);
                         } else {
-                            // 直接百分比模式：0-100
                             percent = Math.round(value);
                         }
 
-                        // 限制在 0-100 范围内
                         percent = Math.max(0, Math.min(100, percent));
                         currentProgress = percent;
 
-                        // 如果不是不确定模式，更新进度条视觉
                         if (!isIndeterminate) {
                             progressFill.style.width = `${percent}%`;
                             percentEl.textContent = `${percent}%`;
@@ -374,21 +517,17 @@ const DialogManager = (() => {
                             percentEl.style.display = 'none';
                         }
 
-                        // 更新状态文本（如"正在下载..."）
                         if (opts.status) {
                             statusEl.textContent = opts.status;
                         }
 
-                        // 更新详细信息（如文件名、速度等）
                         if (opts.detail !== undefined) {
                             detailEl.textContent = opts.detail;
                             detailEl.style.display = opts.detail ? 'block' : 'none';
                         }
 
-                        // 更新进度条颜色状态：'success', 'error', 'warning', 'info'
                         if (opts.state || opts.type) {
                             const state = opts.state || opts.type;
-                            // 清除旧状态
                             progressFill.classList.remove('lit-state-success', 'lit-state-error');
                             percentEl.classList.remove('lit-state-success', 'lit-state-error');
                             if (state) {
@@ -398,7 +537,6 @@ const DialogManager = (() => {
                         }
                     },
 
-                    // 切换不确定进度模式（无限循环动画，用于无法计算进度时）
                     setIndeterminate: (enable = true, statusText) => {
                         isIndeterminate = enable;
                         if (enable) {
@@ -415,7 +553,6 @@ const DialogManager = (() => {
                         }
                     },
 
-                    // 快速完成状态（100% + 绿色）
                     complete: (message, autoCloseDelay = 0) => {
                         this.setIndeterminate(false);
                         currentProgress = 100;
@@ -429,13 +566,11 @@ const DialogManager = (() => {
                         }
                         if (autoCloseDelay > 0) {
                             setTimeout(() => {
-                                _safeRemoveOverlay(overlay);
-                                if (overlay._cleanup) overlay._cleanup();
+                                _close(overlay, () => { }, 'programmatic');
                             }, autoCloseDelay);
                         }
                     },
 
-                    // 错误状态（红色 + 抖动动画）
                     setError: (message, showRetryButton = false, onRetry) => {
                         isIndeterminate = false;
                         progressFill.style.display = 'block';
@@ -451,7 +586,6 @@ const DialogManager = (() => {
                             statusEl.textContent = '失败';
                         }
 
-                        // 可选：显示重试按钮
                         if (showRetryButton && onRetry) {
                             actionRow.style.display = 'flex';
                             actionRow.innerHTML = '';
@@ -463,521 +597,447 @@ const DialogManager = (() => {
                         }
                     },
 
-                    // 更新状态文本的快捷方法
                     setStatus: (text) => {
                         statusEl.textContent = text;
                     },
 
-                    // 更新详细信息的快捷方法
                     setDetail: (text) => {
                         detailEl.textContent = text;
                         detailEl.style.display = text ? 'block' : 'none';
                     },
 
-                    // 获取当前进度值
                     getProgress: () => currentProgress,
 
-                    // 关闭对话框
                     close: () => {
-                        _safeRemoveOverlay(overlay);
-                        if (overlay._cleanup) overlay._cleanup();
+                        _close(overlay, () => { }, 'programmatic');
                     }
                 });
             });
         },
 
-        loading(title, message) {
-            return this.choice(title, message, []);
+        async alert(title, message) {
+            return this.createBaseDialog({
+                title,
+                message,
+                buttons: [{ text: '确定', isPrimary: true, result: true }],
+            });
         },
 
-        alert(title, message) {
-            return this.choice(title, message, ['确定']);
-        },
-
-        confirm(title, message, confirmText = '确定', cancelText = '取消') {
-            return new Promise((resolve) => {
-                this.choice(title, message, [cancelText, confirmText]).then(index => {
-                    resolve(index === 1); // 1 是确认按钮索引
-                });
+        async confirm(title, message, confirmText = '确定', cancelText = '取消') {
+            return await this.createBaseDialog({
+                title,
+                message,
+                buttons: [
+                    { text: cancelText, result: false },
+                    { text: confirmText, isPrimary: true, result: true }
+                ],
             });
         },
 
         async input(title, message, initialValue = '', options = {}) {
-            await _initCSS();
-            return new Promise((resolve) => {
-                const overlay = _createOverlay();
-                const dialog = _createDialog(title, null, {
+            let inputEl;
+
+            const result = await this.createBaseDialog({
+                title,
+                message: null,
+                dialogOptions: {
                     width: options.width || 'min(500px, 90vw)',
                     minHeight: options.minHeight || 'auto'
-                });
+                },
+                buildContent: (dialog) => {
+                    if (message) {
+                        const msgEl = document.createElement('div');
+                        msgEl.className = 'lit-ui-content lit-ui-message';
+                        msgEl.style.marginBottom = '15px';
+                        msgEl.textContent = message;
+                        dialog.appendChild(msgEl);
+                    }
 
-                // 添加消息提示
-                if (message) {
-                    const msgEl = document.createElement('div');
-                    msgEl.className = 'lit-ui-content lit-ui-message';
-                    msgEl.style.marginBottom = '15px';
-                    msgEl.textContent = message;
-                    dialog.appendChild(msgEl);
-                }
+                    const inputContainer = document.createElement('div');
+                    inputContainer.className = 'lit-ui-input-container';
 
-                // 创建输入容器
-                const inputContainer = document.createElement('div');
-                inputContainer.className = 'lit-ui-input-container';
+                    const rows = options.rows || (options.password ? 1 : 3);
 
-                let inputEl;
-                const rows = options.rows || (options.password ? 1 : 3);
+                    if (options.password) {
+                        inputEl = document.createElement('input');
+                        inputEl.type = 'password';
+                        inputEl.className = 'lit-ui-input';
+                    } else if (rows === 1) {
+                        inputEl = document.createElement('input');
+                        inputEl.type = 'text';
+                        inputEl.className = 'lit-ui-input';
+                    } else {
+                        inputEl = document.createElement('textarea');
+                        inputEl.className = 'lit-ui-input lit-ui-input-textarea';
+                        inputEl.rows = rows;
+                        inputEl.style.resize = 'vertical';
+                    }
 
-                // 根据配置创建 input 或 textarea
-                if (options.password) {
-                    inputEl = document.createElement('input');
-                    inputEl.type = 'password';
-                    inputEl.className = 'lit-ui-input';
-                } else if (rows === 1) {
-                    inputEl = document.createElement('input');
-                    inputEl.type = 'text';
-                    inputEl.className = 'lit-ui-input';
-                } else {
-                    inputEl = document.createElement('textarea');
-                    inputEl.className = 'lit-ui-input lit-ui-input-textarea';
-                    inputEl.rows = rows;
-                    inputEl.style.resize = 'vertical';
-                }
+                    inputEl.value = initialValue;
+                    if (options.placeholder) inputEl.placeholder = options.placeholder;
 
-                inputEl.value = initialValue;
-                if (options.placeholder) {
-                    inputEl.placeholder = options.placeholder;
-                }
+                    inputContainer.appendChild(inputEl);
+                    dialog.appendChild(inputContainer);
 
-                inputContainer.appendChild(inputEl);
-                dialog.appendChild(inputContainer);
+                    // 自动聚焦
+                    setTimeout(() => {
+                        inputEl.focus();
+                        if (options.selectAll) {
+                            inputEl.select();
+                        } else {
+                            const len = inputEl.value.length;
+                            inputEl.setSelectionRange(len, len);
+                        }
+                    }, 100);
 
-                // 统一的关闭函数
-                const closeDialog = (result) => {
-                    _safeRemoveOverlay(overlay);
-                    if (overlay._cleanup) overlay._cleanup();
-                    resolve(result);
-                };
-                const safeCloseDialog = _createSafeCallback(closeDialog);
-
-                // 按钮配置
-                dialog.appendChild(_createButtonRow([
+                    // 单行输入时支持回车键快捷确认
+                    if (rows === 1 || options.password) {
+                        inputEl.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                // 模拟点击确认按钮
+                                const confirmBtn = dialog.querySelector('.lit-ui-button.primary');
+                                if (confirmBtn) confirmBtn.click();
+                            }
+                        });
+                    }
+                },
+                buttons: [
                     {
                         text: options.cancelText || '取消',
-                        isPrimary: false,
-                        isCancel: true,
-                        onClick: () => safeCloseDialog(null)
+                        result: null
                     },
                     {
                         text: options.confirmText || '确定',
                         isPrimary: true,
-                        onClick: () => safeCloseDialog(inputEl.value)
+                        result: () => inputEl.value  // 使用函数延迟获取值
                     }
-                ]));
-
-                overlay.appendChild(dialog);
-                document.body.appendChild(overlay);
-
-                // ESC/返回键/遮罩点击：取消并返回 null
-                const closeHandler = () => safeCloseDialog(null);
-                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler, {
-                    enableEsc: true,
-                    enableBack: true,
-                    enableOverlayClick: options.closeOnOverlay !== false
-                });
-
-                // 自动聚焦并定位光标
-                setTimeout(() => {
-                    inputEl.focus();
-                    if (options.selectAll) {
-                        inputEl.select();
-                    } else {
-                        const len = inputEl.value.length;
-                        inputEl.setSelectionRange(len, len);
-                    }
-                }, 100);
-
-                // 单行输入时支持回车键快捷确认
-                if (rows === 1 || options.password) {
-                    inputEl.addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            safeCloseDialog(inputEl.value);
-                        }
-                    });
-                }
+                ],
+                closeOnEsc: true,
+                closeOnBack: true,
+                closeOnOverlay: options.closeOnOverlay !== false
             });
-        },
 
-        async fileManager(title, message, items) {
-            await _initCSS();
-            return new Promise((resolve) => {
-                const overlay = _createOverlay();
-                const dialog = _createDialog(title, null, {
-                    width: 'min(600px, 90vw)',
-                    maxHeight: '85vh'
-                });
-
-                if (message) {
-                    const msgEl = document.createElement('div');
-                    msgEl.className = 'lit-ui-content lit-ui-message';
-                    msgEl.style.marginBottom = '15px';
-                    msgEl.textContent = message;
-                    dialog.appendChild(msgEl);
-                }
-
-                const listContainer = document.createElement('div');
-                listContainer.className = 'lit-ui-content lit-ui-scrollable lit-ui-list';
-                listContainer.style.maxHeight = '400px';
-
-                const selectedFiles = new Set();
-
-                items.forEach((item, index) => {
-                    const itemEl = document.createElement('div');
-                    itemEl.className = 'lit-ui-list-item';
-                    itemEl.dataset.value = item.value;
-                    if (item.type) itemEl.dataset.type = item.type;
-
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.style.marginRight = '10px';
-                    checkbox.style.pointerEvents = 'none';
-
-                    const number = document.createElement('span');
-                    number.className = 'lit-ui-list-number';
-                    number.textContent = `${index + 1}.`;
-
-                    const textSpan = document.createElement('span');
-                    textSpan.className = 'lit-ui-list-text';
-                    textSpan.textContent = item.text;
-                    textSpan.style.flex = '1';
-
-                    itemEl.appendChild(checkbox);
-                    itemEl.appendChild(number);
-                    itemEl.appendChild(textSpan);
-
-                    itemEl.addEventListener('click', () => {
-                        const isSelected = selectedFiles.has(item.value);
-                        if (isSelected) {
-                            selectedFiles.delete(item.value);
-                            checkbox.checked = false;
-                            itemEl.style.background = '';
-                        } else {
-                            selectedFiles.add(item.value);
-                            checkbox.checked = true;
-                            itemEl.style.background = '#e8f4ff';
-                        }
-                        updateButtonStates();
-                    });
-
-                    listContainer.appendChild(itemEl);
-                });
-
-                dialog.appendChild(listContainer);
-
-                const buttonRow = document.createElement('div');
-                buttonRow.className = 'lit-ui-button-row';
-                buttonRow.style.marginTop = 'auto';
-
-                // 统一的关闭函数
-                const closeDialog = (result) => {
-                    _safeRemoveOverlay(overlay);
-                    if (overlay._cleanup) overlay._cleanup();
-                    resolve(result);
-                };
-                const safeCloseDialog = _createSafeCallback(closeDialog);
-
-                const deleteBtn = _createButton('删除', {
-                    isPrimary: false,
-                    onClick: () => safeCloseDialog({ action: 'delete', files: Array.from(selectedFiles) })
-                });
-
-                const editBtn = _createButton('编辑', {
-                    isPrimary: false,
-                    onClick: () => safeCloseDialog({ action: 'edit', files: Array.from(selectedFiles) })
-                });
-
-                const applyBtn = _createButton('应用配置', {
-                    isPrimary: true,
-                    onClick: () => safeCloseDialog({ action: 'apply', files: Array.from(selectedFiles) })
-                });
-
-                const cancelBtn = _createButton('取消', {
-                    isPrimary: false,
-                    isCancel: true,
-                    onClick: () => safeCloseDialog(null)
-                });
-
-                buttonRow.appendChild(deleteBtn);
-                buttonRow.appendChild(editBtn);
-                buttonRow.appendChild(applyBtn);
-                buttonRow.appendChild(cancelBtn);
-
-                dialog.appendChild(buttonRow);
-                overlay.appendChild(dialog);
-                document.body.appendChild(overlay);
-
-                function updateButtonStates() {
-                    const count = selectedFiles.size;
-                    deleteBtn.disabled = count === 0;
-                    editBtn.disabled = count !== 1;
-                    applyBtn.disabled = count !== 1;
-
-                    [deleteBtn, editBtn, applyBtn].forEach(btn => {
-                        btn.style.opacity = btn.disabled ? '0.5' : '1';
-                        btn.style.cursor = btn.disabled ? 'not-allowed' : 'pointer';
-                    });
-                }
-
-                updateButtonStates();
-            });
+            // 处理 result 可能是函数的情况（获取最终输入值）
+            return typeof result === 'function' ? result() : result;
         },
 
         async showCountdownDialog(title, message, options = {}) {
-            await _initCSS();
-
             const {
                 onConfirm = () => { },
                 onCancel = () => { },
                 countdownTime = 3
             } = options;
 
-            return new Promise((resolve) => {
-                const overlay = _createOverlay();
-                const dialog = _createDialog(title, message, {
+            return await this.createBaseDialog({
+                title,
+                message,
+                dialogOptions: {
                     width: 'min(500px, 90vw)',
                     minHeight: '250px'
-                });
-
-                const countdownEl = document.createElement('div');
-                countdownEl.className = "lit-ui-countdown";
-                countdownEl.textContent = `${countdownTime} 秒`;
-
-                // 统一的关闭函数
-                const closeDialog = (result) => {
-                    _safeRemoveOverlay(overlay);
-                    if (overlay._cleanup) overlay._cleanup();
-                    resolve(result);
-                };
-                const safeCloseDialog = _createSafeCallback(closeDialog);
-
-                const btnRow = _createButtonRow([
+                },
+                buildContent: (dialog) => {
+                    const countdownEl = document.createElement('div');
+                    countdownEl.className = "lit-ui-countdown";
+                    countdownEl.textContent = `${countdownTime} 秒`;
+                    dialog.appendChild(countdownEl);
+                    dialog.countdownEl = countdownEl;
+                },
+                buttons: [
                     {
                         text: '立即重启',
                         isPrimary: true,
-                        onClick: () => {
-                            clearTimeout(timerId);
+                        result: () => {
                             onConfirm();
-                            safeCloseDialog(true);
+                            return true;
                         }
                     },
                     {
                         text: '取消重启',
-                        isPrimary: false,
                         isCancel: true,
-                        onClick: () => {
-                            clearTimeout(timerId);
+                        result: () => {
                             onCancel();
-                            safeCloseDialog(false);
+                            return false;
                         }
                     }
-                ]);
+                ],
+                onDialogCreated: (overlay, dialog) => {
+                    let countdown = countdownTime;
+                    let timerId = null;
+                    const countdownEl = dialog.countdownEl;
 
-                dialog.appendChild(countdownEl);
-                dialog.appendChild(btnRow);
-                overlay.appendChild(dialog);
-                document.body.appendChild(overlay);
+                    const updateCountdown = () => {
+                        countdownEl.textContent = `${countdown} 秒`;
 
-                // ESC/返回键/遮罩点击：取消重启
-                const closeHandler = () => {
-                    clearTimeout(timerId);
-                    onCancel();
-                    safeCloseDialog(false);
-                };
-
-                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler);
-
-                let countdown = countdownTime;
-                let timerId = null;
-
-                const updateCountdown = () => {
-                    countdownEl.textContent = `${countdown} 秒`;
-
-                    if (countdown <= 0) {
-                        if (!_isClosing) {
-                            _isClosing = true;
-                            _safeRemoveOverlay(overlay);
-                            if (overlay._cleanup) overlay._cleanup();
-                            onConfirm();
-                            resolve(true);
+                        if (countdown <= 0) {
+                            clearTimeout(timerId);
+                            const confirmBtn = dialog.querySelector('.lit-ui-button.primary');
+                            if (confirmBtn) confirmBtn.click();
+                        } else {
+                            countdown--;
+                            timerId = setTimeout(updateCountdown, 1000);
                         }
-                    } else {
-                        countdown--;
-                        timerId = setTimeout(updateCountdown, 1000);
+                    };
+                    timerId = setTimeout(updateCountdown, 0);
+                    overlay.exCleanup = () => {
+                        if (timerId) clearTimeout(timerId);
                     }
-                };
+                },
+            });
+        },
 
-                timerId = setTimeout(updateCountdown, 0);
+        async fileManager(title, message, items) {
+            return this.createBaseDialog({
+                title,
+                message: null,
+                dialogOptions: {
+                    width: 'min(600px, 90vw)',
+                    maxHeight: '85vh'
+                },
+                buildContent: (dialog) => {
+                    if (message) {
+                        const msgEl = document.createElement('div');
+                        msgEl.className = 'lit-ui-content lit-ui-message';
+                        msgEl.style.marginBottom = '15px';
+                        msgEl.textContent = message;
+                        dialog.appendChild(msgEl);
+                    }
 
-                resolve({
-                    close: () => closeHandler()
-                });
+                    const listContainer = document.createElement('div');
+                    listContainer.className = 'lit-ui-content lit-ui-scrollable lit-ui-list';
+                    listContainer.style.maxHeight = '400px';
+
+                    const selectedFiles = new Set();
+
+                    items.forEach((item, index) => {
+                        const itemEl = document.createElement('div');
+                        itemEl.className = 'lit-ui-list-item';
+                        itemEl.dataset.value = item.value;
+                        if (item.type) itemEl.dataset.type = item.type;
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.style.marginRight = '10px';
+                        checkbox.style.pointerEvents = 'none';
+
+                        const number = document.createElement('span');
+                        number.className = 'lit-ui-list-number';
+                        number.textContent = `${index + 1}.`;
+
+                        const textSpan = document.createElement('span');
+                        textSpan.className = 'lit-ui-list-text';
+                        textSpan.textContent = item.text;
+                        textSpan.style.flex = '1';
+
+                        itemEl.appendChild(checkbox);
+                        itemEl.appendChild(number);
+                        itemEl.appendChild(textSpan);
+
+                        itemEl.addEventListener('click', () => {
+                            const isSelected = selectedFiles.has(item.value);
+                            if (isSelected) {
+                                selectedFiles.delete(item.value);
+                                checkbox.checked = false;
+                                itemEl.style.background = '';
+                            } else {
+                                selectedFiles.add(item.value);
+                                checkbox.checked = true;
+                                itemEl.style.background = '#e8f4ff';
+                            }
+
+                            // 更新按钮状态
+                            const deleteBtn = dialog.querySelector('.lit-ui-button[data-cancel="false"]:nth-of-type(1)');
+                            const editBtn = dialog.querySelector('.lit-ui-button[data-cancel="false"]:nth-of-type(2)');
+                            const applyBtn = dialog.querySelector('.lit-ui-button.primary');
+
+                            if (deleteBtn && editBtn && applyBtn) {
+                                const count = selectedFiles.size;
+                                deleteBtn.disabled = count === 0;
+                                editBtn.disabled = count !== 1;
+                                applyBtn.disabled = count !== 1;
+
+                                [deleteBtn, editBtn, applyBtn].forEach(btn => {
+                                    btn.style.opacity = btn.disabled ? '0.5' : '1';
+                                    btn.style.cursor = btn.disabled ? 'not-allowed' : 'pointer';
+                                });
+                            }
+                        });
+
+                        listContainer.appendChild(itemEl);
+                    });
+
+                    dialog.appendChild(listContainer);
+                },
+                buttons: [
+                    {
+                        text: '删除',
+                        result: () => ({
+                            action: 'delete',
+                            files: Array.from(document.querySelectorAll('.lit-ui-list-item input:checked'))
+                                .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value)
+                        }),
+                        disabled: true
+                    },
+                    {
+                        text: '编辑',
+                        result: () => ({
+                            action: 'edit',
+                            files: Array.from(document.querySelectorAll('.lit-ui-list-item input:checked'))
+                                .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value)
+                        }),
+                        disabled: true
+                    },
+                    {
+                        text: '应用配置',
+                        isPrimary: true,
+                        result: () => ({
+                            action: 'apply',
+                            files: Array.from(document.querySelectorAll('.lit-ui-list-item input:checked'))
+                                .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value)
+                        }),
+                        disabled: true
+                    },
+                    {
+                        text: '取消',
+                        isCancel: true,
+                        result: null
+                    }
+                ],
             });
         },
 
         async showDocModal(url, title, dataProcessor = null) {
             await _initCSS();
 
-            return new Promise((resolve) => {
-                const overlay = _createOverlay();
-                overlay.className = 'lit-ui-overlay';
-
-                const dialog = _createDialog(title, null, {
+            return this.createBaseDialog({
+                title,
+                message: null,
+                dialogOptions: {
                     titleSize: 24,
                     titleCenter: true,
                     width: 'min(1200px, 90vw)',
                     maxHeight: '90vh'
-                });
-                dialog.className = 'lit-ui-dialog lit-doc-modal-dialog';
+                },
+                buildContent: (dialog) => {
+                    dialog.className = 'lit-ui-dialog lit-doc-modal-dialog';
 
-                const iframeContainer = document.createElement('div');
-                iframeContainer.className = 'lit-ui-content lit-doc-modal-content';
-                iframeContainer.style.padding = '0';
-                iframeContainer.style.margin = '0';
+                    const iframeContainer = document.createElement('div');
+                    iframeContainer.className = 'lit-ui-content lit-doc-modal-content';
+                    iframeContainer.style.padding = '0';
+                    iframeContainer.style.margin = '0';
 
-                const iframe = document.createElement('iframe');
-                iframe.className = 'lit-doc-modal-iframe';
+                    const iframe = document.createElement('iframe');
+                    iframe.className = 'lit-doc-modal-iframe';
 
-                iframeContainer.appendChild(iframe);
-                dialog.appendChild(iframeContainer);
-                overlay.appendChild(dialog);
-                document.body.appendChild(overlay);
+                    iframeContainer.appendChild(iframe);
+                    dialog.appendChild(iframeContainer);
 
-                // 统一的关闭函数
-                const closeDialog = () => {
-                    _safeRemoveOverlay(overlay);
-                    if (overlay._cleanup) overlay._cleanup();
-                    resolve();
-                };
-                const safeCloseDialog = _createSafeCallback(closeDialog);
-
-                const closeBtn = document.createElement('button');
-                closeBtn.className = 'lit-doc-modal-close';
-                closeBtn.setAttribute('aria-label', '关闭');
-                closeBtn.onclick = safeCloseDialog;
-                dialog.appendChild(closeBtn);
-
-                // ESC/返回键/遮罩点击：关闭
-                const closeHandler = () => safeCloseDialog();
-
-                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler);
-
-                const oReq = new XMLHttpRequest();
-                oReq.addEventListener('load', function () {
-                    let content = this.responseText;
-                    if (dataProcessor && typeof dataProcessor === 'function') {
-                        content = dataProcessor(content);
-                    }
-
-                    iframe.srcdoc = content;
-                    iframe.onload = () => {
-                        try {
-                            const doc = iframe.contentDocument;
-                            if (doc && doc.body) {
-                                doc.body.style.background = 'none';
-                            }
-                        } catch (e) { }
+                    const closeBtn = document.createElement('button');
+                    closeBtn.className = 'lit-doc-modal-close';
+                    closeBtn.setAttribute('aria-label', '关闭');
+                    closeBtn.onclick = () => {
+                        const overlay = dialog.closest('.lit-ui-overlay');
+                        if (overlay && overlay.close) overlay.close();
                     };
-                });
+                    dialog.appendChild(closeBtn);
 
-                // 防止重复推送历史记录
-                if (!window.history.state || !window.history.state.modalOpen) {
-                    history.pushState({ modalOpen: true }, '', '#lit-doc');
-                }
+                    // 加载文档内容
+                    const oReq = new XMLHttpRequest();
+                    oReq.addEventListener('load', function () {
+                        let content = this.responseText;
+                        if (dataProcessor && typeof dataProcessor === 'function') {
+                            content = dataProcessor(content);
+                        }
+                        iframe.srcdoc = content;
 
-                oReq.addEventListener('error', (err) => {
-                    console.error(`加载文档失败: ${url}`, err);
-                    _safeRemoveOverlay(overlay);
-                    if (overlay._cleanup) overlay._cleanup();
-                    resolve();
-                });
-                oReq.open('GET', url);
-                oReq.send();
+                        iframe.onload = () => {
+                            try {
+                                const doc = iframe.contentDocument;
+                                if (doc && doc.body) {
+                                    doc.body.style.background = 'none';
+                                }
+                            } catch (e) { }
+                        };
+                    });
+
+                    oReq.addEventListener('error', (err) => {
+                        console.error(`加载文档失败: ${url}`, err);
+                        const overlay = dialog.closest('.lit-ui-overlay');
+                        if (overlay && overlay.close) overlay.close();
+                    });
+
+                    oReq.open('GET', url);
+                    oReq.send();
+                },
+                buttons: [],
             });
         },
 
         async textEditor(title, message, initialContent, options = {}) {
-            await _initCSS();
-            return new Promise((resolve) => {
-                const overlay = _createOverlay();
-                const dialog = _createDialog(title, null, {
+            let textarea, checkbox;
+
+            return this.createBaseDialog({
+                title,
+                message: null,
+                dialogOptions: {
                     width: 'min(900px, 95vw)',
                     maxHeight: '95vh'
-                });
-                dialog.className += ' lit-text-editor-dialog';
+                },
+                buildContent: (dialog) => {
+                    dialog.className += ' lit-text-editor-dialog';
 
-                if (message) {
-                    const msgEl = document.createElement('div');
-                    msgEl.className = 'lit-ui-content lit-ui-message';
-                    msgEl.style.fontSize = '14px';
-                    msgEl.style.color = '#666';
-                    msgEl.textContent = message;
-                    dialog.appendChild(msgEl);
-                }
+                    if (message) {
+                        const msgEl = document.createElement('div');
+                        msgEl.className = 'lit-ui-content lit-ui-message';
+                        msgEl.style.fontSize = '14px';
+                        msgEl.style.color = '#666';
+                        msgEl.textContent = message;
+                        dialog.appendChild(msgEl);
+                    }
 
-                const editorContainer = document.createElement('div');
-                editorContainer.className = 'lit-ui-editor-container';
-                editorContainer.style.position = 'relative';
+                    const editorContainer = document.createElement('div');
+                    editorContainer.className = 'lit-ui-editor-container';
 
-                const textarea = document.createElement('textarea');
-                textarea.className = 'lit-ui-textarea lit-ui-scrollable';
-                textarea.value = initialContent;
-                textarea.spellcheck = false;
+                    textarea = document.createElement('textarea');
+                    textarea.className = 'lit-ui-textarea lit-ui-scrollable';
+                    textarea.value = initialContent;
+                    textarea.spellcheck = false;
 
-                if (options.selectionStart !== undefined) {
-                    textarea.selectionStart = options.selectionStart;
-                    textarea.selectionEnd = options.selectionEnd || options.selectionStart;
-                }
+                    editorContainer.appendChild(textarea);
 
-                editorContainer.appendChild(textarea);
+                    const optionsRow = document.createElement('div');
+                    optionsRow.className = 'lit-ui-editor-options';
 
-                const optionsRow = document.createElement('div');
-                optionsRow.className = 'lit-ui-editor-options';
+                    checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = 'deleteTempFile';
+                    checkbox.checked = options.deleteTempFile !== false;
 
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.id = 'deleteTempFile';
-                checkbox.checked = options.deleteTempFile !== false;
+                    const label = document.createElement('label');
+                    label.htmlFor = 'deleteTempFile';
+                    label.textContent = '编码成功后，删除临时json文件';
 
-                const label = document.createElement('label');
-                label.htmlFor = 'deleteTempFile';
-                label.textContent = '编码成功后，删除临时json文件';
-                label.style.cursor = 'pointer';
+                    optionsRow.appendChild(checkbox);
+                    optionsRow.appendChild(label);
+                    editorContainer.appendChild(optionsRow);
 
-                optionsRow.appendChild(checkbox);
-                optionsRow.appendChild(label);
-                editorContainer.appendChild(optionsRow);
+                    dialog.appendChild(editorContainer);
 
-                dialog.appendChild(editorContainer);
-
-                // 统一的关闭函数
-                const closeDialog = (result) => {
-                    _safeRemoveOverlay(overlay);
-                    if (overlay._cleanup) overlay._cleanup();
-                    resolve(result);
-                };
-                const safeCloseDialog = _createSafeCallback(closeDialog);
-
-                dialog.appendChild(_createButtonRow([
-                    {
-                        text: '取消',
-                        isPrimary: false,
-                        isCancel: true,
-                        onClick: () => safeCloseDialog(null)
-                    },
+                    // 焦点管理
+                    setTimeout(() => {
+                        textarea.focus();
+                        if (options.selectionStart !== undefined) {
+                            textarea.selectionStart = options.selectionStart;
+                            textarea.selectionEnd = options.selectionEnd || options.selectionStart;
+                            textarea.scrollTop = options.scrollTop || 0;
+                        }
+                    }, 100);
+                },
+                buttons: [
+                    { text: '取消', result: null },
                     {
                         text: '暂存并退出',
-                        isPrimary: false,
-                        onClick: () => safeCloseDialog({
+                        result: () => ({
                             content: textarea.value,
                             action: 'save',
                             selectionStart: textarea.selectionStart,
@@ -987,7 +1047,7 @@ const DialogManager = (() => {
                     {
                         text: '保存并编码',
                         isPrimary: true,
-                        onClick: () => safeCloseDialog({
+                        result: () => ({
                             content: textarea.value,
                             action: 'encode',
                             deleteTempFile: checkbox.checked,
@@ -995,44 +1055,33 @@ const DialogManager = (() => {
                             selectionEnd: textarea.selectionEnd
                         })
                     }
-                ]));
-
-                overlay.appendChild(dialog);
-                document.body.appendChild(overlay);
-
-                // ESC/返回键关闭：编辑器不允许遮罩关闭
-                const closeHandler = () => safeCloseDialog(null);
-
-                overlay._cleanup = _addDialogEventHandlers(overlay, closeHandler, {
-                    enableEsc: false,
-                    enableBack: false,
-                    enableOverlayClickClose: false,
-                });
-
-                setTimeout(() => {
-                    textarea.focus();
-                    if (options.selectionStart !== undefined) {
-                        textarea.scrollTop = options.scrollTop || 0;
-                    } else {
-                        textarea.selectionStart = 0;
-                        textarea.selectionEnd = 0;
-                        textarea.scrollTop = 0;
-                    }
-                }, 100);
-            });
+                ],
+                // 编辑器不允许遮罩/Esc/返回关闭，必须通过按钮
+                closeOnEsc: false,
+                closeOnBack: false,
+                closeOnOverlay: false
+            }).then(result => typeof result === 'function' ? result() : result);
         },
 
+        /**
+         * 关闭所有对话框
+         */
         closeAll() {
-            const overlays = document.querySelectorAll('.lit-ui-overlay');
-            overlays.forEach(overlay => {
-                if (overlay.parentNode === document.body) {
-                    document.body.removeChild(overlay);
-                }
-                if (overlay._cleanup) {
-                    overlay._cleanup();
+            // 从后往前关闭，避免索引问题
+            [..._dialogStack].reverse().forEach(({ overlay }) => {
+                if (overlay && overlay.close) {
+                    overlay.close();
                 }
             });
-            _isClosing = false; // 重置状态
+            _dialogStack = [];
+            _isClosing = false;
+        },
+
+        /**
+         * 获取当前打开的对话框数量
+         */
+        getDialogCount() {
+            return _dialogStack.length;
         },
     };
 })();

@@ -90,38 +90,38 @@ export const skill = {
                     player.removeSkill(i);
                     switch (i.slice(11)) {
                         case 'qb':
-                            player["addSkill"]('lit_tiannaV2');//于“天呐”末尾增加：>1血受伤时若此伤害会使血<1，免伤且血掉至1
+                            player["addSkill"]('lit_tiannaV2');//获得“天呐”并于末尾增加：>1血受伤时若此伤害会使血<1，免伤且血掉至1
                             break;
                         case 'zsj':
-                            player["addSkill"]('lit_wutouV2');//于“无头”中增加：结束阶段，可强制移动场上的1牌
+                            player["addSkill"]('lit_wutouV2');//获得“无头”并于中增加：结束阶段，可强制移动场上的1牌
                             break;
                         case 'zqy':
-                            player["addSkill"]('lit_zishaV2');//于“紫砂”开头增加：准备阶段，可失去1点体力，+2牌
+                            player["addSkill"]('lit_zishaV2');//获得“紫砂”并于开头增加：准备阶段，可失去1点体力，+2牌
                             break;
                         case 'pjl':
-                            player["addSkill"]('lit_duilianV2');//修改“对练”：不需要弃牌了
+                            player["addSkill"]('lit_duilianV2');//获得并修改“对练”：不需要弃牌了
                             break;
                         case 'wxq':
                             if (player.hasSkill('lit_xiaochou')) {
-                                player["addSkill"]('lit_xiaochouV2');//修改“小丑”：使其弃全部牌
+                                player["addSkill"]('lit_xiaochouV2');//获得“面具”/“小丑”，并修改其中的“小丑”：使其弃全部牌
                             } else {
                                 player["addSkill"]('lit_mianjuV2');
                             }
                             break;
                         case 'zg':
-                            player["addSkill"]('lit_zhanshiV2');//修改“展示”：你也拥有后半段技能
+                            player["addSkill"]('lit_zhanshiV2');//获得并修改“展示”：你也拥有后半段技能
                             break;
                         case 'zpj':
-                            player["addSkill"]('lit_saohuaV2');//修改“骚话”：此技能中，点数<7的牌计算时的点数+7
+                            player["addSkill"]('lit_saohuaV2');//获得并修改“骚话”：此技能中，点数<7的牌计算时的点数+7
                             break;
                         case 'bs':
-                            player["addSkill"]('lit_yisuiV2');//修改“易碎”：闺蜜死亡时，你不再失去体力
+                            player["addSkill"]('lit_yisuiV2');//获得并修改“易碎”：闺蜜死亡时，你不再失去体力
                             break;
                         case 'lcm':
-                            player["addSkill"]('lit_jijinV2');//修改“受激”：伤害越高，受激叠层越多
+                            player["addSkill"]('lit_jijinV2');//获得并修改“受激”：伤害越高，受激叠层越多
                             break;
                         case 'zmh':
-                            player["addSkill"]('lit_rennai');//获得：“忍耐”
+                            player["addSkill"]('lit_jianrenV2');//获得“坚韧”并于末尾增加：横置时属性伤+1
                             break;
                         case 'rita':
                             if (player.hasSkill('lit_dafang')) {
@@ -139,19 +139,19 @@ export const skill = {
                             await player.recover(player.maxHp - player.hp);//+1体力上限，回满血
                             break;
                         case 'hxy':
-                            player["addSkill"]('lit_shihuaiV2');//修改“释怀”选项②：交给你1张装备牌
+                            player["addSkill"]('lit_shihuaiV2');//获得并修改“释怀”选项②：交给你1张装备牌
                             break;
                         case 'hjw':
-                            player["addSkill"]('lit_wutongV2');//修改“梧桐”条件：还可弃置全部手牌触发
+                            player["addSkill"]('lit_wutongV2');//获得并修改“梧桐”条件：还可弃置全部手牌触发
                             break;
                         case 'jhx':
-                            player["addSkill"]('lit_shanliangV2');//于“善良”末尾增加：若恢复量溢出，增加等溢出量的上限后回满血
+                            player["addSkill"]('lit_shanliangV2');//获得“善良”并于末尾增加：若恢复量溢出，增加等溢出量的上限后回满血
                             break;
                         case 'qbc':
-                            player["addSkill"]('lit_chushouV2');//修改“出手”：不再跳过摸牌阶段
+                            player["addSkill"]('lit_chushouV2');//获得并修改“出手”：不再跳过摸牌阶段
                             break;
                         case 'zc':
-                            player["addSkill"]('lit_shuxinV2');//修改“竖心”：不再为锁定技
+                            player["addSkill"]('lit_shuxinV2');//获得并修改“竖心”：不再为锁定技
                             break;
                         case 'yxl':
                             player["addSkill"]('lit_juji');//获得：“狙击”
@@ -336,7 +336,7 @@ export const skill = {
                 if (button.link[2] === 'sha') return !player.storage.lit_bolun[1].includes(button.link[3]);
                 return !player.storage.lit_bolun[0].includes(button.link[2]);
             },
-            check: (button) => {
+            check(button) {
                 const player = _status.event.player;
                 const enemyNum = game.countPlayer(function (current) {
                     return current != player && !current.hasSkill("lit_jiqing", null, false, true) && (get.realAttitude || get.attitude)(current, player) < 0;
@@ -674,7 +674,7 @@ export const skill = {
         filter: (event, player) => {
             return player.hasMark('lit_huoshan');
         },
-        check: (event, player) => {
+        check(event, player) {
             return !player.hasJudge('lebu') && !player.hasJudge('lit_qianfanpai') && player.countMark('lit_huoshan') > 1;
         },
         async content(event, trigger, player) {
@@ -1233,7 +1233,7 @@ export const skill = {
             },
         },
         logTarget: "target",
-        check: (event, player) => {
+        check(event, player) {
             return get.attitude(player, event.target) <= 0;
         },
         filter: (event, player) => {
@@ -2029,7 +2029,7 @@ export const skill = {
         init: (player) => {
             if (player.hasSkill('lit_zisha')) player.removeSkill('lit_zisha');
         },
-        check: (event, player) => {
+        check(event, player) {
             if (player.hp === 1) return player.hasUsableCard("tao") || player.hasUsableCard("jiu");
             return player.hp > 2;
         },
@@ -2158,7 +2158,7 @@ export const skill = {
         filterCard(card, player, event) {
             return lib.filter.canBeDiscarded(card, player, player);
         },
-        position: "hes",
+        position: "he",
         filterTarget(card, player, target) {
             let i = ui.selected.targets.length;
             if (i % 2 === 1) {
@@ -2512,7 +2512,7 @@ export const skill = {
         discard: false,
         lose: false,
         delay: 0,
-        check: (card) => {
+        check(card) {
             const player = get.owner(card);
             if (get.tag(card, "damage")) return get.value(card);
             if (player.needsToDiscard()) return 11 - get.useful(card);
@@ -2947,7 +2947,7 @@ export const skill = {
             var list = lib.skill.lit_saohua_sub.getAuto(player);
             return list[0].length;
         },
-        check: (event, player) => {
+        check(event, player) {
             if (player.storage.lit_saohua) {
                 player.storage.lit_saohua = 0;
                 return false;
@@ -2997,6 +2997,7 @@ export const skill = {
                             if (str.length) return str.slice(0, -4);
                         },
                     ]));
+                const result = await next.forResult();
                 if (result.bool) {
                     await player.logSkill(skillName, result.targets[0], "thunder");
                     await player.loseToDiscardpile(origin.links);
@@ -3754,9 +3755,9 @@ export const skill = {
             return name === "tiesuo" && player.countCards("hes") > 0;
         },
         enable: "chooseToUse",
-        check(card, player) {
-            let use = false, targets = [];
-            use = !!(() => {
+        check(card) {
+            let player = _status.event.player, targets = [];
+            let use = (() => {
                 game.countPlayer(current => {
                     if (current.isLinked()) targets.push(current);
                 });
@@ -3770,8 +3771,15 @@ export const skill = {
                 }
                 if (res[1] > 0 && res[2] === 0) return 0;
                 return res[1] > 2 ? res[0] : 1;
-            })
-            if (use) return 6 - get.value(card);
+            })();
+            if (use < 0) return;
+            if (get.position(card) == "e") {
+                let subs = get.subtypes(card);
+                if (subs.includes("equip2") || subs.includes("equip3")) {
+                    return player.getHp() - get.value(card);
+                }
+            }
+            return 6 - get.value(card);
         },
         filter: (event, player) => {
             if (player.countCards("hes") === 0) return false;
@@ -3781,7 +3789,7 @@ export const skill = {
         selectCard: [1, Infinity],
         filterCard(card, player, event) {
             if (!event) event = _status.event;
-            if (event.type === "phase" && lib.filter.canBeDiscarded(card, player, player)) {
+            if (event.type === "phase" && get.position(card) != "s" && lib.filter.canBeDiscarded(card, player, player)) {
                 return true;
             } else {
                 if (game.checkMod(card, player, "unchanged", "cardEnabled2", player) === false) return false;
@@ -4080,7 +4088,7 @@ export const skill = {
         filter: (event, player) => {
             return player.getDamagedHp() > 0;
         },
-        check: (event, player) => {
+        check(event, player) {
             let damaged = player.getDamagedHp();
             let delta = player.hp - damaged;
             if (delta <= 0) return true;
@@ -5274,7 +5282,7 @@ export const skill = {
         derivation: "lit_male_faq",
         locked: false,
         frequent: "check",
-        check: (event, player) => {
+        check(event, player) {
             return game.countPlayer() > 2;
         },
         getLastDamaged: function (player, event) {
@@ -5574,7 +5582,7 @@ export const skill = {
             return event.player != event.target && ["basic", "trick"].includes(get.type(event.card));
         },
         prompt2: (event, player) => `令 ${get.translation(event.player)} 对他自己使用此 ${get.translation(event.card)}`,
-        check: (event, player) => {
+        check(event, player) {
             return get.effect(event.player, event.card, event.player, player) > 0;
         },
         async content(event, trigger, player) {

@@ -43,7 +43,7 @@ export const character = {
         sex: "female",
         group: "nine",
         hp: 3,
-        skills: ["lit_gaoshang", "lit_cidi", "lit_danchun"],
+        skills: ["lit_jinshan", "lit_cidi", "lit_danchun"],
         groupInGuozhan: "nine",
     },
     'lit_pengliying彭丽颖': {

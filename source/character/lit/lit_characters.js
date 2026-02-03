@@ -193,7 +193,7 @@ export const characterTitle = {
     'lit_zengpinjia曾品嘉': '凑牌·追击·中',
     'lit_boshu菠树': '辅助·反伤·较难',
     'lit_liuchenmu刘晨沐': '辅助·干扰·较易',
-    'lit_zhengmohan郑墨翰': '逆风爆发·回血·易',
+    'lit_zhengmohan郑墨翰': '过牌·爆发·回血·易',
     'lit_ritaRita': '装备·补牌·爆发·较难',
     'lit_hupan胡畔': '反击·续航·中',
     'lit_lanboxun兰柏勋': '控牌·顺风爆发·易',
