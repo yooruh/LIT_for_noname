@@ -20,11 +20,10 @@ const CONFIG = {
         timeout: 30000,
         maxConcurrent: 3,
         backupCount: 5,
-        maxTempAge: 7 * 86400000, // 7天
         stateSaveDebounce: 1000   // 状态保存防抖(ms)
     },
     types: {
-        critical: ['extension.js', 'info.json', 'content.js'],
+        critical: ['extension.js', 'precontent.js', 'content.js'],
         text: ['.js', '.json', '.css', '.html', '.md', '.txt', '.ts', '.xml', '.yml', '.yaml', '.csv'],
         media: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp3', '.ogg', '.wav', '.mp4', '.zip']
     }
@@ -120,8 +119,8 @@ const Environment = {
     },
 
     isElectronRenderer() {
-        return typeof window !== 'undefined' && 
-            window.process && 
+        return typeof window !== 'undefined' &&
+            window.process &&
             window.process.type === 'renderer';
     },
 
@@ -200,6 +199,7 @@ class GitAdapter {
         this.owner = null;
         this.repo = null;
         this.branch = 'main';
+        this.token = null;
         this.parse(url);
     }
 
@@ -253,13 +253,14 @@ class GitAdapter {
     }
 }
 
-// ==================== 状态管理（含防抖） ====================
+// ==================== 状态管理 ====================
 class StateManager {
     constructor(tempDir) {
         this.path = `${tempDir}/${CONFIG.files.state}`;
         this.data = null;
         this.saveTimer = null;
         this.pendingSave = false;
+        this.syncSaveQueue = []; // 同步保存队列
     }
 
     async load() {
@@ -270,20 +271,31 @@ class StateManager {
             const content = await game.promises.readFileAsText(this.path);
             this.data = JSON.parse(content);
 
-            if (Date.now() - (this.data.timestamp || 0) > CONFIG.limits.maxTempAge) {
-                await this.clear();
-                return null;
+            // 数据完整性检查：将上次中断的 'downloading' 状态重置为 'pending'
+            if (this.data?.files) {
+                let needsSave = false;
+                for (const file of this.data.files) {
+                    if (file.status === 'downloading') {
+                        file.status = 'pending';
+                        file.downloadedBytes = 0;
+                        needsSave = true;
+                    }
+                }
+                if (needsSave) {
+                    await this.save(true);
+                }
             }
+
             return this.data;
         } catch (e) {
             return null;
         }
     }
 
-    // 防抖保存
+    // 防抖保存（用于非关键更新）
     async save(immediate = false) {
         if (!this.data) return;
-        
+
         if (this.saveTimer) {
             clearTimeout(this.saveTimer);
             this.saveTimer = null;
@@ -298,6 +310,7 @@ class StateManager {
                     dir,
                     name
                 );
+                this.pendingSave = false;
             } catch (e) {
                 console.error('[State] 保存失败:', e);
             }
@@ -306,7 +319,19 @@ class StateManager {
         if (immediate) {
             await doSave();
         } else {
+            this.pendingSave = true;
             this.saveTimer = setTimeout(doSave, CONFIG.limits.stateSaveDebounce);
+        }
+    }
+
+    // 强制刷新所有挂起的保存
+    async flush() {
+        if (this.saveTimer) {
+            clearTimeout(this.saveTimer);
+            this.saveTimer = null;
+        }
+        if (this.pendingSave && this.data) {
+            await this.save(true);
         }
     }
 
@@ -314,7 +339,8 @@ class StateManager {
         this.data = {
             timestamp: Date.now(),
             repo: { platform: repo.platform, owner: repo.owner, repo: repo.repo, branch },
-            mode,
+            mode: mode,
+            phase: 'downloading', // 新增：阶段标记
             files: files.map(f => ({
                 path: f.remote,
                 size: f.size,
@@ -323,21 +349,42 @@ class StateManager {
                 status: 'pending',
                 retries: 0,
                 error: null,
-                errorType: null, // 'cors' | 'token' | 'network' | 'disk'
-                downloadedBytes: 0
+                errorType: null,
+                downloadedBytes: 0,
+                tempVerified: false // 新增：临时文件已验证
             })),
-            stats: { total: files.length, success: 0, failed: 0, skipped: 0, bytes: 0, totalBytes: files.reduce((s, f) => s + (f.size || 0), 0) },
+            stats: {
+                total: files.length,
+                success: 0,
+                failed: 0,
+                skipped: 0,
+                bytes: 0,
+                totalBytes: files.filter(f => !f.skip).reduce((s, f) => s + (f.size || 0), 0)
+            },
             completed: false,
             hasFailures: false
         };
         await this.save(true);
     }
 
-    async updateFile(path, status, error = null, errorType = null, bytes = 0) {
+    async updateFile(path, status, error = null, errorType = null, bytes = 0, immediate = false) {
         if (!this.data) return;
         const file = this.data.files.find(f => f.path === path);
         if (file) {
             const oldStatus = file.status;
+
+            // 状态流转验证
+            const validTransitions = {
+                'pending': ['downloading', 'skipped'],
+                'downloading': ['success', 'failed'],
+                'failed': ['pending', 'downloading'],
+                'skipped': []
+            };
+
+            if (oldStatus !== status && validTransitions[oldStatus] && !validTransitions[oldStatus].includes(status)) {
+                console.warn(`[State] 非法状态流转: ${oldStatus} -> ${status} (${path})`);
+            }
+
             file.status = status;
             if (error) {
                 file.error = error;
@@ -348,32 +395,86 @@ class StateManager {
                 if (status === 'success') {
                     this.data.stats.success++;
                     this.data.stats.bytes += bytes;
+                    file.tempVerified = true;
                 } else if (status === 'failed') {
-                    file.retries++;
+                    if (oldStatus !== 'pending' && oldStatus !== 'downloading') {
+                        file.retries++;
+                    }
                     this.data.stats.failed++;
                 } else if (status === 'skipped') {
                     this.data.stats.skipped++;
                 }
 
-                if (status === 'pending' && oldStatus === 'failed') {
-                    this.data.stats.failed--;
+                if (status === 'pending' && (oldStatus === 'failed' || oldStatus === 'downloading')) {
+                    this.data.stats.failed = Math.max(0, this.data.stats.failed - 1);
                 }
             }
-            await this.save();
+
+            await this.save(immediate);
         }
     }
 
-    async updateProgress(path, bytes) {
+    async updateProgress(path, bytes, immediate = false) {
         if (!this.data) return;
         const file = this.data.files.find(f => f.path === path);
         if (file) {
             file.downloadedBytes = bytes;
+            await this.save(immediate);
+        }
+    }
+
+    // 将下载失败标记为待下载
+    async resetFailedToPending() {
+        if (!this.data) return false;
+        let changed = false;
+        for (const file of this.data.files) {
+            if (file.status === 'failed') {
+                this.data.stats.failed--;
+                file.status = 'pending';
+                file.error = null;
+                file.errorType = null;
+                file.downloadedBytes = 0;
+                file.tempVerified = false;
+                changed = true;
+            }
+        }
+        if (changed) {
+            this.data.completed = false;
+            this.data.phase = 'downloading';
+            await this.save(true);
+        }
+        return changed;
+    }
+
+    // 将下载失败标记为跳过
+    async markAllFailedAsSkipped() {
+        if (!this.data) return;
+        for (const file of this.data.files) {
+            if (file.status === 'failed') {
+                file.status = 'skipped';
+            }
+        }
+        await this.save(true);
+    }
+
+    // 设置更新阶段
+    async setPhase(phase, immediate = true) {
+        if (!this.data) return;
+        const validPhases = ['downloading', 'backing_up', 'moving'];
+        if (validPhases.includes(phase)) {
+            this.data.phase = phase;
+            await this.save(immediate);
         }
     }
 
     getPending() {
         if (!this.data) return [];
         return this.data.files.filter(f => f.status === 'pending');
+    }
+
+    getDownloading() {
+        if (!this.data) return [];
+        return this.data.files.filter(f => f.status === 'downloading');
     }
 
     getFailed() {
@@ -388,40 +489,13 @@ class StateManager {
 
     canResume() {
         if (!this.data) return false;
+        // 只有在 downloading 阶段才能续传
+        if (this.data.phase !== 'downloading') return false;
         return this.data.files.some(f => f.status === 'pending' || f.status === 'failed');
     }
 
     isCompletedWithFailures() {
         return this.data?.completed === true && this.data?.hasFailures === true;
-    }
-
-    async resetFailedToPending() {
-        if (!this.data) return false;
-        let changed = false;
-        for (const file of this.data.files) {
-            if (file.status === 'failed') {
-                file.status = 'pending';
-                file.error = null;
-                file.errorType = null;
-                file.downloadedBytes = 0;
-                changed = true;
-            }
-        }
-        if (changed) {
-            this.data.completed = false;
-            await this.save(true);
-        }
-        return changed;
-    }
-
-    async markAllFailedAsSkipped() {
-        if (!this.data) return;
-        for (const file of this.data.files) {
-            if (file.status === 'failed') {
-                file.status = 'skipped';
-            }
-        }
-        await this.save(true);
     }
 
     async clear() {
@@ -456,7 +530,7 @@ class DownloadTask {
     }
 }
 
-// ==================== 智能下载器（合并优化版） ====================
+// ==================== 智能下载器 ====================
 class SmartDownloader {
     constructor(repo, tokenManager) {
         this.repo = repo;
@@ -465,7 +539,7 @@ class SmartDownloader {
         this.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
         this.activeControllers = new Map();
         this.isCancelled = false;
-        
+
         // Node 环境预加载模块
         if (this.env === 'node') {
             this.nodeModules = {
@@ -523,7 +597,7 @@ class SmartDownloader {
 
                 const protocol = url.startsWith('https') ? https : http;
                 const requestId = Date.now() + Math.random();
-                
+
                 const req = protocol.get(parsed, (res) => {
                     if (signal?.aborted) return;
 
@@ -629,7 +703,7 @@ class SmartDownloader {
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            
+
             chunks.push(value);
             received += value.length;
             if (onProgress) onProgress(received, contentLength);
@@ -651,7 +725,7 @@ class SmartDownloader {
     }
 
     // 主下载方法
-    async download(task, onProgress) {
+    async download(task, onProgress, stateManager = null) {
         if (this.isCancelled) throw new Error('下载已取消');
 
         const url = this.repo.getURL(task.remote);
@@ -664,6 +738,11 @@ class SmartDownloader {
         const cleanup = () => {
             this.activeControllers.delete(requestId);
         };
+
+        // 标记为下载中
+        if (stateManager) {
+            await stateManager.updateFile(task.remote, 'downloading', null, null, 0, true);
+        }
 
         try {
             let result;
@@ -678,7 +757,7 @@ class SmartDownloader {
             } catch (error) {
                 // 特定错误重试或切换备用源
                 const { type } = this.classifyError(error, this.repo.platform);
-                
+
                 // Token 错误，清除 Token 并重试一次
                 if (type === 'token' && token) {
                     this.tokens.clear(this.repo.platform);
@@ -687,9 +766,9 @@ class SmartDownloader {
                     if (this.env !== 'node') {
                         result = await this.downloadFetch(url, onProgress, controller.signal, null);
                     } else {
-                        throw error; // Node 环境下 Token 通常不影响，直接抛出
+                        throw error;
                     }
-                } 
+                }
                 // 网络/CORS 错误，尝试备用源
                 else if (fallback && fallback !== url && (type === 'cors' || type === 'network')) {
                     game.print('🔄 主源失败，尝试备用源...');
@@ -699,17 +778,29 @@ class SmartDownloader {
                 }
             }
 
-            // 保存文件
+            // 保存文件（成功后再标记状态）
             await this.saveFile(task.temp, result.data, task.type);
+
+            // 强制保存成功状态
+            if (stateManager) {
+                await stateManager.updateFile(task.remote, 'success', null, null, result.size, true);
+            }
+
             cleanup();
             return { success: true, size: result.size, mode: this.env };
 
         } catch (error) {
             cleanup();
             const { type } = this.classifyError(error, this.repo.platform);
-            return { 
-                success: false, 
-                error: error.message, 
+
+            // 强制保存失败状态
+            if (stateManager && error.message !== '下载已取消') {
+                await stateManager.updateFile(task.remote, 'failed', error.message, type, 0, true);
+            }
+
+            return {
+                success: false,
+                error: error.message,
                 errorType: type,
                 needToken: type === 'cors' && this.repo.platform === 'gitee' && this.env !== 'node'
             };
@@ -758,13 +849,13 @@ class VersionChecker {
                 size: 0,
                 type: 'text'
             });
-            
+
             const result = await this.downloader.download(task);
             if (!result.success) throw new Error(result.error);
 
             const content = await game.promises.readFileAsText(task.temp);
             await game.promises.removeFile(task.temp);
-            
+
             const info = JSON.parse(content);
 
             if (!info.versions || !Array.isArray(info.versions)) {
@@ -801,7 +892,7 @@ class VersionChecker {
     }
 }
 
-// ==================== UI 管理器（增强版） ====================
+// ==================== UI 管理器 ====================
 class UIManager {
     constructor() {
         this.dialog = Lit_Dialog;
@@ -814,11 +905,11 @@ class UIManager {
         if (resumeInfo.hasFailures) buttons.push('🔄 仅重试失败文件');
         buttons.push('🔑 Token管理', '💾 版本回退', '取消');
 
-        const envText = this.env === 'node' 
-            ? '🖥️ 当前环境: Node.js（直连模式，速度最快）\n' 
+        const envText = this.env === 'node'
+            ? '🖥️ 当前环境: Node.js（直连模式）\n'
             : this.env === 'electron-renderer'
-            ? '⚠️ 当前环境: Electron（可能受网络限制）\n'
-            : '⚠️ 当前环境: 浏览器（建议配置Token）\n';
+                ? '⚠️ 当前环境: Electron（建议配置Token，避免网络限制）\n'
+                : '⚠️ 当前环境: 浏览器（未适配，请谨慎更新）\n';
 
         const index = await this.dialog.choice(
             `${CONFIG.name} 更新中心`,
@@ -831,7 +922,7 @@ class UIManager {
         );
 
         const choice = buttons[index];
-        if (choice === '取消' || index === -1) return null;
+        if (choice === '取消' || !choice) return null;
         if (choice.includes('继续上次')) return 'resume';
         if (choice.includes('重试失败')) return 'retry_failed';
         if (choice.includes('Token')) return 'token';
@@ -842,8 +933,8 @@ class UIManager {
     async showTokenManager(tokens) {
         const githubStatus = tokens.has('github') ? '✅ 已设置' : '❌ 未设置';
         const giteeStatus = tokens.has('gitee') ? '✅ 已设置' : '❌ 未设置';
-        const envHint = this.env === 'node' 
-            ? 'Node 模式下通常无需 Token，但配置后可提高 API 限额' 
+        const envHint = this.env === 'node'
+            ? 'Node 模式下通常无需 Token，但配置后可提高 API 限额'
             : '浏览器模式下强烈建议配置 Token，避免 Gitee 403 错误';
 
         const index = await this.dialog.choice(
@@ -879,7 +970,6 @@ class UIManager {
         return result?.trim() || null;
     }
 
-    // 使用 fileManager 替代 choice 管理备份（优化点6）
     async showRollbackManager(backups, currentVersion) {
         if (backups.length === 0) {
             await this.dialog.alert('版本回退', '暂无备份记录');
@@ -892,19 +982,19 @@ class UIManager {
             type: i === 0 ? 'current' : 'backup'
         }));
 
-        const result = await this.dialog.fileManager(
+        const result = await this.dialog.filesManager(
             '版本回退管理',
             '选择要恢复的备份（仅可选一个回退，可多选删除）：\n💡 回退会覆盖当前版本，请先确认已备份重要数据',
             items
         );
 
         if (!result) return null;
-        
+
         if (result.action === 'apply' && result.files.length === 1) {
             const backup = backups.find(b => b.timestamp.toString() === result.files[0]);
             return { action: 'rollback', backup };
         }
-        
+
         if (result.action === 'delete' && result.files.length > 0) {
             const toDelete = result.files.map(ts => backups.find(b => b.timestamp.toString() === ts)).filter(Boolean);
             return { action: 'delete', backups: toDelete };
@@ -940,7 +1030,7 @@ class UIManager {
         modeButtons.push('取消');
 
         const modeIndex = await this.dialog.choice('选择更新模式', modeMessage, modeButtons);
-        if (modeIndex === -1 || modeIndex === modeButtons.length - 1) return null;
+        if (modeIndex === -1) return null;
 
         let mode = 'simple';
         if (hasFailed && modeIndex === 0) {
@@ -953,72 +1043,93 @@ class UIManager {
         return { platform: selectedPlatform, mode };
     }
 
-    // 字节级进度计算（优化点5）
+    // 计算下载进度
     async createDownloadProgress(title, totalBytes, totalFiles, mode) {
         const controller = await this.dialog.complexLoading(
-            title, 
+            title,
             mode === 'retry_failed' ? '正在重试失败的文件...' : '准备下载...',
             {
                 width: 'min(520px, 92vw)',
                 minHeight: '280px',
                 indeterminate: false,
                 initialStatus: '连接中...',
-                initialDetail: `共 ${utils.parseSize(totalBytes)} (${totalFiles} 个文件)`
+                initialDetail: totalBytes > 0 ? `共 ${utils.parseSize(totalBytes)} (${totalFiles} 个文件)` : `共 ${totalFiles} 个文件`
             }
         );
 
         let startTime = Date.now();
         let lastUpdate = Date.now();
         let downloadedBytes = 0;
+        const useFileCountMode = totalBytes === 0;
 
         return {
             setFile: (name, size) => {
-                controller.setDetail(`${name} (${utils.parseSize(size)})`);
+                controller.setDetail(`${name} (${useFileCountMode ? '计算中...' : utils.parseSize(size)})`);
             },
 
-            // 基于字节的进度更新
-            updateProgress: (fileReceived, fileTotal, totalReceived, totalSize, currentFileIndex, totalFiles) => {
+            // 基于实际下载字节或文件数的进度计算
+            updateProgress: (fileReceived, fileTotal, totalReceived, totalSize, currentFileIndex, totalFilesCount) => {
                 const now = Date.now();
                 const elapsed = (now - startTime) / 1000;
-                
-                // 总进度百分比（基于字节）
-                const totalPercent = totalSize > 0 
-                    ? Math.min(100, Math.round((totalReceived / totalSize) * 100))
-                    : Math.min(100, Math.round((currentFileIndex / totalFiles) * 100));
 
-                // 当前文件进度
-                const filePercent = fileTotal > 0 ? Math.round((fileReceived / fileTotal) * 100) : 0;
+                let totalPercent;
+                let status;
+                let detail;
 
-                // 计算速度
-                const deltaTime = (now - lastUpdate) / 1000;
-                const deltaBytes = totalReceived - downloadedBytes;
-                const speed = deltaTime > 0 ? deltaBytes / deltaTime : 0;
-                
-                if (deltaTime >= 0.5) { // 每500ms更新一次
-                    downloadedBytes = totalReceived;
-                    lastUpdate = now;
+                if (useFileCountMode) {
+                    // 按文件数量计算进度
+                    totalPercent = Math.min(100, Math.round((currentFileIndex / totalFilesCount) * 100));
+
+                    const deltaTime = (now - lastUpdate) / 1000;
+                    if (deltaTime >= 0.5) {
+                        lastUpdate = now;
+                    }
+
+                    const remainingFiles = totalFilesCount - currentFileIndex;
+                    const avgTimePerFile = elapsed > 0 && currentFileIndex > 0 ? elapsed / currentFileIndex : 0;
+                    const eta = avgTimePerFile > 0 ? remainingFiles * avgTimePerFile : 0;
+
+                    status = `文件 ${currentFileIndex}/${totalFilesCount}` + (eta > 0 ? ` · 剩余 ${utils.formatTime(eta)}` : '');
+                    detail = `按文件计数模式 · 当前文件 ${fileTotal > 0 ? Math.round((fileReceived / fileTotal) * 100) : 0}%`;
+                } else {
+                    // 按字节计算进度
+                    totalPercent = totalSize > 0
+                        ? Math.min(100, Math.round((totalReceived / totalSize) * 100))
+                        : 0;
+
+                    // 当前文件进度
+                    const filePercent = fileTotal > 0 ? Math.round((fileReceived / fileTotal) * 100) : 0;
+
+                    // 计算速度
+                    const deltaTime = (now - lastUpdate) / 1000;
+                    const deltaBytes = totalReceived - downloadedBytes;
+                    const speed = deltaTime > 0 ? deltaBytes / deltaTime : 0;
+
+                    if (deltaTime >= 0.5) {
+                        downloadedBytes = totalReceived;
+                        lastUpdate = now;
+                    }
+
+                    const remainingBytes = totalSize - totalReceived;
+                    const eta = speed > 0 ? remainingBytes / speed : 0;
+
+                    status = speed > 0
+                        ? `${utils.parseSize(speed)}/s · 剩余 ${utils.formatTime(eta)} · 文件 ${currentFileIndex}/${totalFilesCount}`
+                        : `文件 ${currentFileIndex}/${totalFilesCount}`;
+
+                    detail = `${utils.parseSize(totalReceived)}/${utils.parseSize(totalSize)} · 当前文件 ${filePercent}%`;
                 }
-
-                const remainingBytes = totalSize - totalReceived;
-                const eta = speed > 0 ? remainingBytes / speed : 0;
-
-                const status = speed > 0
-                    ? `${utils.parseSize(speed)}/s · 剩余 ${utils.formatTime(eta)} · 文件 ${currentFileIndex}/${totalFiles}`
-                    : `文件 ${currentFileIndex}/${totalFiles}`;
 
                 controller.updateProgress({
                     percent: totalPercent,
                     status: status,
-                    detail: `${utils.parseSize(totalReceived)}/${utils.parseSize(totalSize)} · 当前文件 ${filePercent}%`
+                    detail: detail
                 });
             },
 
             setError: (msg) => controller.setError(msg),
-
             complete: (msg, delay) => controller.complete(msg, delay),
-
             close: () => controller.close(),
-
             showRetry: (onRetry) => {
                 controller.setError('部分文件下载失败', true, onRetry);
             }
@@ -1031,8 +1142,8 @@ class UIManager {
         const isPartialSuccess = stats.failed > 0;
 
         let title = isPartialSuccess ? '更新完成（部分成功）' : '更新完成';
-        
-        // 分析失败原因（优化点3细节）
+
+        // 分析失败原因
         const corsErrors = failedFiles.filter(f => f.errorType === 'cors');
         const tokenErrors = failedFiles.filter(f => f.errorType === 'token');
         const networkErrors = failedFiles.filter(f => f.errorType === 'network');
@@ -1069,9 +1180,9 @@ class UIManager {
             return ['retry', 'ignore', 'later'][choice] || 'later';
         } else {
             const shouldRestart = await this.dialog.confirm(
-                title, 
+                title,
                 message + '\n\n✨ 更新完全成功！建议立即重启以应用更改。',
-                '立即重启', 
+                '立即重启',
                 '稍后手动重启'
             );
             return shouldRestart ? 'restart' : 'done';
@@ -1107,7 +1218,7 @@ class UIManager {
     async promptForToken(platform, errorType) {
         const name = platform === 'gitee' ? 'Gitee' : 'GitHub';
         const reason = errorType === 'token' ? 'Token 无效或已过期' : '访问被限制（可能需要 Token）';
-        
+
         const shouldSet = await this.dialog.confirm(
             `${name} 访问受限`,
             `${reason}\n\n是否立即配置 ${name} Token 以提高下载成功率？\n\n` +
@@ -1252,32 +1363,9 @@ class BackupManager {
             await this.copyDirectoryRecursive(`${src}/${folder}`, `${dest}/${folder}`);
         }
     }
-
-    // 清理过期临时目录（优化点4）
-    async cleanupOldTempDirs() {
-        try {
-            const [folders] = await game.promises.getFileList(this.targetDir);
-            const tempDirs = folders.filter(f => f.startsWith('__temp_'));
-            const now = Date.now();
-
-            for (const dir of tempDirs) {
-                try {
-                    const timestamp = parseInt(dir.replace('__temp_', ''));
-                    if (!isNaN(timestamp) && (now - timestamp > CONFIG.limits.maxTempAge)) {
-                        await game.promises.removeDir(`${this.targetDir}/${dir}`);
-                        console.log(`[清理] 删除过期临时目录: ${dir}`);
-                    }
-                } catch (e) {
-                    console.warn(`[清理] 无法删除临时目录 ${dir}:`, e);
-                }
-            }
-        } catch (e) {
-            console.warn('[清理] 扫描临时目录失败:', e);
-        }
-    }
 }
 
-// ==================== 主更新器（事件驱动重构版） ====================
+// ==================== 主更新器 ====================
 class ExtensionUpdater {
     constructor() {
         this.repo = null;
@@ -1296,9 +1384,10 @@ class ExtensionUpdater {
         this.totalBytes = 0;
         this.envType = Environment.getEnvironmentType();
         this.eventHandlers = {};
+        this.fixedTempDirName = '_temp_downloading';
     }
 
-    // 事件订阅机制（解耦UI）
+    // 事件订阅机制
     on(event, handler) {
         if (!this.eventHandlers[event]) this.eventHandlers[event] = [];
         this.eventHandlers[event].push(handler);
@@ -1316,15 +1405,12 @@ class ExtensionUpdater {
 
         this.repo = new GitAdapter(url);
         this.mode = mode;
-        this.tempDir = `${this.targetDir}/__temp_${Date.now()}`;
+        this.tempDir = `${this.targetDir}/${this.fixedTempDirName}`;
         this.state = new StateManager(this.tempDir);
         this.downloader = new SmartDownloader(this.repo, this.tokens);
         this.shouldCleanup = true;
         this.totalBytes = 0;
         this.tasks = [];
-
-        // 启动时清理旧临时目录
-        await this.backupManager.cleanupOldTempDirs();
 
         console.log(`[更新器] 初始化: 平台=${platform}, 环境=${this.envType}, 模式=${mode}`);
     }
@@ -1335,24 +1421,58 @@ class ExtensionUpdater {
         const loaded = await this.state.load();
 
         if (loaded) {
+            // 验证阶段合法性
+            if (loaded.phase && loaded.phase !== 'downloading') {
+                console.warn(`[恢复] 上次更新停留在阶段: ${loaded.phase}，可能未完整应用`);
+                if (loaded.phase === 'completed') {
+                    return false; // 已完成的不恢复
+                }
+            }
+
             this.repo = new GitAdapter(CONFIG.urls[loaded.repo.platform]);
             this.repo.switchBranch(loaded.repo.branch);
             this.mode = loaded.mode;
             this.downloader = new SmartDownloader(this.repo, this.tokens);
-            
-            // 恢复任务列表
-            this.tasks = loaded.files.map(f => new DownloadTask({
-                remote: f.path,
-                temp: `${this.tempDir}/${f.path}`,
-                target: `${this.targetDir}/${f.path}`,
-                size: f.size,
-                type: f.type,
-                critical: f.critical,
-                priority: f.type === 'text' ? 0 : (f.type === 'media' ? 2 : 1),
-                skip: f.status === 'skipped'
-            }));
 
-            this.totalBytes = this.tasks.reduce((sum, t) => sum + (t.size || 0), 0);
+            // 恢复任务列表，验证临时文件存在性
+            this.tasks = [];
+            for (const f of loaded.files) {
+                const task = new DownloadTask({
+                    remote: f.path,
+                    temp: `${this.tempDir}/${f.path}`,
+                    target: `${this.targetDir}/${f.path}`,
+                    size: f.size,
+                    type: f.type,
+                    critical: f.critical,
+                    priority: f.type === 'text' ? 0 : (f.type === 'media' ? 2 : 1),
+                    skip: f.status === 'skipped'
+                });
+
+                // 验证已下载文件的临时文件是否存在
+                if (f.status === 'success' && f.tempVerified) {
+                    try {
+                        const exists = await game.promises.checkFile(task.temp);
+                        if (!exists) {
+                            console.warn(`[恢复] 临时文件丢失，重置为pending: ${f.path}`);
+                            f.status = 'pending';
+                            f.downloadedBytes = 0;
+                            f.tempVerified = false;
+                            task.skip = false;
+                        }
+                    } catch (e) {
+                        f.status = 'pending';
+                        f.tempVerified = false;
+                    }
+                }
+
+                this.tasks.push(task);
+            }
+            // 修正统计
+            this.totalBytes = this.tasks.reduce((sum, t) => sum + (t.skip ? 0 : (t.size || 0)), 0);
+            this.recalculateStats();
+
+            // 保存修正后的状态
+            await this.state.save(true);
             return true;
         }
         return false;
@@ -1360,30 +1480,56 @@ class ExtensionUpdater {
 
     async checkResume() {
         try {
-            const [folders] = await game.promises.getFileList(this.targetDir);
-            const tempDirs = folders.filter(f => f.startsWith('__temp_'));
+            // 检查固定名称的临时目录是否存在
+            const tempDir = `${this.targetDir}/${this.fixedTempDirName}`;
+            const exists = await game.promises.checkDir(tempDir);
 
-            if (tempDirs.length > 0) {
-                tempDirs.sort().reverse();
-                for (const dir of tempDirs) {
-                    if (await this.resumeFromState(`${this.targetDir}/${dir}`)) {
-                        return {
-                            canResume: this.state.canResume(),
-                            hasFailures: this.state.isCompletedWithFailures(),
-                            tempDir: this.tempDir
-                        };
-                    }
+            if (exists === 1) {
+                // 尝试从该目录加载状态
+                if (await this.resumeFromState(tempDir)) {
+                    return {
+                        canResume: this.state.canResume(),
+                        hasFailures: this.state.isCompletedWithFailures(),
+                        tempDir: this.tempDir
+                    };
                 }
             }
         } catch (e) { }
         return { canResume: false, hasFailures: false, tempDir: null };
     }
 
+    recalculateStats() {
+        if (!this.state.data) return;
+
+        const stats = {
+            total: this.state.data.files.length,
+            success: 0,
+            failed: 0,
+            skipped: 0,
+            bytes: 0,
+            totalBytes: 0
+        };
+
+        for (const f of this.state.data.files) {
+            if (f.status === 'success') {
+                stats.success++;
+                stats.bytes += f.size || 0;
+            } else if (f.status === 'failed') {
+                stats.failed++;
+            } else if (f.status === 'skipped') {
+                stats.skipped++;
+            }
+
+            if (f.status !== 'skipped') {
+                stats.totalBytes += f.size || 0;
+            }
+        }
+
+        this.state.data.stats = stats;
+    }
+
     async prepareFileList(targetBranch = null) {
         if (targetBranch) this.repo.switchBranch(targetBranch);
-
-        const url = this.repo.getURL(CONFIG.files.directory);
-        
         // 下载文件列表
         const listTask = new DownloadTask({
             remote: CONFIG.files.directory,
@@ -1395,7 +1541,7 @@ class ExtensionUpdater {
         const result = await this.downloader.download(listTask);
         if (!result.success) {
             if (result.needToken) {
-                // 动态请求 Token（优化点3）
+                // 动态请求 Token
                 const token = await this.ui.promptForToken(this.repo.platform, 'cors');
                 if (token) {
                     this.tokens.set(this.repo.platform, token);
@@ -1411,10 +1557,10 @@ class ExtensionUpdater {
         try {
             directory = JSON.parse(content);
         } catch (e) {
-            throw new Error('文件列表格式错误');
+            throw new Error('Directory.json文件列表格式错误');
         }
 
-        // 解析文件列表（复用原逻辑，改为 Task 对象）
+        // 解析文件列表
         const excludes = {
             dirs: ['.git', '.vscode', 'node_modules', '__temp__'],
             files: ['.gitignore', '.DS_Store', CONFIG.files.state],
@@ -1470,15 +1616,15 @@ class ExtensionUpdater {
 
         const skipCount = this.tasks.filter(t => t.skip).length;
         await this.state.init(this.repo, this.repo.branch, this.mode, this.tasks);
-        
-        return { 
-            fileCount: this.tasks.length, 
-            skipCount, 
-            totalBytes: this.totalBytes 
+
+        return {
+            fileCount: this.tasks.length,
+            skipCount,
+            totalBytes: this.totalBytes
         };
     }
 
-    // 核心下载逻辑（真正的并发控制）
+    // 核心下载逻辑
     async downloadFiles(onProgress, onFileStart) {
         const pending = this.state.getPending()
             .map(p => this.tasks.find(t => t.remote === p.path))
@@ -1488,11 +1634,13 @@ class ExtensionUpdater {
 
         let completedCount = this.tasks.length - pending.length;
         let totalDownloadedBytes = this.state.data.stats.bytes;
-        
-        // 并发下载（使用 asyncPool）
+        let lastForceSaveTime = Date.now();
+        const FORCE_SAVE_INTERVAL = 5000; // 每5秒强制保存一次
+
+        // 并发下载
         await utils.asyncPool(CONFIG.limits.maxConcurrent, pending, async (task) => {
             if (task.skip) {
-                await this.state.updateFile(task.remote, 'skipped');
+                await this.state.updateFile(task.remote, 'skipped', null, null, 0, true);
                 completedCount++;
                 return;
             }
@@ -1500,31 +1648,47 @@ class ExtensionUpdater {
             if (onFileStart) onFileStart(task.remote, task.size);
 
             let lastReportedBytes = 0;
-            
-            const result = await this.downloader.download(task, (received, total) => {
-                // 细粒度进度
+            let lastProgressSave = Date.now();
+
+            const result = await this.downloader.download(task, async (received, total) => {
+                // 细粒度进度 - 使用防抖，但定期强制保存
                 task.downloadedBytes = received;
                 const delta = received - lastReportedBytes;
-                if (delta > 65536 || received === total) { // 每64KB或完成时更新
+                const now = Date.now();
+
+                // 每64KB或完成时更新内存进度
+                if (delta > 65536 || received === total) {
                     totalDownloadedBytes += delta;
                     lastReportedBytes = received;
-                    this.state.updateProgress(task.remote, received);
-                    
+
+                    // 每2秒或完成时强制保存进度
+                    if (now - lastProgressSave > 2000 || received === total) {
+                        await this.state.updateProgress(task.remote, received, true);
+                        lastProgressSave = now;
+                    } else {
+                        await this.state.updateProgress(task.remote, received, false);
+                    }
+
                     if (onProgress) {
                         onProgress(received, total, totalDownloadedBytes, this.totalBytes, completedCount, pending.length);
                     }
                 }
-            });
+
+                // 定期强制刷新所有状态
+                if (now - lastForceSaveTime > FORCE_SAVE_INTERVAL) {
+                    await this.state.flush();
+                    lastForceSaveTime = now;
+                }
+            }, this.state); // 传入 stateManager 以便内部管理状态流转
 
             if (result.success) {
                 completedCount++;
-                await this.state.updateFile(task.remote, 'success', null, null, result.size);
+                // 状态已在 download 方法中强制保存，这里更新计数即可
             } else {
-                await this.state.updateFile(task.remote, 'failed', result.error, result.errorType);
-                
-                // 动态 Token 提示（优化点3）
+                // 失败状态也已在 download 方法中保存
+                // 动态 Token 提示
                 if (result.needToken && !this._tokenPrompted) {
-                    this._tokenPrompted = true; // 防止重复提示
+                    this._tokenPrompted = true;
                     const token = await this.ui.promptForToken(this.repo.platform, result.errorType);
                     if (token) {
                         this.tokens.set(this.repo.platform, token);
@@ -1534,47 +1698,74 @@ class ExtensionUpdater {
             }
         });
 
+        // 最终强制刷新
+        await this.state.flush();
         return this.state.data.stats;
     }
 
-    // 仅重试失败文件（优化点1）
+    // 仅重试失败文件
     async retryFailedFiles(onProgress, onFileStart) {
         const failed = this.state.getFailed();
         if (failed.length === 0) return this.state.data.stats;
 
         // 重置失败状态为 pending
         await this.state.resetFailedToPending();
-        
+
         // 重新计算总字节数（仅失败文件）
         this.totalBytes = failed.reduce((sum, f) => sum + (f.size || 0), 0);
-        
+
         return this.downloadFiles(onProgress, onFileStart);
     }
 
     async applyUpdate() {
-        // 创建备份
         const backupResult = await this.backupManager.createBackup();
         if (!backupResult.success) {
             console.warn('[备份] 创建失败，继续更新:', backupResult.error);
+        } else {
+            // 进入备份阶段
+            await this.state.setPhase('backing_up', true);
         }
-
-        // 移动文件
-        await this.moveDirectory(this.tempDir, this.targetDir);
-        
-        // 清理
-        this.state.complete(false);
-        this.shouldCleanup = true;
-        await this.cleanup();
+        try {
+            // 进入移动阶段
+            await this.state.setPhase('moving', true);
+            await this.moveDirectory(this.tempDir, this.targetDir);
+            await this.cleanup();
+        } catch (error) {
+            // 移动或清理失败，记录状态以便恢复
+            console.error('[应用更新] 失败:', error);
+            await this.state.setPhase('downloading', true); // 重置为可恢复状态
+            throw error;
+        }
     }
 
+    // 增强的移动目录方法，带状态验证
     async moveDirectory(src, dest) {
         const [folders, files] = await game.promises.getFileList(src);
         await game.promises.createDir(dest);
 
         for (const file of files) {
-            const content = await game.promises.readFile(`${src}/${file}`);
-            await game.promises.writeFile(content, dest, file);
-            await game.promises.removeFile(`${src}/${file}`);
+            const srcPath = `${src}/${file}`;
+            const destPath = `${dest}/${file}`;
+
+            // 查找对应任务以验证
+            const relativePath = srcPath.replace(this.tempDir + '/', '');
+            const fileState = this.state.data.files.find(f => f.path === relativePath);
+
+            if (fileState && fileState.status === 'success' && fileState.tempVerified) {
+                try {
+                    const content = await game.promises.readFile(srcPath);
+                    await game.promises.writeFile(content, dest, file);
+                    await game.promises.removeFile(srcPath);
+
+                    // 标记为已应用（可选，用于更精细的回滚）
+                    fileState.applied = true;
+                } catch (e) {
+                    console.error(`[移动文件] 失败: ${file}`, e);
+                    throw new Error(`移动文件失败: ${file} - ${e.message}`);
+                }
+            } else {
+                console.warn(`[移动文件] 跳过未验证文件: ${file}`);
+            }
         }
 
         for (const folder of folders) {
@@ -1583,11 +1774,13 @@ class ExtensionUpdater {
 
         try {
             await game.promises.removeDir(src);
-        } catch (e) { }
+        } catch (e) {
+            console.warn('[清理] 删除临时目录失败:', e);
+        }
     }
 
     async cleanup() {
-        if (!this.tempDir || !this.shouldCleanup) return;
+        if (!this.tempDir) return;
         try {
             const exists = await game.promises.checkDir(this.tempDir);
             if (exists === 1) {
@@ -1623,12 +1816,12 @@ class ExtensionUpdater {
         }
     }
 
-    // 版本回退（使用 fileManager）
+    // 版本回退
     async manageRollback() {
         while (true) {
             const backups = await this.backupManager.listBackups();
             const currentVersion = 'current'; // 可扩展为读取当前版本
-            
+
             const action = await this.ui.showRollbackManager(backups, currentVersion);
             if (!action) break;
 
@@ -1648,7 +1841,7 @@ class ExtensionUpdater {
                 }
             } else if (action.action === 'delete') {
                 const confirm = await this.ui.confirm(
-                    '删除确认', 
+                    '删除确认',
                     `确定删除选中的 ${action.backups.length} 个备份吗？此操作不可恢复。`,
                     '删除', '取消'
                 );
@@ -1663,51 +1856,114 @@ class ExtensionUpdater {
     }
 
     // 主更新流程
-    async update(force = false, retryMode = false) {
+    async update(force = false, resumeMode = false, retryMode = false) {
         this.startTime = Date.now();
         let progressUI = null;
         this._tokenPrompted = false;
 
         try {
-            // 恢复模式或重试模式
-            if (!force && this.state.data && !retryMode) {
-                // 恢复现有任务（断点续传）
-            } else if (retryMode) {
-                // 重试模式：使用现有状态，不重新初始化
-            } else {
-                // 全新下载：版本检查与文件列表准备
-                const gameVer = lib.version || '1.0.0';
-                const verInfo = await new VersionChecker(this.repo, this.tokens, this.envType).check(gameVer);
-
-                if (verInfo.branch !== this.repo.branch) {
-                    this.repo.switchBranch(verInfo.branch);
+            // 断点续传模式：保持现有状态继续下载
+            if (resumeMode) {
+                // 检查是否有可恢复的任务
+                if (!this.state || !this.state.data || !this.state.canResume()) {
+                    throw new Error('没有可恢复的下载任务');
                 }
 
-                const { fileCount, skipCount, totalBytes } = await this.prepareFileList();
+                game.print(`[断点续传] 恢复下载: ${this.state.data.stats.success}/${this.state.data.stats.total} 文件已完成`);
+            }
+            // 重试模式：只处理失败的文件
+            else if (retryMode) {
+                // 如果没有失败的文件，直接返回
+                if (!this.state || !this.state.data) {
+                    throw new Error('没有可重试的失败文件');
+                }
 
-                const confirmed = await this.ui.confirmStart({
-                    version: verInfo.extensionVersion,
-                    branch: this.repo.branch,
-                    platform: this.repo.platform,
-                    mode: this.mode,
-                    fileCount,
-                    skipCount,
-                    totalSize: utils.parseSize(totalBytes),
-                    envType: this.envType
-                });
+                const failedCount = this.state.getFailed().length;
+                if (failedCount === 0) {
+                    return { success: true, stats: this.state.data.stats, message: '没有失败的文件需要重试' };
+                }
+            }
+            // 正常模式：全新下载或检查版本
+            else {
+                // 如果有可恢复的状态，询问用户是否继续
+                if (this.state.data && this.state.canResume() && !force) {
+                    const choice = await this.ui.confirm(
+                        '发现未完成任务',
+                        '检测到上次未完成的下载任务，是否继续下载？\n\n选择"取消"将开始新的下载任务并删除之前的进度。',
+                        '继续下载',
+                        '开始新任务'
+                    );
 
-                if (!confirmed) {
-                    await this.cleanup();
-                    return { cancelled: true };
+                    if (choice) {
+                        // 用户选择继续，保持现有状态
+                        game.print(`[断点续传] 恢复下载: ${this.state.data.stats.success}/${this.state.data.stats.total} 文件已完成`);
+                    } else {
+                        // 用户选择新任务，清理并重新开始
+                        await this.cleanup();
+                        this.tasks = [];
+                        this.totalBytes = 0;
+
+                        // 全新下载：版本检查与文件列表准备
+                        const gameVer = lib.version || '1.0.0';
+                        const verInfo = await new VersionChecker(this.repo, this.tokens, this.envType).check(gameVer);
+
+                        if (verInfo.branch !== this.repo.branch) {
+                            this.repo.switchBranch(verInfo.branch);
+                        }
+
+                        const { fileCount, skipCount, totalBytes } = await this.prepareFileList();
+
+                        const confirmed = await this.ui.confirmStart({
+                            version: verInfo.extensionVersion,
+                            branch: this.repo.branch,
+                            platform: this.repo.platform,
+                            mode: this.mode,
+                            fileCount,
+                            skipCount,
+                            totalSize: utils.parseSize(totalBytes),
+                            envType: this.envType
+                        });
+
+                        if (!confirmed) {
+                            await this.cleanup();
+                            return { cancelled: true };
+                        }
+                    }
+                } else {
+                    // 全新下载：版本检查与文件列表准备
+                    const gameVer = lib.version || '1.0.0';
+                    const verInfo = await new VersionChecker(this.repo, this.tokens, this.envType).check(gameVer);
+
+                    if (verInfo.branch !== this.repo.branch) {
+                        this.repo.switchBranch(verInfo.branch);
+                    }
+
+                    const { fileCount, skipCount, totalBytes } = await this.prepareFileList();
+
+                    const confirmed = await this.ui.confirmStart({
+                        version: verInfo.extensionVersion,
+                        branch: this.repo.branch,
+                        platform: this.repo.platform,
+                        mode: this.mode,
+                        fileCount,
+                        skipCount,
+                        totalSize: utils.parseSize(totalBytes),
+                        envType: this.envType
+                    });
+
+                    if (!confirmed) {
+                        await this.cleanup();
+                        return { cancelled: true };
+                    }
                 }
             }
 
-            // 获取待下载文件数（用于UI）
-            const pendingCount = retryMode 
-                ? this.state.getFailed().length 
+            // 获取待下载文件数
+            const pendingCount = retryMode
+                ? this.state.getFailed().length
                 : this.state.getPending().length;
-            
-            const totalBytes = retryMode 
+
+            const totalBytes = retryMode
                 ? this.state.getFailed().reduce((s, f) => s + (f.size || 0), 0)
                 : this.totalBytes;
 
@@ -1722,16 +1978,9 @@ class ExtensionUpdater {
                 this.mode
             );
 
-            // 绑定取消事件
-            const onCancel = () => {
-                this.downloader.cancelAll();
-                this.shouldCleanup = false;
-            };
-
             let currentFileIndex = 0;
-            
-            // 执行下载（区分正常下载和重试下载）
-            const downloadMethod = retryMode 
+            // 执行下载（区分正常下载、断点续传和重试下载）
+            const downloadMethod = retryMode
                 ? () => this.retryFailedFiles(
                     (fileRec, fileTot, totalRec, totalTot, idx, tot) => {
                         progressUI.updateProgress(fileRec, fileTot, totalRec, totalTot, idx, tot);
@@ -1758,7 +2007,6 @@ class ExtensionUpdater {
             if (failed.length > 0) {
                 this.shouldCleanup = false;
                 this.state.complete(true);
-
                 const action = await this.ui.showCompleteResult(
                     {
                         stats: this.state.data.stats,
@@ -1774,20 +2022,28 @@ class ExtensionUpdater {
                 );
 
                 if (action === 'retry') {
-                    // 仅重试失败（优化点1）
-                    return await this.update(true, true);
-                } else if (action === 'ignore') {
+                    // 仅重试失败
+                    return await this.update(false, false, true);
+                }
+                if (action === 'ignore') {
                     await this.state.markAllFailedAsSkipped();
-                    await this.applyUpdate();
+                    await this.applyUpdate(); // 确保执行备份、替换和清理
                     return {
                         success: true,
                         partial: true,
                         stats: this.state.data.stats,
                         message: '已跳过失败文件完成更新'
                     };
-                } else {
-                    return { retryLater: true, failed };
                 }
+                if (action === 'restart') {
+                    game.reload();
+                    return {
+                        success: true,
+                        stats: this.state.data.stats,
+                        message: '更新已完成'
+                    };
+                }
+                return { retryLater: true, failed };
             } else {
                 await this.applyUpdate();
                 const result = {
@@ -1802,13 +2058,17 @@ class ExtensionUpdater {
                 const action = await this.ui.showCompleteResult(result, []);
                 if (action === 'restart') {
                     game.reload();
+                    return {
+                        success: true,
+                        stats: this.state.data.stats,
+                        message: '更新已完成'
+                    };
                 }
                 return result;
             }
-
         } catch (error) {
             if (progressUI) progressUI.close();
-            
+
             if (error.message === '下载已取消') {
                 this.shouldCleanup = false;
                 return { cancelled: true, canResume: true };
@@ -1823,12 +2083,8 @@ class ExtensionUpdater {
 const Lit_update = {
     async showUI() {
         const updater = new ExtensionUpdater();
-        let autoRetryCount = 0;
 
         try {
-            // 启动时自动清理过期临时文件
-            await updater.backupManager.cleanupOldTempDirs();
-
             const resumeInfo = await updater.checkResume();
             const hasToken = {
                 github: updater.tokens.has('github'),
@@ -1849,14 +2105,29 @@ const Lit_update = {
             }
 
             let mode = 'simple';
+            let isResumeMode = false;
             let isRetryMode = false;
 
             if (choice === 'resume') {
-                // 断点续传：复用现有状态
-                await updater.init(updater.repo.platform, updater.mode);
+                // 断点续传模式：使用现有状态继续下载
+                if (!updater.state || !updater.state.data) {
+                    throw new Error('恢复状态失败，请重新开始更新');
+                }
+                if (resumeInfo.canResume && resumeInfo.tempDir) {
+                    updater.tempDir = resumeInfo.tempDir;
+                    await updater.resumeFromState(resumeInfo.tempDir);
+                }
+                isResumeMode = true;
+                game.print(`[断点续传] 恢复下载: ${updater.state.data.stats.success}/${updater.state.data.stats.total} 文件已完成`);
             } else if (choice === 'retry_failed') {
-                // 仅重试失败
-                await updater.init(updater.repo.platform, updater.mode);
+                // 仅重试失败模式
+                if (!updater.state || !updater.state.data) {
+                    throw new Error('没有可重试的失败文件');
+                }
+                if (resumeInfo.canResume && resumeInfo.tempDir) {
+                    updater.tempDir = resumeInfo.tempDir;
+                    await updater.resumeFromState(resumeInfo.tempDir);
+                }
                 isRetryMode = true;
             } else {
                 // 新任务
@@ -1867,15 +2138,15 @@ const Lit_update = {
                 );
                 if (!config) return;
 
-                // 清理旧临时目录（如果用户选择重新开始）
+                // 清理旧临时目录
                 if (resumeInfo.tempDir && config.mode !== 'retry_failed') {
-                    await updater.backupManager.cleanupOldTempDirs();
+                    await updater.cleanup();
                 }
 
                 await updater.init(config.platform, config.mode);
             }
 
-            const result = await updater.update(false, isRetryMode);
+            const result = await updater.update(false, isResumeMode, isRetryMode);
 
             if (result.cancelled) {
                 game.print('[更新] 已取消，进度已保存');
@@ -1894,13 +2165,13 @@ const Lit_update = {
 
         } catch (error) {
             console.error('[更新失败]', error);
-            
+
             // 细化错误提示
             let errorMsg = error.message;
             if (error.message.includes('CORS') || error.message.includes('403')) {
                 errorMsg += '\n\n建议解决方案：\n1. 使用 Node.js 版本客户端\n2. 配置 Gitee Token\n3. 切换为 GitHub 源';
             }
-            
+
             await updater.ui.alert('更新失败', errorMsg);
 
             if (error.message !== '下载已取消' && updater.tempDir) {
@@ -1922,14 +2193,14 @@ const Lit_update = {
         const updater = new ExtensionUpdater();
         try {
             await updater.init(platform, mode);
-            
+
             const resumeInfo = await updater.checkResume();
             if (resumeInfo.canResume && !force) {
                 game.print('[更新] 发现未完成任务，继续下载...');
             }
 
-            const result = await updater.update(force);
-            
+            const result = await updater.update(force, resumeInfo.canResume && !force, mode === 'retry_failed');
+
             if (result.retryLater) {
                 game.print(`[${CONFIG.name}] 部分文件下载失败，已保存进度`);
                 return result;
@@ -1948,11 +2219,11 @@ const Lit_update = {
         }
     },
 
-    // 快速下载指定文件（新增接口）
+    // 快速下载指定文件
     async quickDownload(fileList, options = {}) {
         const { platform = 'gitee', onProgress, silent = false } = options;
         const updater = new ExtensionUpdater();
-        
+
         try {
             await updater.init(platform, 'full');
             const tasks = fileList.map((file, index) => {
@@ -1979,7 +2250,7 @@ const Lit_update = {
 
             updater.tasks = tasks;
             updater.totalBytes = tasks.reduce((s, t) => s + (t.size || 0), 0);
-            
+
             if (!silent) game.print(`[快速下载] 开始下载 ${tasks.length} 个文件...`);
 
             let progressUI = null;
@@ -2002,7 +2273,7 @@ const Lit_update = {
             });
 
             if (progressUI) progressUI.close();
-            
+
             // 应用下载（直接移动到目标位置，不备份）
             for (const task of tasks) {
                 try {

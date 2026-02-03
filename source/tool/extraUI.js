@@ -3,7 +3,7 @@ import basic from './basic.js'
 
 /**
  * 样式隔离的对话框组件 - 重构版
- * 公开接口: loading, complexLoading, alert, confirm, choice, input, fileManager, showCountdownDialog, showDocModal, textEditor, closeAll
+ * 公开接口: loading, complexLoading, alert, confirm, choice, input, filesManager, showCountdownDialog, showDocModal, textEditor, closeAll
  */
 const DialogManager = (() => {
     // ========== 私有变量 ==========
@@ -90,7 +90,6 @@ const DialogManager = (() => {
 
         // 延迟释放锁，防止连续触发
         // setTimeout(() => {
-        //     debugger;
         //     _isClosing = false;
         // }, 50);
         _isClosing = false;
@@ -106,9 +105,10 @@ const DialogManager = (() => {
             enableEsc: true,
             enableBack: true,
             enableOverlayClick: true,
-            closeOnConfirm: true,  // 点击确认按钮后是否关闭
-            closeOnCancel: true,   // 点击取消按钮后是否关闭
-            preventDefault: false  // 是否阻止默认关闭行为（用于自定义处理）
+            closeOnConfirm: true,       // 点击确认按钮后是否关闭
+            closeOnCancel: true,        // 点击取消按钮后是否关闭
+            preventDefault: false,      // 是否阻止默认关闭行为（用于自定义处理）
+            defaultResult: undefined    // 默认的关闭后返回结果
         };
         const opts = { ...defaultOptions, ...options };
         const handlers = [];
@@ -118,7 +118,7 @@ const DialogManager = (() => {
             const handler = (e) => {
                 if (e.key === 'Escape') {
                     e.preventDefault();
-                    _close(overlay, onClose, 'esc');
+                    _close(overlay, onClose, 'esc', opts.defaultResult);
                 }
             };
             document.addEventListener('keydown', handler);
@@ -127,7 +127,7 @@ const DialogManager = (() => {
 
         // 返回键/历史记录管理
         if (opts.enableBack) {
-            const backHandler = _createBackHandler(overlay, onClose);
+            const backHandler = _createBackHandler(overlay, onClose, opts.defaultResult);
             handlers.push(backHandler);
         }
 
@@ -136,7 +136,7 @@ const DialogManager = (() => {
             const handler = (e) => {
                 if (e.target === overlay) {
                     e.stopPropagation();
-                    _close(overlay, onClose, 'overlay');
+                    _close(overlay, onClose, 'overlay', opts.defaultResult);
                 }
             };
             overlay.addEventListener('pointerdown', handler);
@@ -159,7 +159,7 @@ const DialogManager = (() => {
      * 重写返回键处理 - 使用 Hash 方案替代 History API
      * 避免历史记录污染，移动端兼容性更好
      */
-    const _createBackHandler = (overlay, onClose) => {
+    const _createBackHandler = (overlay, onClose, result) => {
         // 使用 hash 变化来捕获返回键，更可靠
         const hashKey = `dialog-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 
@@ -177,7 +177,7 @@ const DialogManager = (() => {
                 // 阻止默认返回行为
                 if (e) e.preventDefault();
 
-                _close(overlay, onClose, 'back');
+                _close(overlay, onClose, 'back', result);
 
                 // 恢复原始 hash（如果需要）
                 if (originalHash && window.history.length > 1) {
@@ -272,7 +272,7 @@ const DialogManager = (() => {
         let clicked = false;
         button.onclick = (e) => {
             e.stopPropagation();
-            if (!clicked && !options.disabled) {
+            if (!clicked && !button.disabled) {
                 clicked = true;
                 if (options.onClick) options.onClick();
                 setTimeout(() => { clicked = false; }, 500);
@@ -350,12 +350,11 @@ const DialogManager = (() => {
                         config.buttons.map(btn => ({
                             ...btn,
                             onClick: () => {
+                                if (btn.onClick) btn.onClick();
                                 if (btn.closeOnClick !== false) {
                                     _close(overlay, handleClose, 'button',
                                         typeof btn.result === 'function' ? btn.result() : btn.result
                                     );
-                                } else if (btn.onClick) {
-                                    btn.onClick();
                                 }
                             }
                         }))
@@ -367,7 +366,8 @@ const DialogManager = (() => {
                 const closeOptions = {
                     enableEsc: config.closeOnEsc !== false,
                     enableBack: config.closeOnBack !== false,
-                    enableOverlayClick: config.closeOnOverlay !== false
+                    enableOverlayClick: config.closeOnOverlay !== false,
+                    defaultResult: config.defaultResult
                 };
 
                 // 暴露关闭方法供外部调用
@@ -388,14 +388,16 @@ const DialogManager = (() => {
 
         // ========== 基于统一基础方法重构具体对话框 ==========
 
-        async choice(title, message, buttons) {
+        async choice(title, message, buttons, primaryIdx) {
+            if (!primaryIdx && buttons) primaryIdx = buttons.length - 1;
             return await this.createBaseDialog({
                 title,
                 message,
+                defaultResult: -1,
                 buttons: buttons.map((text, index) => ({
                     text,
-                    isPrimary: index === buttons.length - 1 && !['取消', 'Cancel'].includes(text),
-                    result: index  // 返回按钮索引
+                    isPrimary: index === primaryIdx,
+                    result: ['取消', 'Cancel'].includes(text) ? -1 : index  // 返回按钮索引
                 }))
             });
         },
@@ -619,6 +621,7 @@ const DialogManager = (() => {
             return this.createBaseDialog({
                 title,
                 message,
+                defaultResult: true,
                 buttons: [{ text: '确定', isPrimary: true, result: true }],
             });
         },
@@ -627,6 +630,7 @@ const DialogManager = (() => {
             return await this.createBaseDialog({
                 title,
                 message,
+                defaultResult: false,
                 buttons: [
                     { text: cancelText, result: false },
                     { text: confirmText, isPrimary: true, result: true }
@@ -702,6 +706,7 @@ const DialogManager = (() => {
                         });
                     }
                 },
+                defaultResult: null,
                 buttons: [
                     {
                         text: options.cancelText || '取消',
@@ -742,6 +747,10 @@ const DialogManager = (() => {
                     countdownEl.textContent = `${countdownTime} 秒`;
                     dialog.appendChild(countdownEl);
                     dialog.countdownEl = countdownEl;
+                },
+                defaultResult: () => {
+                    onCancel();
+                    return false;
                 },
                 buttons: [
                     {
@@ -786,8 +795,8 @@ const DialogManager = (() => {
             });
         },
 
-        async fileManager(title, message, items) {
-            return this.createBaseDialog({
+        async filesManager(title, message, items) {
+            return await this.createBaseDialog({
                 title,
                 message: null,
                 dialogOptions: {
@@ -846,9 +855,10 @@ const DialogManager = (() => {
                             }
 
                             // 更新按钮状态
-                            const deleteBtn = dialog.querySelector('.lit-ui-button[data-cancel="false"]:nth-of-type(1)');
-                            const editBtn = dialog.querySelector('.lit-ui-button[data-cancel="false"]:nth-of-type(2)');
-                            const applyBtn = dialog.querySelector('.lit-ui-button.primary');
+                            const buttons = dialog.querySelectorAll('.lit-ui-button-row .lit-ui-button');
+                            const deleteBtn = buttons[0]; // 删除按钮
+                            const editBtn = buttons[1];   // 编辑按钮
+                            const applyBtn = buttons[2];  // 应用配置按钮
 
                             if (deleteBtn && editBtn && applyBtn) {
                                 const count = selectedFiles.size;
@@ -868,33 +878,43 @@ const DialogManager = (() => {
 
                     dialog.appendChild(listContainer);
                 },
+                defaultResult: null,
                 buttons: [
                     {
                         text: '删除',
-                        result: () => ({
-                            action: 'delete',
-                            files: Array.from(document.querySelectorAll('.lit-ui-list-item input:checked'))
-                                .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value)
-                        }),
+                        result: () => {
+                            let files = Array.from(document.querySelectorAll('.lit-ui-list-item input:checked'))
+                                .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value);
+                            return ({
+                                action: 'delete',
+                                files: files
+                            });
+                        },
                         disabled: true
                     },
                     {
                         text: '编辑',
-                        result: () => ({
-                            action: 'edit',
-                            files: Array.from(document.querySelectorAll('.lit-ui-list-item input:checked'))
-                                .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value)
-                        }),
+                        result: () => {
+                            let files = Array.from(document.querySelectorAll('.lit-ui-list-item input:checked'))
+                                .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value);
+                            return ({
+                                action: 'edit',
+                                files: files
+                            });
+                        },
                         disabled: true
                     },
                     {
                         text: '应用配置',
                         isPrimary: true,
-                        result: () => ({
-                            action: 'apply',
-                            files: Array.from(document.querySelectorAll('.lit-ui-list-item input:checked'))
-                                .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value)
-                        }),
+                        result: () => {
+                            let files = Array.from(document.querySelectorAll('.lit-ui-list-item input:checked'))
+                                .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value);
+                            return ({
+                                action: 'apply',
+                                files: files
+                            });
+                        },
                         disabled: true
                     },
                     {
@@ -907,9 +927,7 @@ const DialogManager = (() => {
         },
 
         async showDocModal(url, title, dataProcessor = null) {
-            await _initCSS();
-
-            return this.createBaseDialog({
+            return await this.createBaseDialog({
                 title,
                 message: null,
                 dialogOptions: {
@@ -976,7 +994,7 @@ const DialogManager = (() => {
         async textEditor(title, message, initialContent, options = {}) {
             let textarea, checkbox;
 
-            return this.createBaseDialog({
+            return await this.createBaseDialog({
                 title,
                 message: null,
                 dialogOptions: {
@@ -1016,6 +1034,7 @@ const DialogManager = (() => {
                     const label = document.createElement('label');
                     label.htmlFor = 'deleteTempFile';
                     label.textContent = '编码成功后，删除临时json文件';
+                    label.style.cursor = 'pointer';
 
                     optionsRow.appendChild(checkbox);
                     optionsRow.appendChild(label);
@@ -1033,6 +1052,7 @@ const DialogManager = (() => {
                         }
                     }, 100);
                 },
+                defaultResult: null,
                 buttons: [
                     { text: '取消', result: null },
                     {
@@ -1060,7 +1080,7 @@ const DialogManager = (() => {
                 closeOnEsc: false,
                 closeOnBack: false,
                 closeOnOverlay: false
-            }).then(result => typeof result === 'function' ? result() : result);
+            });
         },
 
         /**

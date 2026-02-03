@@ -1,83 +1,245 @@
 {
-    "LICENSE": "other",
-    "extension.js": "text",
-    "image/card/lit_diaoka.png": "image",
-    "image/card/lit_qianfanpai.png": "image",
-    "image/character/lit_boshu.png": "image",
-    "image/character/lit_chenke.png": "image",
-    "image/character/lit_hujunwei.png": "image",
-    "image/character/lit_hupan.png": "image",
-    "image/character/lit_hupan9.png": "image",
-    "image/character/lit_huxinyu.png": "image",
-    "image/character/lit_jianghaixu.png": "image",
-    "image/character/lit_lanboxun.png": "image",
-    "image/character/lit_linmiao.png": "image",
-    "image/character/lit_liuchenmu.png": "image",
-    "image/character/lit_liyang9.png": "image",
-    "image/character/lit_pangjianlong.png": "image",
-    "image/character/lit_pengliying.png": "image",
-    "image/character/lit_qb.png": "image",
-    "image/character/lit_qianbaocan.png": "image",
-    "image/character/lit_rita.png": "image",
-    "image/character/lit_wangcan9.png": "image",
-    "image/character/lit_wangrong.png": "image",
-    "image/character/lit_wangsiyuan.png": "image",
-    "image/character/lit_wuxiaoqi.png": "image",
-    "image/character/lit_yangxiangling.png": "image",
-    "image/character/lit_zengpinjia.png": "image",
-    "image/character/lit_zengpinjia9.png": "image",
-    "image/character/lit_zhangchi.png": "image",
-    "image/character/lit_zhangchi9.png": "image",
-    "image/character/lit_zhangqinyi.png": "image",
-    "image/character/lit_zhangshengjie.png": "image",
-    "image/character/lit_zhangshengjie9.png": "image",
-    "image/character/lit_zhengmohan.png": "image",
-    "image/character/lit_zhengmohan9.png": "image",
-    "image/character/lit_zhongyutong9.png": "image",
-    "image/character/lit_zigao.png": "image",
-    "image/skin/lit_hupan9/lit_hupan_chara.jpg": "image",
-    "image/skin/lit_jianghaixu/lit_jianghaixu_azure.png": "image",
-    "image/skin/lit_wangrong/lit_wangrong_pale.png": "image",
-    "info.json": "json",
-    "script/chooseCharacterOL.js": "text",
-    "script/content.js": "text",
-    "script/function.js": "text",
-    "script/mode/chooseSkill.js": "text",
-    "script/mode/doudizhu.js": "text",
-    "script/modeset.js": "text",
-    "script/player.js": "text",
-    "script/precontent.js": "text",
-    "script/skillSet.js": "text",
-    "script/useFunction.js": "text",
-    "script/video.js": "text",
-    "source/card/lit_card.js": "text",
-    "source/card/lit_cardSkills.js": "text",
-    "source/card/lit_cardTranslate.js": "text",
-    "source/character/lit.js": "text",
-    "source/character/lit/lit_characters.js": "text",
-    "source/character/lit/lit_skills.js": "text",
-    "source/character/lit/lit_translate.js": "text",
-    "source/character/lit_gz.js": "text",
-    "source/character/lit_test.js": "text",
-    "source/character/test/test_characters.js": "text",
-    "source/character/test/test_skills.js": "text",
-    "source/character/test/test_translate.js": "text",
-    "source/config.js": "text",
-    "source/content.js": "text",
-    "source/help.js": "text",
-    "source/mode/sandaohuanhua.js": "text",
-    "source/precontent.js": "text",
-    "source/tool/basic.js": "text",
-    "source/tool/configSeter.js": "text",
-    "source/tool/extraUI.js": "text",
-    "source/tool/suiSet.js": "text",
-    "source/tool/update.js": "text",
-    "style/css/cards.css": "text",
-    "style/css/extension.css": "text",
-    "style/css/extraUI.css": "text",
-    "style/html/help.html": "text",
-    "style/html/sandaohuanhua.html": "text",
-    "style/html/update.html": "text",
-    "style/nncfg/android_wide11.0.nncfg": "other",
-    "style/nncfg/win11.0.nncfg": "other"
+    "LICENSE": {
+        "size": 35475
+    },
+    "extension.js": {
+        "size": 5014
+    },
+    "image/card/lit_diaoka.png": {
+        "size": 5653
+    },
+    "image/card/lit_qianfanpai.png": {
+        "size": 16160
+    },
+    "image/character/lit_boshu.png": {
+        "size": 168220
+    },
+    "image/character/lit_chenke.png": {
+        "size": 191594
+    },
+    "image/character/lit_hujunwei.png": {
+        "size": 169992
+    },
+    "image/character/lit_hupan.png": {
+        "size": 274246
+    },
+    "image/character/lit_hupan9.png": {
+        "size": 161645
+    },
+    "image/character/lit_huxinyu.png": {
+        "size": 236810
+    },
+    "image/character/lit_jianghaixu.png": {
+        "size": 304244
+    },
+    "image/character/lit_lanboxun.png": {
+        "size": 324427
+    },
+    "image/character/lit_linmiao.png": {
+        "size": 198156
+    },
+    "image/character/lit_liuchenmu.png": {
+        "size": 266362
+    },
+    "image/character/lit_liyang9.png": {
+        "size": 194053
+    },
+    "image/character/lit_pangjianlong.png": {
+        "size": 206820
+    },
+    "image/character/lit_pengliying.png": {
+        "size": 181136
+    },
+    "image/character/lit_qb.png": {
+        "size": 159996
+    },
+    "image/character/lit_qianbaocan.png": {
+        "size": 128169
+    },
+    "image/character/lit_rita.png": {
+        "size": 225176
+    },
+    "image/character/lit_wangcan9.png": {
+        "size": 203228
+    },
+    "image/character/lit_wangrong.png": {
+        "size": 314510
+    },
+    "image/character/lit_wangsiyuan.png": {
+        "size": 123899
+    },
+    "image/character/lit_wuxiaoqi.png": {
+        "size": 259587
+    },
+    "image/character/lit_yangxiangling.png": {
+        "size": 373634
+    },
+    "image/character/lit_zengpinjia.png": {
+        "size": 252855
+    },
+    "image/character/lit_zengpinjia9.png": {
+        "size": 134942
+    },
+    "image/character/lit_zhangchi.png": {
+        "size": 356516
+    },
+    "image/character/lit_zhangchi9.png": {
+        "size": 162757
+    },
+    "image/character/lit_zhangqinyi.png": {
+        "size": 131272
+    },
+    "image/character/lit_zhangshengjie.png": {
+        "size": 240427
+    },
+    "image/character/lit_zhangshengjie9.png": {
+        "size": 189844
+    },
+    "image/character/lit_zhengmohan.png": {
+        "size": 185546
+    },
+    "image/character/lit_zhengmohan9.png": {
+        "size": 174434
+    },
+    "image/character/lit_zhongyutong9.png": {
+        "size": 183630
+    },
+    "image/character/lit_zigao.png": {
+        "size": 176679
+    },
+    "image/skin/lit_hupan9/lit_hupan_chara.jpg": {
+        "size": 107161
+    },
+    "image/skin/lit_jianghaixu/lit_jianghaixu_azure.png": {
+        "size": 295013
+    },
+    "image/skin/lit_wangrong/lit_wangrong_pale.png": {
+        "size": 284308
+    },
+    "info.json": {
+        "size": 254
+    },
+    "script/chooseCharacterOL.js": {
+        "size": 916
+    },
+    "script/content.js": {
+        "size": 4581
+    },
+    "script/function.js": {
+        "size": 13862
+    },
+    "script/mode/chooseSkill.js": {
+        "size": 14512
+    },
+    "script/mode/doudizhu.js": {
+        "size": 31328
+    },
+    "script/modeset.js": {
+        "size": 7641
+    },
+    "script/player.js": {
+        "size": 1741
+    },
+    "script/precontent.js": {
+        "size": 1364
+    },
+    "script/skillSet.js": {
+        "size": 17015
+    },
+    "script/useFunction.js": {
+        "size": 1664
+    },
+    "script/video.js": {
+        "size": 4824
+    },
+    "source/card/lit_card.js": {
+        "size": 537
+    },
+    "source/card/lit_cardSkills.js": {
+        "size": 23640
+    },
+    "source/card/lit_cardTranslate.js": {
+        "size": 3174
+    },
+    "source/character/lit.js": {
+        "size": 867
+    },
+    "source/character/lit/lit_characters.js": {
+        "size": 13220
+    },
+    "source/character/lit/lit_skills.js": {
+        "size": 257314
+    },
+    "source/character/lit/lit_translate.js": {
+        "size": 30603
+    },
+    "source/character/lit_gz.js": {
+        "size": 3235
+    },
+    "source/character/lit_test.js": {
+        "size": 879
+    },
+    "source/character/test/test_characters.js": {
+        "size": 2311
+    },
+    "source/character/test/test_skills.js": {
+        "size": 48288
+    },
+    "source/character/test/test_translate.js": {
+        "size": 4593
+    },
+    "source/config.js": {
+        "size": 6361
+    },
+    "source/content.js": {
+        "size": 3855
+    },
+    "source/help.js": {
+        "size": 3136
+    },
+    "source/mode/sandaohuanhua.js": {
+        "size": 59775
+    },
+    "source/precontent.js": {
+        "size": 6198
+    },
+    "source/tool/basic.js": {
+        "size": 329
+    },
+    "source/tool/configSeter.js": {
+        "size": 26067
+    },
+    "source/tool/extraUI.js": {
+        "size": 45154
+    },
+    "source/tool/suiSet.js": {
+        "size": 38769
+    },
+    "source/tool/update.js": {
+        "size": 87905
+    },
+    "style/css/cards.css": {
+        "size": 88
+    },
+    "style/css/extension.css": {
+        "size": 3999
+    },
+    "style/css/extraUI.css": {
+        "size": 10489
+    },
+    "style/html/help.html": {
+        "size": 12545
+    },
+    "style/html/sandaohuanhua.html": {
+        "size": 8984
+    },
+    "style/html/update.html": {
+        "size": 10129
+    },
+    "style/nncfg/android_wide11.0.nncfg": {
+        "size": 3628
+    },
+    "style/nncfg/win11.0.nncfg": {
+        "size": 3368
+    }
 }

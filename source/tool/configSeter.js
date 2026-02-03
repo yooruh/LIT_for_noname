@@ -339,7 +339,7 @@ const ConfigFlow = (() => {
             ['备份并应用', '直接应用', '取消']
         );
 
-        if (confirmAction === 2 || confirmAction === undefined) return;
+        if (confirmAction === -1) return;
 
         let backupName = null;
         if (confirmAction === 0) {
@@ -407,7 +407,7 @@ const ConfigFlow = (() => {
                 return;
             }
 
-            const result = await Lit_Dialog.fileManager(
+            const result = await Lit_Dialog.filesManager(
                 '配置文件管理',
                 `找到 ${items.length} 个配置文件：\n\n请选择文件并点击下方按钮执行操作：`,
                 items
