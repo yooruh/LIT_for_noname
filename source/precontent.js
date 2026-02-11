@@ -25,13 +25,14 @@ export let lib_lit = {
 	// lit_neg为1：不可叠层 lit_neg为2：可叠层 lit_neg为3：可叠层且需要手动触发更新
 	negSkills: ['lit_jiqing', 'lit_qianfan', 'lit_shouji', 'lit_mengying', 'lit_dongjie'],
 	dkSkills: ['lit_zigaodebeixin', 'lit_zenggedeshouzhou', 'lit_qianlaoshidejialian', 'lit_pandejianpan', 'lit_zhongyutongdebiji', 'lit_liyangdeziyou',
-		'lit_zhangxuandemp5', 'lit_yibandelajitong', 'lit_xiaohongtanver', 'lit_qbzhimao', 'lit_jiegededifengfenger'],
+		'lit_zhangxuandemp5', 'lit_yibandelajitong', 'lit_xiaohongtanver', 'lit_qbzhimao', 'lit_jiegededifengfenger', 'lit_caichendekuangre', 'lit_rongshaodejian'],
 	dkCheck(skill) {
 		let count = game.playerx ? game.playerx() : game.countPlayer();
 		switch (skill) {
-			case "lit_zigaodebeixin":
-			case "lit_qbzhimao": return count > 4;
-			case "lit_jiegededifengfenger": return 2 < count && count < 6;
+			case "lit_zigaodebeixin": case "lit_qbzhimao":
+				return count > 4;
+			case "lit_jiegededifengfenger": case "lit_caichendekuangre":
+				return 2 < count && count < 6;
 		}
 		return lib.lit.dkSkills.includes(skill);
 	},
@@ -94,6 +95,7 @@ export async function precontent(config, pack) {
 			if (info.mode) {
 				lib.characterFilter[name] = mode => info.mode.includes(mode);
 			}
+
 			// 角色文件引用使用修正ID
 			let char = info.character[name];
 			if (name.startsWith('gz_')) name = name.slice(3);
@@ -122,9 +124,8 @@ export async function precontent(config, pack) {
 		// 	}
 		// });
 
-		if (info.mode) {
-			lib.lit.infopack[info.name] = info;
-		} else {
+		lib.lit.infopack[info.name] = info;
+		if (!info.mode) {
 			game.import('character', () => info);
 			// lib.config.all.characters.push(info.name); // 本体自己都没修好all.characters对武将包的管理，那还说啥了
 		}

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,13 +11,14 @@
 			--secondary: #e74c3c;
 			--accent: #3498db;
 			--code-bg: #f8f9fa;
-			--shadow: 0 4px 20px rgba(0,0,0,0.08);
+			--shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 			--note-bg: #fff3cd;
 			--note-border: #ffc107;
 		}
 
 		/* 基础样式 */
-		html, body {
+		html,
+		body {
 			height: 100%;
 			width: 100%;
 			margin: 0;
@@ -44,11 +46,13 @@
 			margin: 0 0 0.5em;
 			padding-bottom: 0.3em;
 		}
+
 		h2 {
 			font-size: 20px;
 			margin: 0.2em 0 0.1em;
 			line-height: 1.4;
 		}
+
 		h3 {
 			font-size: 16px;
 			margin: 0.2em 0 0.1em;
@@ -58,10 +62,12 @@
 		p {
 			margin: 0.5em 0;
 		}
+
 		ul {
 			margin: 15px 0;
 			padding-left: 20px;
 		}
+
 		li {
 			margin: 8px 0;
 			line-height: 1.5;
@@ -140,26 +146,191 @@
 			color: var(--primary);
 		}
 
+		/* ========== 更新日志按钮样式 ========== */
+		.update-log-btn {
+			position: fixed;
+			top: 10px;
+			right: 10px;
+			padding: 8px 16px;
+			background-color: var(--secondary);
+			color: white;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			font-size: 14px;
+			font-weight: 500;
+			z-index: 1000;
+			box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+			transition: all 0.2s ease;
+			text-decoration: none;
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.update-log-btn:hover {
+			background-color: #c0392b;
+			transform: translateY(-1px);
+			box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+		}
+
+		.update-log-btn:active {
+			transform: translateY(0);
+		}
+
+		/* 图标样式 */
+		.update-log-btn::before {
+			content: "📜";
+			font-size: 16px;
+		}
+
+		/* 游戏内嵌入时隐藏按钮 */
+		body[data-type="game"][data-embedded] .update-log-btn,
+		body[data-embedded="true"] .update-log-btn {
+			display: none !important;
+		}
+
 		/* 移动端适配 */
 		@media (max-width: 768px) {
 			.preview-container {
 				grid-template-columns: 1fr;
 			}
-			
+
 			.container {
 				padding: 20px;
+			}
+
+			.update-log-btn {
+				top: 5px;
+				right: 5px;
+				padding: 6px 12px;
+				font-size: 12px;
 			}
 		}
 	</style>
 </head>
+
 <body>
+	<!-- 更新日志按钮 -->
+	<button class="update-log-btn" id="updateLogBtn" onclick="handleUpdateLogClick()">
+		更新日志
+	</button>
+
 	<div class="container">
 		<h1>🤔 详细介绍</h1>
+
+		<!-- 升级机制 -->
+		<div class="effect-section">
+			<h2>升级机制</h2>
+			<ul>
+				<li>升级条件：
+					<ul>
+						<li>场上每死亡1名角色全体获得1点经验</li>
+						<li>击杀者额外获得1点经验</li>
+						<li>经验达到3或存活人数＜5时升级</li>
+					</ul>
+				</li>
+				<li>升级效果：
+					<ul>
+						<li>明置对应角色后获得强力增益，并重置相关技能次数</li>
+						<li>未拥有前置技能时直接获得升级技能</li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+
+		<!-- 吊卡技能 -->
+		<div class="effect-section">
+			<h2>吊卡技能列表</h2>
+			<li>吊卡技能在角色阵亡后失去</li>
+			<table>
+				<thead>
+					<tr>
+						<th>技能名称</th>
+						<th>效果</th>
+						<th>获取条件</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>自高的背心</td>
+						<td>防属性伤害，锦囊不可无懈</td>
+						<td>存活人数＞4</td>
+					</tr>
+					<tr>
+						<td>李洋的自由</td>
+						<td>锁定技；没有手牌上限（+∞）</td>
+						<td>无</td>
+					</tr>
+					<tr>
+						<td>Qb之帽</td>
+						<td>受到的伤害＞1时改为1，并摸牌</td>
+						<td>存活人数＞4</td>
+					</tr>
+					<tr>
+						<td>曾哥的手肘</td>
+						<td>锁定技；属性伤害+1</td>
+						<td>无</td>
+					</tr>
+					<tr>
+						<td>钱老师的加练</td>
+						<td>锁定技；你的牌无次数限制</td>
+						<td>无</td>
+					</tr>
+					<tr>
+						<td>畔的键盘</td>
+						<td>出牌阶段限1次，交换两人手牌</td>
+						<td>无</td>
+					</tr>
+					<tr>
+						<td>钟雨桐的笔记</td>
+						<td>弃置区域内的牌后，可观看并弃置他人区域内的1张牌</td>
+						<td>无</td>
+					</tr>
+					<tr>
+						<td>张轩的MP5</td>
+						<td>使用杀后若还有杀，可展示手牌中所有的杀，令此杀不能被响应</td>
+						<td>无</td>
+					</tr>
+					<tr>
+						<td>1班的垃圾桶</td>
+						<td>（6次后失效）获得所有从判定区弃置的牌</td>
+						<td>无</td>
+					</tr>
+					<tr>
+						<td>小红他女儿</td>
+						<td>令1人失去吊卡技能，你亦如此，但获得1个吊卡技能</td>
+						<td>通过吊卡获取概率翻倍</td>
+					</tr>
+					<tr>
+						<td>杰哥的地缝缝儿</td>
+						<td>锁定技；1人死亡后，你须选择其一初始技能添加至你的角色牌</td>
+						<td>2＜存活人数＜6</td>
+					</tr>
+					<tr>
+						<td>蔡晨的狂热</td>
+						<td>锁定技；1人死亡后，你在当前回合的下一回合进行一个额外的回合(可累加，额外回合的效果不会随技能的失去而失去)</td>
+						<td>2＜存活人数＜6</td>
+					</tr>
+					<tr>
+						<td>荣少的剑</td>
+						<td>锁定技；你的攻击范围无限。在他人的结束阶段，你可对其使用1张无实体牌的杀</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
 		<!-- 样式速查表 -->
 		<h2>样式速查表</h2>
 		<table>
 			<thead>
-				<tr><th>功能</th><th>属性</th><th>简写</th><th>示例</th><th>效果演示</th></tr>
+				<tr>
+					<th>功能</th>
+					<th>属性</th>
+					<th>简写</th>
+					<th>示例</th>
+					<th>效果演示</th>
+				</tr>
 			</thead>
 			<tbody>
 				<!-- ✨ 颜色相关 -->
@@ -184,7 +355,7 @@
 					<td><code>op:0.5</code></td>
 					<td style="opacity: 0.5;">半透明效果</td>
 				</tr>
-		
+
 				<!-- ✨ 字体文本相关 -->
 				<tr>
 					<td>字号大小</td>
@@ -296,7 +467,7 @@
 				</thead>
 				<tbody>
 					<tr>
-						<td>字体换行</td>
+						<td>文本换行</td>
 						<td>&lt;br&gt;</td>
 						<td><code>第一行&lt;br&gt;第二行</code></td>
 						<td>第一行<br>第二行</td>
@@ -331,7 +502,7 @@
 		<div class="effect-section">
 			<h2>武将技能语音</h2>
 			<ul>
-				/skill（或/s） +技能代码名 +任意文本（默认为台词）<br>
+				/skill（或/s） +技能代码名 +台词编号（默认随机） +任意文本（默认为台词）<br>
 				例：/s jiwu 2 今天，就让你们感受一下真正的绝望！<br>
 				进阶：/s jiwu 2 &lt;b&gt;&lt;sp fs:30px;c:red;&gt;今天，就让你们感受一下真正的绝望！<br>
 			</ul>
@@ -343,101 +514,10 @@
 			</ul>
 		</div>
 		<div class="note">
-			<strong>注意！</strong>如果使用了<strong>内联标签</strong>，则消息中的特殊符号（假设你就想发送该表情：&gt;_&lt; 甚至该文字：&lt;br&gt;）<strong>可能</strong>需通过转义符才能打出<br>
+			<strong>注意！</strong>如果使用了<strong>内联标签</strong>，则消息中的特殊符号（假设你就想发送该表情：&gt;_&lt;
+			甚至此文本：&lt;br&gt;）<strong>可能</strong>需通过转义符才能打出<br>
 			<li>如&amp;lt;（显示为&lt;） &amp;gt;（显示为&gt;） &amp;amp;（显示为&amp;）以及 &amp;nbsp;（显示为空格）等</li>
 			此外，&lt;/某标签&gt;是该标签的效果在此终止的意思，如果是字符串末尾可省略
-		</div>
-
-		<!-- 升级机制 -->
-		<div class="effect-section">
-			<h2>升级机制</h2>
-			<ul>
-				<li>升级条件：
-					<ul>
-						<li>场上每死亡1名角色全体获得1点经验</li>
-						<li>击杀者额外获得1点经验</li>
-						<li>经验达到3或存活人数＜5时升级</li>
-					</ul>
-				</li>
-				<li>升级效果：
-					<ul>
-						<li>明置对应角色后获得强力增益，并重置相关技能次数</li>
-						<li>未拥有前置技能时直接获得升级技能</li>
-					</ul>
-				</li>
-			</ul>
-		</div>
-
-		<!-- 吊卡技能 -->
-		<div class="effect-section">
-			<h2>吊卡技能列表</h2>
-			<li>吊卡技能在角色阵亡后失去</li>
-			<table>
-				<thead>
-					<tr>
-						<th>技能名称</th>
-						<th>效果</th>
-						<th>获取条件</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td>自高的背心</td>
-						<td>防属性伤害，锦囊不可无懈</td>
-						<td>存活人数＞4</td>
-					</tr>
-					<tr>
-						<td>李洋的自由</td>
-						<td>锁定技；没有手牌上限（+∞）</td>
-						<td>无</td>
-					</tr>
-					<tr>
-						<td>Qb之帽</td>
-						<td>受到的伤害＞1时改为1，并摸牌</td>
-						<td>存活人数＞4</td>
-					</tr>
-					<tr>
-						<td>曾哥的手肘</td>
-						<td>锁定技；属性伤害+1</td>
-						<td>无</td>
-					</tr>
-					<tr>
-						<td>钱老师的加练</td>
-						<td>锁定技；你的牌无次数限制</td>
-						<td>无</td>
-					</tr>
-					<tr>
-						<td>畔的键盘</td>
-						<td>出牌阶段限1次，交换两人手牌</td>
-						<td>无</td>
-					</tr>
-					<tr>
-						<td>钟雨桐的笔记</td>
-						<td>弃置区域内的牌后，可观看并弃置他人区域内的1张牌</td>
-						<td>无</td>
-					</tr>
-					<tr>
-						<td>张轩的MP5</td>
-						<td>使用杀后若还有杀，可展示手牌中所有的杀，令此杀不能被响应</td>
-						<td>无</td>
-					</tr>
-					<tr>
-						<td>1班的垃圾桶</td>
-						<td>（6次后失效）获得所有从判定区弃置的牌</td>
-						<td>无</td>
-					</tr>
-					<tr>
-						<td>小红他女儿</td>
-						<td>令1人失去吊卡技能，你亦如此，但获得1个吊卡技能</td>
-						<td>通过吊卡获取概率翻倍</td>
-					</tr>
-					<tr>
-						<td>杰哥的地缝缝儿</td>
-						<td>锁定技；1人死亡后，你须选择其一初始技能添加至你的角色牌</td>
-						<td>2＜存活人数＜6</td>
-					</tr>
-				</tbody>
-			</table>
 		</div>
 
 		<!-- 韵脚表 -->
@@ -511,5 +591,40 @@
 			</table>
 		</div>
 	</div>
+
+	<script>
+		// 检测是否在 iframe 中嵌入
+		if (window.self === window.top) {
+			document.body.setAttribute('data-embedded', 'true');
+			var btn = document.getElementById('updateLogBtn');
+			if (btn) btn.remove();
+		} else {
+			document.body.setAttribute('data-embedded', 'false');
+		}
+
+		document.body.setAttribute('data-type', 'doc');
+
+		// 更新日志跳转处理
+		function handleUpdateLogClick() {
+			// 在无名杀环境中，调用父窗口的函数打开模态对话框
+			if (window.parent && typeof window.parent.lit_changelogOnclick === 'function') {
+				window.parent.lit_changelogOnclick();
+			} else {
+				window.location.href = './update.html';
+			}
+		}
+
+		// 监听来自父窗口的消息
+		window.addEventListener('message', function (e) {
+			if (e.data && e.data.type === 'lit-check-ready') {
+				e.source.postMessage({
+					type: 'lit-ready',
+					hasChangelog: true,
+					version: document.querySelector('[data-version]')?.dataset.version
+				}, e.origin);
+			}
+		});
+	</script>
 </body>
+
 </html>

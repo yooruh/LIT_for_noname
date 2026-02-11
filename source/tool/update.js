@@ -589,6 +589,8 @@ class SmartDownloader {
                     'Accept': '*/*',
                     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'
                 };
+                // 禁用 SSL 证书验证
+                parsed.rejectUnauthorized = false;
 
                 const token = this.tokens.get(this.repo.platform);
                 if (token) {
@@ -841,7 +843,6 @@ class VersionChecker {
     }
 
     async check(gameVersion) {
-        const url = this.repo.getURL(CONFIG.files.version);
         try {
             const task = new DownloadTask({
                 remote: CONFIG.files.version,

@@ -3,7 +3,7 @@
         "size": 35475
     },
     "extension.js": {
-        "size": 5014
+        "size": 5016
     },
     "image/card/lit_diaoka.png": {
         "size": 5653
@@ -117,7 +117,7 @@
         "size": 284308
     },
     "info.json": {
-        "size": 254
+        "size": 256
     },
     "script/chooseCharacterOL.js": {
         "size": 916
@@ -156,22 +156,22 @@
         "size": 537
     },
     "source/card/lit_cardSkills.js": {
-        "size": 23640
+        "size": 27184
     },
     "source/card/lit_cardTranslate.js": {
-        "size": 3174
+        "size": 3685
     },
     "source/character/lit.js": {
-        "size": 867
+        "size": 880
     },
     "source/character/lit/lit_characters.js": {
-        "size": 13220
+        "size": 21906
     },
     "source/character/lit/lit_skills.js": {
-        "size": 257314
+        "size": 283835
     },
     "source/character/lit/lit_translate.js": {
-        "size": 30603
+        "size": 31763
     },
     "source/character/lit_gz.js": {
         "size": 3235
@@ -192,16 +192,16 @@
         "size": 6361
     },
     "source/content.js": {
-        "size": 3855
+        "size": 4786
     },
     "source/help.js": {
-        "size": 3136
+        "size": 3706
     },
     "source/mode/sandaohuanhua.js": {
-        "size": 59775
+        "size": 59961
     },
     "source/precontent.js": {
-        "size": 6198
+        "size": 6268
     },
     "source/tool/basic.js": {
         "size": 329
@@ -216,7 +216,7 @@
         "size": 38769
     },
     "source/tool/update.js": {
-        "size": 87905
+        "size": 87939
     },
     "style/css/cards.css": {
         "size": 88
@@ -228,13 +228,13 @@
         "size": 10489
     },
     "style/html/help.html": {
-        "size": 12545
+        "size": 15273
     },
     "style/html/sandaohuanhua.html": {
         "size": 8984
     },
     "style/html/update.html": {
-        "size": 10129
+        "size": 10712
     },
     "style/nncfg/android_wide11.0.nncfg": {
         "size": 3628

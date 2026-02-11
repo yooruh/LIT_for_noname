@@ -3,10 +3,10 @@ import { lib_lit } from '../precontent.js';
 
 function getDKListTranslate() {
     let str = '';
-    for(let skill of lib_lit.dkSkills){
-		str += `<li>${get.poptip(skill)}</li>`
-	}
-	return str;
+    for (let skill of lib_lit.dkSkills) {
+        str += `<li>${get.poptip(skill)}</li>`
+    }
+    return str;
 }
 
 export const translate = {
@@ -42,6 +42,12 @@ export const translate = {
     'lit_jiegededifengfenger': '杰哥的地缝缝儿',
     'lit_jiegededifengfenger_limit': '（2<存活人数<6）',
     'lit_jiegededifengfenger_info': '锁；1人死亡后，你须选择其一初始技能添加至你的角色牌',
+    'lit_caichendekuangre': '蔡晨的狂热',
+    'lit_caichendekuangre_limit': '（2<存活人数<6）',
+    'lit_caichendekuangre_info': '锁；1人死亡后，你在当前回合的下一回合进行一个额外的回合(可累加，额外回合的效果不会随技能的失去而失去)',
+    'lit_rongshaodejian': '荣少的剑',
+    'lit_rongshaodejian_info': '锁；你的攻击范围无限。在他人的结束阶段，你可对其使用1张无实体牌的杀',
+    // 记得改help.html
 };
 
 export const dynamicTranslate = {

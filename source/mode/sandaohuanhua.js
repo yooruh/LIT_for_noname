@@ -125,7 +125,10 @@ export let info = {
                     else if (Array.isArray(info.derivation)) list.addArray(info.derivation);
                 }
                 for (let j = 0; j < list.length; j++) {
-                    if (skills.includes(list[j]) || list[j].endsWith('V2') || list[j].endsWith('_append') || list[j].endsWith("_faq") || banned.includes(list[j])) continue;
+                    if (skills.includes(list[j]) || list[j].endsWith('_append') || list[j].endsWith("_faq") || banned.includes(list[j])) continue;
+                    if (list[j].startsWith('lit_')) {
+                        if (list[j].endsWith('V2') || list[j].endsWith("_limit")) continue;
+                    }
                     let info = get.info(list[j]);
                     if (
                         !info ||
@@ -138,6 +141,7 @@ export let info = {
                         info.groupSkill ||
                         info.lit_dk ||
                         info.lit_neg ||
+                        info.sourceSkill ||
                         (info.ai && info.ai.combo)
                     ) continue;
                     skills.push(list[j]);

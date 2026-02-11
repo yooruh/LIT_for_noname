@@ -85,7 +85,8 @@ export const card = {
             return false;
         },
         async effect(event, trigger, player, result) {
-            if (result.bool === false) {
+            if (result.bool != false) return;
+            if (_status.currentPhase === player) {
                 const evt = event.getParent("phase", true);
                 if (evt && evt.player == player) {
                     game.log(player, "被遣返离校，本回合直接结束");
@@ -96,6 +97,8 @@ export const card = {
                 if (evtx) {
                     evtx.skipped = true;
                 }
+            } else {
+                player.addSkill("lit_qianfanpai_skill");
             }
         },
         ai: {
@@ -136,6 +139,26 @@ export const card = {
 };
 
 export const skill = {
+    lit_qianfanpai_skill: {
+        nopop: true,
+        direct: true,
+        firstDo: true,
+        charlotte: true,
+        trigger: { player: "phaseBefore" },
+        async content(event, trigger, player) {
+            // cancelled事件容易找不到reason，故lit_qixu_mark关于遣返牌的处理被移至了此处
+            let delayEffects = player.storage.lit_qixu_mark;
+            if (delayEffects && delayEffects.includes("lit_qianfanpai")) {
+                delayEffects = delayEffects.filter(value => value != "lit_qianfanpai");
+                player.popup("（期许）<br>跳过回合");
+                player.setStorage("lit_qixu_mark", delayEffects, true);
+                if (delayEffects.length === 0) player.removeSkill("lit_qixu_mark");
+            }
+            trigger.cancel();
+            game.log(player, "被遣返离校，本回合直接结束");
+            player.removeSkill("lit_qianfanpai_skill");
+        },
+    },
     lit_diaokajineng: {
         nopop: true,
         unique: true,
@@ -287,6 +310,7 @@ export const skill = {
         multitarget: true,
         multiline: true,
         async content(event, trigger, player) {
+            player.addTempSkill("lit_pandejianpan_used");
             event.forceDie = true;
             await event.targets[0].swapHandcards(event.targets[1]).set("forceDie", true);
         },
@@ -296,6 +320,11 @@ export const skill = {
             nokeep: true,
             order: 1,
             expose: 0.3,
+            skillTagFilter: (player, tag, arg) => {
+                if (["pretao", "nokeep"].includes(tag)) {
+                    if (!player.hasSkill("lit_pandejianpan_used")) return true;
+                }
+            },
             result: {
                 target: (player, target) => {
                     if (target.hasSkillTag('noh')) return 1;
@@ -307,6 +336,13 @@ export const skill = {
                     if (delval >= 0) return 0;
                     return -delval * (h1.length - h2.length);
                 },
+            },
+        },
+        subSkill: {
+            used: {
+                charlotte: true,
+                sub: true,
+                sourceSkill: "pandejianpan",
             },
         },
     },
@@ -532,7 +568,7 @@ export const skill = {
         trigger: {
             player: "damageBegin4",
         },
-        filter: function (event, player) {
+        filter: (event, player) => {
             return event.num > 1;
         },
         async content(event, trigger, player) {
@@ -541,7 +577,7 @@ export const skill = {
         },
         ai: {
             filterDamage: true,
-            skillTagFilter: function (player, tag, arg) {
+            skillTagFilter: (player, tag, arg) => {
                 if (arg && arg.player) {
                     if (arg.player.hasSkillTag("jueqing", false, player)) return false;
                 }
@@ -557,7 +593,7 @@ export const skill = {
         trigger: {
             global: "dieAfter",
         },
-        filter: function (event, player) {
+        filter: (event, player) => {
             let list = [],
                 target = event.player;
             if (lib.character[target.name]) list.addArray(lib.character[target.name][3]);
@@ -613,22 +649,77 @@ export const skill = {
             }, player, control);
         },
     },
+    lit_caichendekuangre: {
+        unique: true,
+        lit_dk: true,
+        charlotte: true,
+        nobracket: true,
+        forced: true,
+        trigger: {
+            global: 'dieAfter',
+        },
+        filter: (event, player) => {
+            return player !== event.player;
+        },
+        async content(event, trigger, player) {
+            if (!player.hasSkill("lit_caichendekuangre_mark")) {
+                player.addSkill("lit_caichendekuangre_mark");
+            }
+            let count = player.storage.lit_caichendekuangre_mark;
+            player.setStorage("lit_caichendekuangre_mark", ++count, true);
+            player.insertPhase(event.skill);
+        },
+        subSkill: {
+            mark: {
+                direct: true,
+                firstDo: true,
+                mark: true,
+                marktext: "热",
+                intro: {
+                    name: "好热好热！",
+                    content: "将狂热地进行#次额外回合",
+                },
+                init: (player) => {
+                    player.setStorage("lit_caichendekuangre_mark", 0);
+                },
+                trigger: { player: "phaseBefore" },
+                async content(event, trigger, player) {
+                    let count = player.storage.lit_caichendekuangre_mark;
+                    player.setStorage("lit_caichendekuangre_mark", --count, true);
+                    if (count <= 0) player.removeSkill("lit_caichendekuangre_mark");
+                },
+                sub: true,
+                sourceSkill: "lit_caichendekuangre",
+            },
+        },
+    },
     lit_rongshaodejian: {
         unique: true,
         lit_dk: true,
         charlotte: true,
         nobracket: true,
-        direct: true,
+        mod: {
+            attackRange(player, num) {
+                return Infinity;
+            },
+        },
         trigger: {
-            player: ['changeHp', 'loseMaxHpAfter'],
+            global: 'phaseJieshu',
         },
         filter: (event, player) => {
-            let num = event.name === 'changeHp' ? event.num : -event.loseHp;
-            if (num === 0) return false;
-            return;
+            return player.canUse({ name: "sha", isCard: true }, event.player, false);
+        },
+        check(event, player) {
+            return get.effect(event.player, { name: "sha", isCard: true }, player, player) > 0;
+        },
+        prompt(event, player) {
+            return `是否对 ${get.translation(event.player)} 发动「荣少的剑」？`;
+        },
+        logTarget(trigger, player) {
+            return trigger.player;
         },
         async content(event, trigger, player) {
-            await player.executeDelayCardEffect();
+            await player.useCard({ name: "sha", isCard: true }, trigger.player);
         },
     },
 };

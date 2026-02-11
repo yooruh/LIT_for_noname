@@ -19,6 +19,7 @@ const lit_changelogOnclick = () => {
 	const dataProcessor = (content) => content.replace("{{version}}", version);
 
 	// 调用模块
+	Lit_Dialog.closeAll();
 	Lit_Dialog.showDocModal(updateURL, '更新日志', dataProcessor);
 };
 window.lit_changelogOnclick = lit_changelogOnclick;
@@ -59,12 +60,12 @@ ${getDKskillsHelp()}
 	<tr><td>十四姑</td><td>u</td></tr>
 </table>
 <br>当前版本（${game.getExtensionConfig('叁岛世界', 'version')}）：<br>
-① 加入全新角色：张驰、杨湘铃；<br>
-② 平衡林淼、菠树角色强度，减少设计撞车；<br>
-③ 开启叁岛国战的实验性测试，已知大量Bug，先平衡强度，以后会修；<br>
-④ 一并为更新日志和帮助文档添加HTML介绍，分别可在旧帮助界面和叁岛世界设置中找到；<br>
-⑤ 取消原append形式的技能补充介绍，转而使用右键小窗口（或长按屏幕）；<br>
-⑥ 修复Bug，调整V2技能描述，重命名角色ID。<br>
+① 加入角色：${get.poptip("lit_wangrong王荣")} 以及吊卡技能：${get.poptip("lit_caichendekuangre")}、${get.poptip("lit_rongshaodejian")}；<br>
+② 调整了${get.poptip("lit_yangxiangling杨湘铃")}、${get.poptip("lit_hupan胡畔")}、${get.poptip("lit_zhengmohan郑墨翰")}、${get.poptip("lit_qianbaocan钱保灿")}的强度及部分技能的AI逻辑；<br>
+③ 叁岛国战：重构导入逻辑（由于本体国战模式重做，故暂停叁岛国战的更新）；<br>
+④ “叁岛测试”角色包上线：其中的6个《九班杀》老角色默认关闭，需手动开启。注意：强度、AI、兼容性均未完成优化，极可能存在Bug；<br>
+⑤ 引入了新UI以代替部分老代码，加入“在线更新扩展（测试，暂时仅支持电脑版）”“应用推荐的无名杀全局设置”功能。此外，本体已加入名词解释超链接和复活事件，本扩展不再额外重复；<br>
+⑥ 部分角色新增可选皮肤，以前的皮肤用AI塑炼了一下，清晰度↗，占用空间↘<br>
 <hr>
 <a  onclick="window.lit_changelogOnclick()" 
 	style="cursor:pointer;text-decoration:underline">

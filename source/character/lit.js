@@ -4,11 +4,11 @@ import { skill } from './lit/lit_skills.js';
 import { translate, dynamicTranslate, pinyins } from './lit/lit_translate.js';
 
 export let info = {
-	name:'lit',
-	connect:true,
-	connectBanned: Characters.connectBanned || [],
+    name: 'lit',
+    connect: true,
+    connectBanned: Characters.connectBanned || [],
 
-	characterSort: Characters.characterSort,
+    characterSort: Characters.characterSort,
     character: Characters.character,
     characterTitle: Characters.characterTitle,
     characterIntro: Characters.characterIntro,
@@ -18,8 +18,8 @@ export let info = {
     perfectPair: Characters.perfectPair,
 
     skill: skill,
-    
+
     translate: translate,
     dynamicTranslate: dynamicTranslate,
-	pinyins: pinyins,
+    pinyins: pinyins,
 };
