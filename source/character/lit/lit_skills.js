@@ -4393,9 +4393,14 @@ export const skill = {
             expose: 0.3,
             result: {
                 target: (player, target) => {
+                    if (target.maxHp <= 1) return;
                     let loseNum = Math.max(target.maxHp - target.hp, 1);
-                    let loseHp = target.maxHp === target.hp;
-                    let result = loseHp ? Math.sqrt(get.effect(target, { name: "losehp" }, player, target)) : 0;
+                    let divAtt = Math.abs(get.attitude(target, target)) ?? 5;
+                    let loseHpEffect = (target.maxHp > 1 && target.maxHp === target.hp) ?
+                        (get.effect(target, { name: "losehp" }, player, target) / divAtt)
+                        : 0;
+
+                    let result = get.sgn(loseHpEffect) * Math.sqrt(Math.abs(loseHpEffect));
                     if (target.hasSkill('lit_mianju') || target.hasSkill('lit_mianjuV2')) {
                         let count = target.countMark('lit_mianju') + target.countMark('lit_mianjuV2');
                         if (count <= target.maxHp && count > target.maxHp - loseNum) {
