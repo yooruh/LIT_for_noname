@@ -1,13 +1,6 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js';
 //这个文件是写给主机执行的代码
-import {
-	updateActive,
-	setUpdateActive,
-	menux,
-	menuxpages,
-	createConfig,
-	clickMenuItem
-} from "../../../noname/ui/create/menu/index.js";
+
 import { config } from '../source/config.js'
 import { suiSet } from "../source/tool/suiSet.js";
 const functions = {
@@ -16,6 +9,10 @@ const functions = {
 			lib.element.player.chat = function (str) {
 				if (get.is.banWords(str)) return;
 				if (str.startsWith('/')) {
+					if(str === "/remove chat"){
+						ui.chatButton.remove();
+						return;
+					}
 					const args = str.slice(1).split(' ');
 					const command = args.shift();
 					const audioCommand = (type) => {
@@ -343,6 +340,7 @@ const edits = {
 			return $throwordered2
 		}
 	},
+	// 联机单人开房
 	alone() {
 		ui.create.connectPlayers = function (ip) {
 			let special = "fixed";

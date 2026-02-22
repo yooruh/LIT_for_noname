@@ -1,5 +1,5 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js';
-import { suiSet } from '../source/tool/suiSet.js';
+
 lib.element.player.chooseButtonAndWriteNameOL = function(list, callback, ai) {
 	let next = game.createEvent("chooseButtonAndWriteNameOL");
 	next.list = list;

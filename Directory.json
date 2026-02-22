@@ -116,38 +116,29 @@
     "image/skin/lit_wangrong/lit_wangrong_pale.png": {
         "size": 284308
     },
-    "info.json": {
-        "size": 256
+    "image/splash/sandaohuanhua.png": {
+        "size": 244182
     },
-    "script/chooseCharacterOL.js": {
-        "size": 916
+    "info.json": {
+        "size": 237
     },
     "script/content.js": {
-        "size": 4581
+        "size": 4530
     },
     "script/function.js": {
-        "size": 13862
-    },
-    "script/mode/chooseSkill.js": {
-        "size": 14512
-    },
-    "script/mode/doudizhu.js": {
-        "size": 31328
+        "size": 13827
     },
     "script/modeset.js": {
-        "size": 7641
+        "size": 12478
     },
     "script/player.js": {
-        "size": 1741
+        "size": 1691
     },
     "script/precontent.js": {
-        "size": 1364
-    },
-    "script/skillSet.js": {
-        "size": 17015
+        "size": 1201
     },
     "script/useFunction.js": {
-        "size": 1664
+        "size": 1667
     },
     "script/video.js": {
         "size": 4824
@@ -156,7 +147,7 @@
         "size": 537
     },
     "source/card/lit_cardSkills.js": {
-        "size": 27184
+        "size": 27190
     },
     "source/card/lit_cardTranslate.js": {
         "size": 3685
@@ -165,13 +156,13 @@
         "size": 880
     },
     "source/character/lit/lit_characters.js": {
-        "size": 21906
+        "size": 21961
     },
     "source/character/lit/lit_skills.js": {
-        "size": 284092
+        "size": 284098
     },
     "source/character/lit/lit_translate.js": {
-        "size": 31763
+        "size": 31235
     },
     "source/character/lit_gz.js": {
         "size": 3235
@@ -189,40 +180,43 @@
         "size": 4593
     },
     "source/config.js": {
-        "size": 6361
+        "size": 7411
     },
     "source/content.js": {
-        "size": 4786
+        "size": 4728
     },
     "source/help.js": {
         "size": 3706
     },
     "source/mode/sandaohuanhua.js": {
-        "size": 59961
+        "size": 60473
+    },
+    "source/mode/sandaohuanhua_brawl.js": {
+        "size": 60143
     },
     "source/precontent.js": {
-        "size": 6268
+        "size": 6881
     },
     "source/tool/basic.js": {
         "size": 329
     },
-    "source/tool/configSeter.js": {
-        "size": 26067
+    "source/tool/configSetter.js": {
+        "size": 26078
     },
     "source/tool/extraUI.js": {
         "size": 45154
     },
     "source/tool/suiSet.js": {
-        "size": 38769
+        "size": 36637
     },
     "source/tool/update.js": {
-        "size": 87939
+        "size": 87942
     },
     "style/css/cards.css": {
         "size": 88
     },
     "style/css/extension.css": {
-        "size": 3999
+        "size": 5964
     },
     "style/css/extraUI.css": {
         "size": 10489
@@ -231,15 +225,15 @@
         "size": 15273
     },
     "style/html/sandaohuanhua.html": {
-        "size": 8984
+        "size": 9101
     },
     "style/html/update.html": {
         "size": 10712
     },
     "style/nncfg/android_wide11.0.nncfg": {
-        "size": 3628
+        "size": 3956
     },
     "style/nncfg/win11.0.nncfg": {
-        "size": 3368
+        "size": 3700
     }
 }

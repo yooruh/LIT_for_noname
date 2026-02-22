@@ -1107,4 +1107,4 @@ const DialogManager = (() => {
 })();
 
 // 导出UI模块
-export const Lit_Dialog = DialogManager;
+export const Lit_dialog = DialogManager;

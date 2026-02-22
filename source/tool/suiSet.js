@@ -104,33 +104,8 @@ export const suiSet = {
 		return parseInt(num)
 	},
 	modeConfig: {},
-	createFloatBall() {
-		const ball = suiSet.node('div', {
-			id: 'sstball', className: 'nomal canmove',
-			innerHTML:/*html*/`
-			<svg  width="16" height="16" fill="currentColor" class="bi bi-tools" viewBox="0 0 16 16">
-				<path d=""/>
-			</svg>
-			`
-		}, document.body)
-		ball.configs = suiSet.node('div', { id: 'animateConfig', className: 'aniConfig close', innerHTML: '' }, document.body)
-		ball.addEventListener(lib.config.touchscreen ? 'touchend' : 'mousedown', suiSet.activeFlatBall)
-		new suiSet.MoveModel(ball, node => {
-			const fn = node.configs.classList.contains('opening') ? 'remove' : 'add'
-			node.configs.classList[fn]('opening')
-		})
-		ball.style.animation = 'left 1s ease 0.1s forwards'
-		suiSet.initFloatBall(ball.configs)
-		const tool = "M1 0 0 1l2.2 3.081a1 1 0 0 0 .815.419h.07a1 1 0 0 1 .708.293l2.675 2.675-2.617 2.654A3.003 3.003 0 0 0 0 13a3 3 0 1 0 5.878-.851l2.654-2.617.968.968-.305.914a1 1 0 0 0 .242 1.023l3.27 3.27a.997.997 0 0 0 1.414 0l1.586-1.586a.997.997 0 0 0 0-1.414l-3.27-3.27a1 1 0 0 0-1.023-.242L10.5 9.5l-.96-.96 2.68-2.643A3.005 3.005 0 0 0 16 3c0-.269-.035-.53-.102-.777l-2.14 2.141L12 4l-.364-1.757L13.777.102a3 3 0 0 0-3.675 3.68L7.462 6.46 4.793 3.793a1 1 0 0 1-.293-.707v-.071a1 1 0 0 0-.419-.814L1 0Zm9.646 10.646a.5.5 0 0 1 .708 0l2.914 2.915a.5.5 0 0 1-.707.707l-2.915-2.914a.5.5 0 0 1 0-.708ZM3 11l.471.242.529.026.287.445.445.287.026.529L5 13l-.242.471-.026.529-.445.287-.287.445-.529.026L3 15l-.471-.242L2 14.732l-.287-.445L1.268 14l-.026-.529L1 13l.242-.471.026-.529.445-.287.287-.445.529-.026L3 11Z"
-		setTimeout((ball, tool) => {
-			const path = ball.firstElementChild.firstElementChild
-			path.setAttribute('d', tool)
-		}, 0, ball, tool);
-		suiSet.floatBall = ball
-	},
-	initFloatBall(configs) {
-		// suiSet.floatBall
-	},
+
+
 	canMove(node, func) {
 		node.classList.add('canmove')
 		node.moveEndFunc = func
@@ -684,7 +659,7 @@ export const suiSet = {
 	},
 	gameDraw(player, num = 4) {
 		const fnum = lib.config['extension_叁岛世界_fun_beginDraw']??num;
-		if (typeof funm === 'function') {
+		if (typeof fnum === 'function') {
 			const result = num
 			num = function (player) {
 				const n = result.call(this, player)
@@ -701,10 +676,7 @@ export const suiSet = {
 		next.setContent(begeinDraw ? 'gameSelect' : 'gameDraw');
 		return next;
 	},
-	createCharacter(name, translate, sex, group, hp, skills, extens) {
-		const copy = suiSet.copyCharacter(name)
-		const character = new lib.element.Character()
-	},
+
 	copyCharacter({ character, hp, skills, name, translate }) {
 		const { sex, group, trashBin } = lib.character[character]
 		lib.character[name] = new lib.element.Character([sex, group, hp, skills])
@@ -841,55 +813,6 @@ export const suiSet = {
 		})
 		// return skillList
 	},
-	replacePlayer(ws, player) {
-		return '这个方法已经废弃了，请使用suiSet.swapPlayer'
-		if (ws instanceof lib.element.Player) {
-			ws = ws.ws
-		}
-		//首先先给要上场的角色视角换到要下场的目标去
-		ws.send((player, ws, identity) => {
-			game.swapPlayer(game.me, player)
-			ui.arena.classList.remove("observe")
-			delete game.observe
-			const chat = [...ui.system2.childNodes].some(c => c.innerHTML === '聊天')
-			if (!chat) {
-				ui.create.chat()
-			}
-			game.onlineID = ws.id
-			game.me.setIdentity(identity)
-		}, player, ws, player.identity)
-
-		//然后再把要上场的角色移除旁观
-		if (lib.node.observing.includes(ws)) {
-			lib.node.observing.remove(ws)
-		}
-
-		const playerws = player.ws
-		const playerid = player.playerid
-		//保存一下要下场的角色ws和id，待会准备换到旁观去
-
-		if (playerws) {
-			lib.node.observing.push(playerws)
-			//把下场角色放到旁观去
-		}
-		player.ws = ws
-		// 把下场角色的ws换成要上场角色的ws
-
-		delete lib.playerOL[playerid]
-		lib.playerOL[ws.id] = player
-		player.nickname = ws.nickname
-		player.setNickname(ws.nickname)
-		//删掉旧的迎接新的
-
-
-		if (lib.node.observing.length === 0) {
-			if (ui.removeObserve) {
-				ui.removeObserve.remove()
-			}
-		}
-
-		//应该不会那么简单，我去看看源代码
-	},
 	async gameSelect(event) {
 		if (_status.brawl && _status.brawl.noGameDraw) {
 			event.finish();
@@ -974,7 +897,7 @@ export const suiSet = {
 		_status.auto = bool
 		game.observe = bool
 	},
-	playerToobserve(player) {
+	playerToobserve(player, replaceNickname) {
 		const auto = suiSet.auto
 		//如果只传了一个玩家，那就是要把一个玩家放上旁观
 		//但这里还要确认一下这个是不是普通玩家

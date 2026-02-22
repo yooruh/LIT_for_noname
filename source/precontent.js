@@ -4,22 +4,27 @@ import basic from './tool/basic.js'
 
 export let charPack = {
 	lit: {
+		init: true,
 		translate: '叁岛世界',
 	},
 	lit_gz: {
+		init: true,
 		translate: '叁岛国战',
 	},
 	lit_test: {
+		init: false,
 		translate: '叁岛测试',
 	},
 };
 export let cardPack = {
 	lit_card: {
+		init: true,
 		translate: '叁岛世界',
 	},
 };
 
 export let lib_lit = {
+	sdhh_connectName: "../extension/叁岛世界/source/mode/sandaohuanhua",
 	infopack: {},
 	effLock: {},
 	// lit_neg为1：不可叠层 lit_neg为2：可叠层 lit_neg为3：可叠层且需要手动触发更新
@@ -65,6 +70,17 @@ export async function precontent(config, pack) {
 
 	// 将公共变量暴露到lib全局
 	lib.lit = lib_lit;
+
+	// 注册叁岛幻化模式
+	const { default: sandaohuanhuaMode } = await import('./mode/sandaohuanhua.js');
+	const modeConfig = sandaohuanhuaMode();
+
+	game.addMode(lib.lit.sdhh_connectName, modeConfig, {
+		translate: '叁岛幻化',
+		extension: '叁岛世界',
+	});
+	lib.mode[lib.lit.sdhh_connectName].config = modeConfig.config || {};
+	lib.mode[lib.lit.sdhh_connectName].connect = modeConfig.connect || {};
 
 	// 加入势力
 	lib.init.css(`${basic.path}/style/css`, 'extension');
@@ -129,12 +145,10 @@ export async function precontent(config, pack) {
 			game.import('character', () => info);
 			// lib.config.all.characters.push(info.name); // 本体自己都没修好all.characters对武将包的管理，那还说啥了
 		}
-		if (!game.getExtensionConfig('叁岛世界', `${info.name}_character_pack`)) {
-			if (!info.name.endsWith('_test')) {
-				lib.config.characters.add(info.name);
-				game.saveConfig('characters', lib.config.characters);
-				game.saveExtensionConfig('叁岛世界', `${info.name}_character_pack`, true);
-			}
+		if (!game.getExtensionConfig('叁岛世界', `${info.name}_character_pack`) && charPack[packName].init !== false) {
+			lib.config.characters.add(info.name);
+			game.saveConfig('characters', lib.config.characters);
+			game.saveExtensionConfig('叁岛世界', `${info.name}_character_pack`, true);
 		}
 		lib.translate[info.name + '_character_config'] = charPack[packName].translate;
 	};
@@ -149,19 +163,17 @@ export async function precontent(config, pack) {
 		}
 		game.import('card', () => info);
 		// lib.config.all.cards.push(info.name);
-		if (!game.getExtensionConfig('叁岛世界', `${info.name}_card_pack`)) {
-			if (!info.name.endsWith('_test')) {
-				lib.config.cards.add(info.name);
-				game.saveConfig('cards', lib.config.cards);
-				game.saveExtensionConfig('叁岛世界', `${info.name}_card_pack`, true);
-			}
+		if (!game.getExtensionConfig('叁岛世界', `${info.name}_card_pack`) && cardPack[packName].init !== false) {
+			lib.config.cards.add(info.name);
+			game.saveConfig('cards', lib.config.cards);
+			game.saveExtensionConfig('叁岛世界', `${info.name}_card_pack`, true);
 		}
 		lib.translate[info.name + '_card_config'] = cardPack[packName].translate;
 	};
 
 	if (!lib.config['extension_叁岛世界_fix_onlineFixCancel']) {
 		const useJs = [
-			'chooseCharacterOL', 'content', 'function', 'modeset', 'player', 'skillSet', 'video',
+			'content', 'function', 'modeset', 'player', 'video',
 		];
 		suiSet.addImport(`${basic.path}/script/precontent.js`, () => {
 			useJs.forEach(m => suiSet.addImport(`${basic.path}/script/${m}.js`))
@@ -169,5 +181,4 @@ export async function precontent(config, pack) {
 		});
 		suiSet.config = this.config;
 	}
-	// game.runAfterExtensionLoaded('叁岛世界', () => {});
 }

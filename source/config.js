@@ -1,8 +1,52 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js';
-import { Lit_Dialog } from './tool/extraUI.js'
-import Lit_update from './tool/update.js';
-import Lit_configSeter from './tool/configSeter.js'
+import { Lit_dialog } from './tool/extraUI.js'
+import { Lit_update } from './tool/update.js';
+import { Lit_configSetter } from './tool/configSetter.js'
 import basic from './tool/basic.js'
+
+// 本体菜单更新，未来可期
+// update(config, map) {
+// 	if (config.fix_onlineFixCancel === true) {
+// 		map.lit_fg0.hide();
+// 		map.main_audio.hide();
+// 		map.main_cdown.hide();
+// 		map.edit_emojiAllowed.hide();
+// 		map.play_observeChat.hide();
+// 		map.edit_alone.hide();
+// 		map.play_mima.hide();
+// 		map.setMima.hide();
+// 		map.play_tipPlayerVersion.hide();
+// 		map.play_tipNonamePlayer.hide();
+// 		map.play_tipExtension.hide();
+// 		map.fun_handCardsFix.hide();
+// 		map.fun_beginDraw.hide();
+// 		map.fun_replaceHandCards.hide();
+// 		map.edit_cardsInfo.hide();
+// 		map.edit_errorIgnore.hide();
+// 	} else {
+// 		map.lit_fg0.show();
+// 		map.main_audio.show();
+// 		map.main_cdown.show();
+// 		map.edit_emojiAllowed.show();
+// 		map.play_observeChat.show();
+// 		map.edit_alone.show();
+// 		map.play_mima.show();
+// 		map.setMima.show();
+// 		map.play_tipPlayerVersion.show();
+// 		map.play_tipNonamePlayer.show();
+// 		map.play_tipExtension.show();
+// 		map.fun_handCardsFix.show();
+// 		if (config.fun_handCardsFix === true) {
+// 			map.fun_beginDraw.show();
+// 			map.fun_replaceHandCards.show();
+// 		} else {
+// 			map.fun_beginDraw.hide();
+// 			map.fun_replaceHandCards.hide();
+// 		}
+// 		map.edit_cardsInfo.show();
+// 		map.edit_errorIgnore.show();
+// 	}
+// }
 
 export const config = {
 	lit_help: {
@@ -11,7 +55,7 @@ export const config = {
 		clear: true,
 		async onclick() {
 			try {
-				await Lit_Dialog.showDocModal(
+				await Lit_dialog.showDocModal(
 					`${basic.path}/style/html/help.html`,
 					'帮助文档'
 				);
@@ -34,7 +78,7 @@ export const config = {
 		intro: "载入相对适配《叁岛世界》的“无名杀全局设置”，同时可备份当前配置到files目录",
 		clear: true,
 		async onclick() {
-			await Lit_configSeter.showUI();
+			await Lit_configSetter.showUI();
 		}
 	},
 	lit_dkwsl: {
@@ -43,14 +87,6 @@ export const config = {
 		intro: "开启后，允许非“九”“叁”势力角色直接使用吊卡",
 		onclick: (item) => {
 			game.saveExtensionConfig('叁岛世界', 'lit_dkwsl', item);
-		}
-	},
-	lit_huanhuaLimit: {
-		name: "幻化无范围限制",
-		init: false,
-		intro: "开启后，允许非叁岛世界角色及其技能进入叁岛幻化中",
-		onclick: (item) => {
-			game.saveExtensionConfig('叁岛世界', 'lit_huanhuaLimit', item);
 		}
 	},
 	lit_guozhanAllowed: {

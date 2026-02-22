@@ -1,5 +1,5 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js';
-import { suiSet } from '../source/tool/suiSet.js';
+
 export function canIn(config){
 	if (lib.config['extension_叁岛世界_play_mima']) {
 		const { mima, nickname } = config

@@ -728,7 +728,7 @@ export const skill = {
                     }
                 },
                 sub: true,
-                subSkill: "lit_huoshan",
+                sourceSkill: "lit_huoshan",
             },
             damage: {
                 trigger: {
@@ -746,7 +746,7 @@ export const skill = {
                     skillTagFilter: () => true,
                 },
                 sub: true,
-                subSkill: "lit_huoshan",
+                sourceSkill: "lit_huoshan",
             },
         }
     },

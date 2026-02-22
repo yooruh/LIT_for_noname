@@ -1,28 +1,9 @@
 import { lib, game, ui, get, ai, _status } from '../../../../../noname.js';
 
-// 改不了，还是去提issue吧
-// function lit_tip(id, name, type) {
-//     let tipName = name ?? (`※${get.translation(id)}`);
-//     let obj = {
-//         id: id,
-//         name: tipName,
-//     };
-//     if (type) obj.type = type;
-//     switch (type) {
-//         case "card": obj.dialog = "cardDialog"; break;
-//         case "character": obj.dialog = "characterDialog"; break;
-//         default: {
-//             obj.info = get.translation(id + "_info");
-//             break;
-//         }
-//     }
-//     return get.poptip(obj);
-// }
-
-function Styled(style, text) {
+ function Styled(style, text) {
     switch (style) {
-        case 'r': style = 'color:Red'; break;
-        case 'g': style = 'color:PaleGreen'; break;
+        case 'r': style = 'color:#ff4343'; break;
+        case 'g': style = 'color:#98fb98'; break;
         case 'b': style = 'color:LightBlue'; break;
         case 'p': style = 'color:Pink'; break;
         case 'y': style = 'color:Orange'; break;
@@ -30,7 +11,7 @@ function Styled(style, text) {
     }
     return `<span style='${style}'>${text}</span>`;
 }
-let X = Styled('b', 'X'), Y = Styled('p', 'Y'), Z = Styled('y', 'Z');
+const X = Styled('b', 'X'), Y = Styled('p', 'Y'), Z = Styled('y', 'Z');
 
 export const translate = {
     'lit': "叁岛世界",
@@ -64,7 +45,7 @@ export const translate = {
     'lit_jiqing': "基情",
     'lit_jiqing_info': `锁定技；你不能质疑“悖论”，你体力为1时，${Styled('r', '其他技能无效')}；体力<1时，${Styled('r', '主动技能无效')}`,
     'lit_jiqingsishe': "激情四射",
-    'lit_jiqingsishe_info': `锁定技；你死亡前，你选择拥有“基情”的1人令其判定：${Styled('r', '不为“桃”或“桃园结义”则其死亡')}`,
+    'lit_jiqingsishe_info': `锁定技；你死亡前，你选择拥有${get.poptip('lit_jiqing')}的1人令其判定：${Styled('r', '不为“桃”或“桃园结义”则其死亡')}`,
     // 9王灿
     'lit_xiaoqiao': "小巧",
     'lit_xiaoqiao_info': "锁定技；你的♠牌视作♥牌。",
@@ -74,7 +55,7 @@ export const translate = {
     'lit_renxiao_info': `${Styled('r', '成功后不可于此回合再次使用')}；你使用或打出牌后，可判定：若为♥，你从弃牌堆中获得之。`,
     // 9李洋
     'lit_xiuer': "秀儿",
-    'lit_xiuer_info': `你每使用1张非转化锦囊牌就可以摸1张牌，若体力为1则+1张；锁定技；你${Styled('r', '使用锦囊牌无距离限制')}`,
+    'lit_xiuer_info': `你每使用1张非转化锦囊牌就可以摸1张牌，若体力为1则+1张；锁定技；你${Styled('g', '使用锦囊牌无距离限制')}`,
     'lit_xiuer_faq': "关于非转化",
     'lit_xiuer_faq_info': "一般来说，只有通过转换技能来使用的牌才是转化牌，如：把A当做B使用。其他的牌，如：通过弃置、扣血、判定等条件来视为使用，或直接视为使用等，即使是虚拟的，无实体的牌，也不视为转化牌。但是本扩展之外的不敢保证",
     'lit_huangse': "黄色",
@@ -175,7 +156,7 @@ export const translate = {
     'lit_qiantui': "遣退",
     'lit_qiantui_info': `血由3以上掉到3及以下时，可令不带有${get.poptip('lit_kuanshu')}的1人获得${get.poptip('lit_qianfan')}`,
 	/*负面效果*/'lit_qianfan': "遣返",
-    'lit_qianfan_info': `负面；跳过下回合，获得${get.poptip('lit_kuanshu')}，“宽恕”在下回合开始前失效`,
+    'lit_qianfan_info': `负面；跳过下回合，并获得${get.poptip('lit_kuanshu')}，“宽恕”在下回合开始前失效`,
     'lit_kuanshu': "宽恕",
     'lit_kuanshu_info': "锁；本次不会被遣返",
     // 张盛杰

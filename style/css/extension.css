@@ -145,3 +145,76 @@ cS+p {
 	white-Space: nowrap;
 	padding: 5px 10px;
 }
+
+#sdhh-mission-ui {
+	position: fixed;
+	top: 0;
+	z-index: 1000;
+	white-space: nowrap;
+	backdrop-filter: blur(0.5px);
+	font-size: clamp(12px, 4vw, 24px);
+	transform: translateX(-50%) translate3d(var(--sdhh-x, 0px), var(--sdhh-y, 0px), 0);
+	pointer-events: auto;
+	cursor: move;
+	user-select: none;
+	touch-action: none;
+	padding: 5px 10px;
+	border-radius: 4px;
+	transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+	text-align: center;
+	/* 改为 flex 布局以便内容居中，并容纳绝对定位的子元素 */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-width: max-content;
+}
+#sdhh-mission-ui:hover {
+	background: rgba(0,0,0,0.3);
+}
+#sdhh-mission-ui.fixed {
+	cursor: default;
+	background: rgba(255,255,255,0.1);
+	box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+}
+
+/* 文本内容区域 */
+#sdhh-mission-ui .sdhh-mission-text {
+	display: inline;
+	pointer-events: none; /* 文本不拦截点击，让事件透传到容器用于拖拽 */
+}
+
+/* 锁图标（绝对定位在右下角，脱离文档流避免影响文本布局） */
+#sdhh-mission-ui .lock-icon {
+	position: absolute;
+	right: -0.6em;
+	bottom: -0.6em;
+	font-size: 0.85em;
+	line-height: 1;
+	cursor: pointer;
+	pointer-events: auto; /* 锁图标需要独立接收点击 */
+	z-index: 1001;
+	padding: 2px;
+	user-select: none;
+	transition: transform 0.1s ease, opacity 0.2s ease, filter 0.2s;
+	/* Emoji 字体栈 */
+	font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+	text-shadow: 0 0 4px rgba(0,0,0,0.9);
+}
+#sdhh-mission-ui .lock-icon:hover {
+	transform: scale(1.15);
+}
+#sdhh-mission-ui .lock-icon:active {
+	transform: scale(0.85);
+}
+
+/* 锁定状态：金色 */
+#sdhh-mission-ui.fixed .lock-icon {
+	filter: brightness(1.2) drop-shadow(0 0 3px rgba(255, 215, 0, 0.5));
+	opacity: 1;
+}
+/* 未锁定状态：灰色 */
+#sdhh-mission-ui:not(.fixed) .lock-icon {
+	filter: grayscale(0.7) brightness(0.6);
+	opacity: 0.6;
+}

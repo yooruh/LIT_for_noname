@@ -89,7 +89,7 @@ export const card = {
             if (_status.currentPhase === player) {
                 const evt = event.getParent("phase", true);
                 if (evt && evt.player == player) {
-                    game.log(player, "被遣返离校，本回合直接结束");
+                    game.log(player, "受遣返牌影响，本回合直接结束");
                     evt.num = evt.phaseList.length;
                     evt.goto(11);
                 }
@@ -155,7 +155,7 @@ export const skill = {
                 if (delayEffects.length === 0) player.removeSkill("lit_qixu_mark");
             }
             trigger.cancel();
-            game.log(player, "被遣返离校，本回合直接结束");
+            game.log(player, "受遣返牌影响，本回合直接结束");
             player.removeSkill("lit_qianfanpai_skill");
         },
     },

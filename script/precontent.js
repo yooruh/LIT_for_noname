@@ -1,6 +1,5 @@
 import { game, ui, _status, ai, lib, get } from "../../../noname.js";
 import { suiSet } from "../source/tool/suiSet.js";
-import basic from '../source/tool/basic.js'
 
 ui.create.buttonPresets.vcardx = suiSet.vcardx;
 get.identityList = suiSet.identityList;
@@ -14,9 +13,6 @@ if(lib.config['extension_叁岛世界_fun_handCardsFix']){
 	game.replaceHandcards = suiSet.replaceHandcards;
 	lib.element.content.replaceHandcardsOL = suiSet.replaceHandcardEvent;
 }
-
-const mode = ['identity'/* ,'doudizhu' */];
-mode.forEach(m => suiSet.addImport(`${basic.path}/script/mode/${m}.js`));
 
 game.TrueHasExtension = ext => lib.config.extensions && lib.config.extensions.includes(ext);
 game.HasExtension = ext => game.TrueHasExtension(ext) && lib.config['extension_' + ext + '_enable'];

@@ -1,5 +1,5 @@
 import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
-import { Lit_Dialog } from './extraUI.js';
+import { Lit_dialog } from './extraUI.js';
 import basic from './basic.js';
 
 // ==================== 配置与常量 ====================
@@ -896,7 +896,7 @@ class VersionChecker {
 // ==================== UI 管理器 ====================
 class UIManager {
     constructor() {
-        this.dialog = Lit_Dialog;
+        this.dialog = Lit_dialog;
         this.env = Environment.getEnvironmentType();
     }
 
@@ -2081,7 +2081,7 @@ class ExtensionUpdater {
 }
 
 // ==================== 对外接口 ====================
-const Lit_update = {
+const Update = {
     async showUI() {
         const updater = new ExtensionUpdater();
 
@@ -2326,4 +2326,4 @@ const Lit_update = {
     }
 };
 
-export default Lit_update;
+export const Lit_update = Update;

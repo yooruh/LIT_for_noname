@@ -1,7 +1,7 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js'
 import { lib_lit } from './precontent.js';
 import { translate } from './card/lit_cardTranslate.js';
-import { Lit_Dialog } from './tool/extraUI.js'
+import { Lit_dialog } from './tool/extraUI.js'
 import basic from './tool/basic.js'
 
 function getDKskillsHelp() {
@@ -19,8 +19,8 @@ const lit_changelogOnclick = () => {
 	const dataProcessor = (content) => content.replace("{{version}}", version);
 
 	// 调用模块
-	Lit_Dialog.closeAll();
-	Lit_Dialog.showDocModal(updateURL, '更新日志', dataProcessor);
+	Lit_dialog.closeAll();
+	Lit_dialog.showDocModal(updateURL, '更新日志', dataProcessor);
 };
 window.lit_changelogOnclick = lit_changelogOnclick;
 

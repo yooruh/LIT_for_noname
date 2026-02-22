@@ -1,5 +1,4 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js';
-import { suiSet } from '../source/tool/suiSet.js';
 lib.element.content.chooseButtonAndWriteNameOL = function () {
 	"step 0";
 	//ui.arena.classList.add('markhidden');
