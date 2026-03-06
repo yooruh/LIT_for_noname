@@ -1,7 +1,8 @@
 import { lib, game, ui, get, ai, _status } from '../../../../../noname.js';
+import { Styled } from '../../tool/basic.js';
 
 function B(text) {
-    return `<span style='color:LightBlue'>${text}</span>`;
+    return Styled('b', text);
 }
 
 export const connectBanned = [];
@@ -45,7 +46,7 @@ export const character = {
         group: "nine",
         hp: 1,
         maxHp: 2,
-        skills: ["lit_shenjie", "lit_zhewan"],
+        skills: ["lit_lizhi", "lit_shenjie", "lit_zhewan"],
         groupInGuozhan: "three",
     },
     'lit_chenke陈可': {
@@ -195,29 +196,29 @@ export const character = {
 
 export const characterTitle = {
 
-    'lit_qbQb': "卖血·控人·中",
-    'lit_zhangshengjie张盛杰': "跳判定·发育流·较易",
-    'lit_zhangqinyi张钦奕': "控血·爆发·较易",
-    'lit_pangjianlong庞建龙': "控场·强杀·易",
-    'lit_wuxiaoqi伍小戚': "换牌·复活·亡语·较易",
+    'lit_qbQb': `卖血·控人·${Styled('y', "中")}`,
+    'lit_zhangshengjie张盛杰': `跳判定·发育流·${Styled('b', "较易")}`,
+    'lit_zhangqinyi张钦奕': `控血·爆发·${Styled('b', "较易")}`,
+    'lit_pangjianlong庞建龙': `控场·强杀·${Styled('g', "易")}`,
+    'lit_wuxiaoqi伍小戚': `换牌·复活·亡语·${Styled('b', "较易")}`,
 
-    'lit_zigao自高': "补牌·辅助·较难",
-    'lit_zengpinjia曾品嘉': "凑牌·追击·中",
-    'lit_boshu菠树': "辅助·反伤·过牌·较难",
-    'lit_liuchenmu刘晨沐': "辅助·干扰·中",
-    'lit_zhengmohan郑墨翰': "过牌·回血·爆发·较易",
+    'lit_zigao自高': `补牌·辅助·${Styled('o', "较难")}`,
+    'lit_zengpinjia曾品嘉': `凑牌·追击·${Styled('y', "中")}`,
+    'lit_boshu菠树': `辅助·反伤·过牌·${Styled('o', "较难")}`,
+    'lit_liuchenmu刘晨沐': `辅助·干扰·${Styled('y', "中")}`,
+    'lit_zhengmohan郑墨翰': `过牌·回血·爆发·${Styled('b', "较易")}`,
 
-    'lit_ritaRita': "装备·补牌·爆发·易",
-    'lit_hupan胡畔': "反击·续航·较难",
-    'lit_lanboxun兰柏勋': "扒牌·顺风压制·易",
-    'lit_huxinyu胡馨予': "拆牌·消耗·中",
-    'lit_hujunwei胡峻玮': "改判·爆发·强杀·较易",
+    'lit_ritaRita': `装备·补牌·爆发·${Styled('g', "易")}`,
+    'lit_hupan胡畔': `反击·续航·${Styled('o', "较难")}`,
+    'lit_lanboxun兰柏勋': `扒牌·顺风压制·${Styled('g', "易")}`,
+    'lit_huxinyu胡馨予': `拆牌·消耗·${Styled('y', "中")}`,
+    'lit_hujunwei胡峻玮': `改判·爆发·强杀·${Styled('b', "较易")}`,
 
-    'lit_wangrong王荣': "过牌·控人·强杀·中",
-    'lit_jianghaixu蒋海旭': "防拆·补牌·复活·中",
-    'lit_qianbaocan钱保灿': "群伤·爆发·较易",
-    'lit_zhangchi张驰': "拆牌·反伤·较难",
-    'lit_yangxiangling杨湘铃': "控人·斩杀·连破·较难",
+    'lit_wangrong王荣': `过牌·控人·强杀·${Styled('y', "中")}`,
+    'lit_jianghaixu蒋海旭': `防拆·补牌·复活·${Styled('y', "中")}`,
+    'lit_qianbaocan钱保灿': `群伤·爆发·${Styled('b', "较易")}`,
+    'lit_zhangchi张驰': `拆牌·反伤·${Styled('o', "较难")}`,
+    'lit_yangxiangling杨湘铃': `控人·斩杀·连破·${Styled('o', "较难")}`,
 
 };
 

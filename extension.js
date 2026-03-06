@@ -8,7 +8,7 @@ export let type = 'extension';
 
 export default async function () {
 	// 特别提醒+最低版本限制
-	let litVersion = "26.2.11.2", minGameVersion = "1.11.0".split('.').slice(), gameVersion = lib.version.split('.').slice();
+	let litVersion = "26.3.7", minGameVersion = "1.11.0".split('.').slice(), gameVersion = lib.version.split('.').slice();
 	const alertsConfig = [
 		{
 			id: 'onlineFix',
@@ -107,9 +107,9 @@ export default async function () {
 		game.reload();
 	}
 	let extension = {
-		name: extensionInfo.name, editable: true,
+		name: extensionInfo.name, editable: false,
 		content, precontent, config, help,
-		package: {/*intro:+"<img style=width:238px src=" + lib.assetURL + "></img>" ,插入图片*/ },
+		package: {/*intro:+"<img style=width:238px src=" + lib.assetURL + "></img>", 插入图片*/ },
 	};
 	extension.config.intro.name += extensionInfo.intro;
 	return extension;

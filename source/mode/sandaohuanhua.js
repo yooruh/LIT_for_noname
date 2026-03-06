@@ -294,7 +294,12 @@ export default () => {
 			if (!game.videoContent._sandaohuanhua_patched) {
 				game.videoContent._sandaohuanhua_patched = true;
 
+				// 保存原方法
+				const originalAddSkill = lib.element.player.addSkill;
+				const originalRemoveSkill = lib.element.player.removeSkill;
 				const originalInit = game.videoContent.init;
+				const originalArrangeLib = game.videoContent.arrangeLib;
+
 				game.videoContent.init = function (players) {
 					if (lib.config.mode !== '../extension/叁岛世界/source/mode/sandaohuanhua') {
 						if (originalInit) return originalInit.apply(this, arguments);
@@ -397,8 +402,6 @@ export default () => {
 						}
 					}
 				};
-
-				const originalArrangeLib = game.videoContent.arrangeLib;
 				game.videoContent.arrangeLib = function (content) {
 					if (lib.config.mode === '../extension/叁岛世界/source/mode/sandaohuanhua') {
 						if (content && content.skill) {
@@ -411,6 +414,31 @@ export default () => {
 					if (originalArrangeLib) {
 						return originalArrangeLib.apply(this, arguments);
 					}
+				};
+				// skill录像处理
+				game.videoContent.sdhh_addSkill = function (player, skill) {
+					if (!player.hasSkill(skill)) {
+						player.addSkill(skill);
+					}
+				};
+				game.videoContent.sdhh_removeSkill = function (player, skill) {
+					if (player.hasSkill(skill)) {
+						player.removeSkill(skill);
+					}
+				};
+
+				// 重写 addSkill
+				lib.element.player.addSkill = function (skill) {
+					const result = originalAddSkill.apply(this, arguments);
+					if (this.hasSkill(skill)) {
+						game.addVideo('sdhh_addSkill', this, skill);
+					}
+					return result;
+				};
+				// 重写 removeSkill
+				lib.element.player.removeSkill = function (skill) {
+					game.addVideo('sdhh_removeSkill', this, skill);
+					return originalRemoveSkill.apply(this, arguments);
 				};
 			}
 		},
@@ -855,11 +883,11 @@ export default () => {
 
 				// 初始化玩家任务目标
 				if (!_status.playback) {
-					const players = game.players;
+					const players = game.filterPlayer2();
+					const targets = get.playerx();
 					players.forEach(player => {
-						const others = players.filter(p => p !== player).randomSort();
+						const others = targets.filter(p => p !== player).randomSort();
 						[player._toKill, player._toSave] = [others[0], others[1]];
-
 					});
 					let map = {};
 					for (let i in lib.playerOL) {
@@ -984,12 +1012,10 @@ export default () => {
 						logArg.addArray([`变为`, `#b${get.translation(initTarget)}`, `复活`]);
 						game.log.apply(this, logArg);
 
-						game.broadcastAll(async (deadPlayer, initTarget) => {
-							await deadPlayer.reviveEvent(null, false);
-							await deadPlayer.uninit();
-							await deadPlayer.init(initTarget);
-							deadPlayer.addSkill("sdhh_noCard");
-						}, deadPlayer, initTarget);
+						await deadPlayer.clearSkills(true);
+						await deadPlayer.reinit(deadPlayer.name, initTarget, [lib.character[initTarget].hp, lib.character[initTarget].maxHp]);
+						await deadPlayer.reviveEvent(deadPlayer.maxHp, false);
+						deadPlayer.addSkill("sdhh_noCard");
 					}
 				};
 				await effects[type]();
@@ -998,6 +1024,7 @@ export default () => {
 		get: {
 			// 全局初始化
 			sdhhInit() {
+				lib.inpile.addArray(["sdhh_fudichouxin", "sdhh_toulianghuanzhu"]);
 				if (!lib.sandaohuanhua) lib.sandaohuanhua = {};
 
 				if (_status.connectMode) {
@@ -1025,7 +1052,7 @@ export default () => {
 
 			// 获取场上非NPC玩家数量
 			playerx() {
-				return game.filterPlayer(current => !current.name?.startsWith("sdhh_"));
+				return game.filterPlayer(current => typeof current.name === "string" && !current.name?.startsWith("sdhh_"));
 			},
 
 			// 获取技能列表对话框
@@ -1061,7 +1088,7 @@ export default () => {
 				if (prompt) dialog.addText(prompt);
 
 				skills.forEach(skill => {
-					const html = 
+					const html =
 						`<div class="popup pointerdiv" style="width:100%;display:inline-block">` +
 						`<div class="skill" style="width:auto!important;">【${get.translation(skill)}】</div><br>` +
 						`<div>${lib.translate[skill + "_info"] || ''}</div>` +
@@ -1373,12 +1400,11 @@ export default () => {
 			player: {
 				addLingliSkill(skill) {
 					this.lingliSkill.add(skill);
-					this.addSkillLog.apply(this, arguments);
+					this.addSkills.apply(this, arguments);
 				},
 				removeLingliSkill(skill) {
 					this.lingliSkill.remove(skill);
-					game.log(this, "失去了技能", "#g【" + get.translation(skill) + "】");
-					this.removeSkill(skill);
+					this.removeSkills.apply(this, arguments);
 				},
 				fixLingliSkill() {
 					this.lingliSkill = this.lingliSkill.filter(skill => this.hasSkill(skill));
@@ -1437,9 +1463,9 @@ export default () => {
 			get: {
 				rawAttitude(from, to) {
 					if (from === to) return 10;
+					if (from.hasSkill("sdhh_noCard") || to.hasSkill("sdhh_noCard")) return 0;
 					if (to === from._toSave) return 3;
 					if (to === from._toKill) return -10;
-					if (to.hasSkill("sdhh_noCard")) return 0;
 					return -6;
 				},
 			},
@@ -1548,7 +1574,7 @@ export default () => {
 					content(storage, player) {
 						player.fixLingliSkill();
 						const skillList = player.lingliSkill?.length
-							? `<li>已拥有技能：${player.lingliSkill.map(get.translation).join(" ")}`
+							? `<li>已拥有技能：${player.lingliSkill.map(get.poptip).join(" ")}`
 							: '';
 						return `当前灵力点数：${storage} / 5${skillList}`;
 					},
@@ -1567,7 +1593,7 @@ export default () => {
 
 					const allSkills = lib.sandaohuanhua.skills.randomSort();
 					const availableSkills = allSkills.filter(s => !player.lingliSkill.includes(s));
-					const skillNames = player.lingliSkill.map(get.translation).join(" ");
+					const skillNames = player.lingliSkill.map(get.poptip).join(" ");
 					const basePrompt = `当前已拥有技能：${skillNames}`;
 
 					let baseMode;
@@ -1614,7 +1640,7 @@ export default () => {
 						const choices = canRefresh ? [...candidates, "刷新"] : candidates;
 
 						const dialog = get.skillDialog(choices, "选择获得一个技能");
-						const { control } = await player.chooseControl(choices)
+						const { control } = await player.chooseControl(choices.concat('cancel2'))
 							.set("ai", () => get.max(candidates, get.skillRank, "item"))
 							.set("dialog", dialog)
 							.forResult();
@@ -1623,6 +1649,8 @@ export default () => {
 							player.changeLingli(-1);
 							candidateOffset += numCandidates;
 							continue;
+						} else if (control === "cancel2") {
+							return;
 						} else if (candidates.includes(control)) {
 							selectedSkill = control;
 							break;

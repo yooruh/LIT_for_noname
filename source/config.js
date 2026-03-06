@@ -89,12 +89,23 @@ export const config = {
 			game.saveExtensionConfig('叁岛世界', 'lit_dkwsl', item);
 		}
 	},
+	lit_sdhhBanned: {
+		name: "禁用叁岛幻化",
+		init: false,
+		intro: "开启后，不再启用独立的叁岛幻化模式，但乱斗模式中的叁岛幻化不受影响",
+		onclick: (item) => {
+			game.saveExtensionConfig('叁岛世界', 'lit_sdhhBanned', item);
+		}
+	},
 	lit_guozhanAllowed: {
 		name: "叁岛国战（实验）",
 		init: false,
 		intro: "开启后，将叁岛世界角色改为“键”势力并加入到国战模式中，重启生效",
 		onclick: (item) => {
 			game.saveExtensionConfig('叁岛世界', 'lit_guozhanAllowed', item);
+			if (!item) return;
+			lib.config.characters.add('lit_gz');
+			game.saveConfig("characters", lib.config.characters);
 		}
 	},
 	fix_onlineFixCancel: {

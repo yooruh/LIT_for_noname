@@ -3,7 +3,7 @@
         "size": 35475
     },
     "extension.js": {
-        "size": 5016
+        "size": 5014
     },
     "image/card/lit_diaoka.png": {
         "size": 5653
@@ -120,7 +120,7 @@
         "size": 244182
     },
     "info.json": {
-        "size": 237
+        "size": 235
     },
     "script/content.js": {
         "size": 4530
@@ -147,22 +147,22 @@
         "size": 537
     },
     "source/card/lit_cardSkills.js": {
-        "size": 27190
+        "size": 28267
     },
     "source/card/lit_cardTranslate.js": {
-        "size": 3685
+        "size": 3686
     },
     "source/character/lit.js": {
-        "size": 880
+        "size": 1310
     },
     "source/character/lit/lit_characters.js": {
-        "size": 21961
+        "size": 22351
     },
     "source/character/lit/lit_skills.js": {
-        "size": 284098
+        "size": 284871
     },
     "source/character/lit/lit_translate.js": {
-        "size": 31235
+        "size": 56006
     },
     "source/character/lit_gz.js": {
         "size": 3235
@@ -177,28 +177,28 @@
         "size": 48288
     },
     "source/character/test/test_translate.js": {
-        "size": 4593
+        "size": 4614
     },
     "source/config.js": {
-        "size": 7411
+        "size": 7806
     },
     "source/content.js": {
-        "size": 4728
+        "size": 5256
     },
     "source/help.js": {
         "size": 3706
     },
     "source/mode/sandaohuanhua.js": {
-        "size": 60473
+        "size": 61606
     },
     "source/mode/sandaohuanhua_brawl.js": {
         "size": 60143
     },
     "source/precontent.js": {
-        "size": 6881
+        "size": 6960
     },
     "source/tool/basic.js": {
-        "size": 329
+        "size": 795
     },
     "source/tool/configSetter.js": {
         "size": 26078
@@ -222,7 +222,7 @@
         "size": 10489
     },
     "style/html/help.html": {
-        "size": 15273
+        "size": 16271
     },
     "style/html/sandaohuanhua.html": {
         "size": 9101

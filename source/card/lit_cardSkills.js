@@ -14,44 +14,74 @@ export const card = {
         selectTarget: -1,
         filterTarget: (card, player, target) => {
             let group = ['nine', 'three'];
-            if (_status.forceKey) group.push('key');
+            if (lib.lit.isGuozhanKeyEnabled()) group.push('key');
             return target === player && (group.includes(target.group) || game.getExtensionConfig('叁岛世界', 'lit_dkwsl'));
         },
         modTarget: function (card, player, target) {
             let group = ['nine', 'three'];
-            if (_status.forceKey) group.push('key');
-            return group.includes(target.group) || game.getExtensionConfig('叁岛世界', 'lit_dkwsl');
+            if (lib.lit.isGuozhanKeyEnabled()) group.push('key');
+            return target === player && (group.includes(target.group) || game.getExtensionConfig('叁岛世界', 'lit_dkwsl'));
         },
         async content(event, trigger, player) {
-            let target = event.target;
-            let dkh = [], dkd = [], dky = [], dk = lib.lit.dkSkills.concat('lit_xiaohongtanver');
-            for (let i of dk) {
-                if (!lib.lit.dkCheck(i)) dky.push(i);
-                if (game.hasPlayer2(current => { return current.awakenedSkills.includes(i) })) dky.push(i);
+            const target = event.target;
+            const allSkills = lib.lit.dkSkills.concat('lit_xiaohongtanver');
+
+            // 收集被移除的技能（系统移除或已觉醒）
+            const removedSkills = [];
+            for (const skill of allSkills) {
+                const isSystemRemoved = !lib.lit.dkCheck(skill);
+                const isAwakened = game.hasPlayer2(current => current.awakenedSkills.includes(skill));
+                if (isSystemRemoved || isAwakened) {
+                    removedSkills.push(skill);
+                }
             }
-            for (let i of dk) {//dkh：玩家已有的吊卡 dkd：未分配的吊卡 dky：被移除的吊卡 dk：所有的吊卡
-                if (!game.hasPlayer(current => { return current.hasSkill(i) }) &&
-                    !dky.includes(i)) dkd.push(i);
-                if (target.hasSkill(i)) dkh.push(i);
+
+            // 收集可用技能和target当前拥有的吊卡
+            const availableSkills = [];
+            const targetExistingSkills = [];
+            for (const skill of allSkills) {
+                const isOccupied = game.hasPlayer(current => current.hasSkill(skill));
+                const isRemoved = removedSkills.includes(skill);
+
+                if (!isOccupied && !isRemoved) {
+                    availableSkills.push(skill);
+                }
+                if (target.hasSkill(skill)) {
+                    targetExistingSkills.push(skill);
+                }
             }
-            if (dkd.length < 1) {
+
+            // 如果没有可用的吊卡技能
+            if (availableSkills.length < 1) {
                 await target.popup('吊卡没了');
                 await target.draw();
             } else {
-                if (dkh.length > 0) await target.removeSkills(dkh);
-                let new_skills = dkd.randomGets(1);
+                // 移除target已有的吊卡技能
+                if (targetExistingSkills.length > 0) {
+                    await target.removeSkills(targetExistingSkills);
+                }
+
+                // 随机获取1个新技能
+                const newSkills = availableSkills.randomGets(1);
+                const selectedSkill = newSkills[0];
+
+                // 添加标记和新技能
                 await target.addSkill('lit_diaokajineng');
-                await target.changeSkills(new_skills, [], false);
-                let special_pop = get.translation(new_skills[0]);
-                if (special_pop.length < 7) await target.popup(new_skills[0]);
-                else await target.popup(special_pop.slice(0, 3) + "<br>" + special_pop.slice(3));
+                await target.changeSkills(newSkills, [], false);
+
+                // 显示技能名称
+                const skillName = get.translation(selectedSkill);
+                const popupText = skillName.length < 7
+                    ? selectedSkill
+                    : `${skillName.slice(0, 3)}<br>${skillName.slice(3)}`;
+                await target.popup(popupText);
             }
         },
         ai: {
             basic: {
                 value(card, player) {
                     let group = ['nine', 'three'];
-                    if (_status.forceKey) group.push('key');
+                    if (lib.lit.isGuozhanKeyEnabled()) group.push('key');
                     if (!player.hasSkill('lit_diaokajineng') && (group.includes(player.group) || game.getExtensionConfig('叁岛世界', 'lit_dkwsl'))) return 10;
                     return 0.1;
                 },
@@ -61,7 +91,7 @@ export const card = {
             result: {
                 target(player, target) {
                     let group = ['nine', 'three'];
-                    if (_status.forceKey) group.push('key');
+                    if (lib.lit.isGuozhanKeyEnabled()) group.push('key');
                     if (!player.hasSkill('lit_diaokajineng') && (group.includes(player.group) || game.getExtensionConfig('叁岛世界', 'lit_dkwsl'))) return 1;
                     return 0;
                 }
@@ -147,7 +177,7 @@ export const skill = {
         trigger: { player: "phaseBefore" },
         async content(event, trigger, player) {
             // cancelled事件容易找不到reason，故lit_qixu_mark关于遣返牌的处理被移至了此处
-            let delayEffects = player.storage.lit_qixu_mark;
+            let delayEffects = player.getStorage("lit_qixu_mark", []);
             if (delayEffects && delayEffects.includes("lit_qianfanpai")) {
                 delayEffects = delayEffects.filter(value => value != "lit_qianfanpai");
                 player.popup("（期许）<br>跳过回合");
@@ -184,28 +214,29 @@ export const skill = {
         filter: (event) => {
             if (event.name === 'die' || event.addSkill && event.addSkill.length) return true;
             var player = event.player;
-            let list = player.storage.lit_diaokajineng;
+            let list = player.getStorage("lit_diaokajineng");
             return !list.some(e => player.hasSkill(e));
         },
         async content(event, trigger, player) {
             var player = trigger.player;
-            let list = player.storage.lit_diaokajineng;
+            let list = player.getStorage("lit_diaokajineng");
             if (trigger.name != 'die' && trigger.addSkill.length) {
                 for (let i in trigger.addSkill) {
                     try { var dk = get.info(trigger.addSkill[i]).lit_dk } catch { var dk = false }
                     if (dk && !list.includes(trigger.addSkill[i])) {
-                        player.storage.lit_diaokajineng.push(trigger.addSkill[i]);
+                        list.push(trigger.addSkill[i]);
+                        player.setStorage("lit_diaokajineng", list);
                     }
                 }
                 player.markSkill("lit_diaokajineng");
             }
-            else player.removeSkill('lit_diaokajineng');
+            else player.removeSkill("lit_diaokajineng");
         },
         init: (player) => {
             player.setStorage("lit_diaokajineng", []);
         },
         onremove: (player) => {
-            let list = player.storage.lit_diaokajineng;
+            let list = player.getStorage("lit_diaokajineng");
             if (list.some(e => player.hasSkill(e))) player.removeSkills(list);
         },
     },
@@ -442,7 +473,7 @@ export const skill = {
         },
         async content(event, trigger, player) {
             await player.gain(trigger.getl(trigger.player).js, "gain2");
-            let now = player.storage.lit_yibandelajitong - 1;
+            let now = player.getStorage("lit_yibandelajitong") - 1;
             if (now <= 0) {
                 await player.removeSkills('lit_yibandelajitong');
             } else player.setStorage("lit_yibandelajitong", now, true);
@@ -488,7 +519,7 @@ export const skill = {
         async content(event, trigger, player) {
             // 记录target当前拥有的吊卡技能
             const target = event.target;
-            const targetSkills = target.storage.lit_diaokajineng || [];
+            const targetSkills = target.getStorage("lit_diaokajineng", []);
 
             // 移除吊卡技能
             if (targetSkills.length) await target.removeSkills(targetSkills);
@@ -665,7 +696,7 @@ export const skill = {
             if (!player.hasSkill("lit_caichendekuangre_mark")) {
                 player.addSkill("lit_caichendekuangre_mark");
             }
-            let count = player.storage.lit_caichendekuangre_mark;
+            let count = player.getStorage("lit_caichendekuangre_mark", 0);
             player.setStorage("lit_caichendekuangre_mark", ++count, true);
             player.insertPhase(event.skill);
         },
@@ -679,12 +710,12 @@ export const skill = {
                     name: "好热好热！",
                     content: "将狂热地进行#次额外回合",
                 },
-                init: (player) => {
+                init(player){
                     player.setStorage("lit_caichendekuangre_mark", 0);
                 },
                 trigger: { player: "phaseBefore" },
                 async content(event, trigger, player) {
-                    let count = player.storage.lit_caichendekuangre_mark;
+                    let count = player.getStorage("lit_caichendekuangre_mark", 0);
                     player.setStorage("lit_caichendekuangre_mark", --count, true);
                     if (count <= 0) player.removeSkill("lit_caichendekuangre_mark");
                 },

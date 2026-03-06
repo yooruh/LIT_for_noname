@@ -7,15 +7,17 @@ export async function content(config, pack) {
 	let str = [
 		{ type: "players", data: ['lit_hupan9胡畔'] },
 		{
-			type: "text", addText: true, data: `<p style="text-align: left;">
-① 加入角色：${get.poptip("lit_wangrong王荣")} 以及吊卡技能：${get.poptip("lit_caichendekuangre")}、${get.poptip("lit_rongshaodejian")}；<br>
-② 调整了${get.poptip("lit_zhangshengjie张盛杰")}的强度及部分技能的AI逻辑；<br>
-③ 叁岛国战：重构导入逻辑（由于本体国战模式重做，故暂停叁岛国战的更新）；<br>
-④ “叁岛测试”角色包上线：其中的6个《九班杀》老角色默认关闭，需手动开启。注意：强度、AI、兼容性均未完成优化，极可能存在Bug；<br>
-⑤ 引入了新UI以代替部分老代码，加入“在线更新扩展（测试，暂时仅支持电脑版）”“应用推荐的无名杀全局设置”功能。此外，本体已加入名词解释超链接和复活事件，本扩展不再额外重复；<br>
-⑥ 部分角色新增可选皮肤，以前的皮肤用AI塑炼了一下，清晰度↗，占用空间↘<br>
-<li style="text-align: left;">寒假！</li>
-<li style="text-align: left;">可在「选项」-「扩展」-「叁岛世界」中查看帮助文档<span style='opacity: 0.315;color:Red'> =)</span></li></p>`
+			type: "text", addText: true, data: `<div style="text-align: left;font-size: 16px;">
+① 准备加入角色“羲烨”“雨桐”；<br>
+② 修改了${get.poptip("lit_zhangshengjie9张盛杰")} ${get.poptip("lit_zhangqinyi张钦奕")} ${get.poptip("lit_zengpinjia曾品嘉")} ${get.poptip("lit_jianghaixu蒋海旭")}的技能
+<li>准备重做${get.poptip("lit_zhangshengjie张盛杰")}；</li><br>
+③ 现在，选将结束后的局内技能描述会更简洁，而选将之前的技能描述会更完善，如果产生歧义，请以后者为标准！<br>
+④ “叁岛测试”角色包将会持续更新“九班杀”“叁岛篇”的角色，更多以实验技能和代码兼容为主，强度和AI暂不过度处理；<br>
+⑤ “叁岛幻化”已被单独提取为独立模式，且支持线上联机游玩，位于乱斗模式的“叁岛幻化”将暂停更新（会和独立模式对齐，之后可能会有小修小补）；<br>
+⑥ 对无名杀1.11.2进行了些许适配，未来将调整“应用推荐的无名杀全局设置”等功能，以便更好地支持重构后的无名杀版本（因此会放弃对1.11.2及之前的版本支持）<br>
+<li>开学了~</li>
+<li>可在「选项」-「扩展」-「叁岛世界」中查看帮助文档<span style='opacity: 0.315;color:Red'> =)</span></li>
+</div>`
 		}];
 	game.showExtensionChangeLog(str, '叁岛世界');
 
@@ -38,13 +40,29 @@ export async function content(config, pack) {
 		name: "展示",
 		type: "skill",
 		info: `<span class='bluetext'>直到下回合结束，使用牌点数为<span style='color:Pink'>Y</span>的：<li>倍数，无次数限制；<li>约数，+1牌<br>（<span style='color:Pink'>Y</span>为使用的上一牌的点数）</span>`,
-	})
+	});
+	get.poptip({
+		id: "lit_btCard",
+		name: "牌",
+		type: "character",
+		info: `基本牌或普通锦囊牌`,
+	});
+	get.poptip({
+		id: "lit_exdeCard",
+		name: "牌",
+		type: "character",
+		info: `装备牌和延时锦囊牌除外`,
+	});
+	get.poptip({
+		id: "lit_hej",
+		name: "区域内的牌",
+		type: "character",
+		info: `指手牌、装备区的牌和判定区的牌`,
+	});
 
 	// 将角色加入国战模式
 	if (get.mode() === 'guozhan' && game.getExtensionConfig('叁岛世界', 'lit_guozhanAllowed')) {
-		if (lib.config.characters.includes('lit_gz')) {
-			_status.forceKey = true; // 启用键势力
-		}
+		// 导入菜单栏
 		let pack = lib.lit.infopack['lit_gz'];
 		for (const name in pack) {
 			const content = pack[name];
@@ -74,13 +92,17 @@ export async function content(config, pack) {
 			}
 		}
 		lib.characterPack[pack.name] = pack.character;
-		lib.characterGuozhanFilter.add(pack.name);
 		lib.translate[`${pack.name}_character_config`] = '叁岛国战';
+		// 在国战模式中启用
+		if (lib.config.characters.includes('lit_gz')) {
+			_status.forceKey = true; // 启用键势力
+			lib.characterGuozhanFilter.add(pack.name);
+		}
 
 		let info = (await import(`./card/lit_card.js`)).info;
 		if (lib.cardPack.guozhan && lib.config.cards.includes(info.name)) {
 			for (let i in info.card) {
-				lib.cardPack.guozhan.push(i);
+				lib.cardPack.guozhan.add(i);
 			}
 			lib.guozhanPile.addArray(info.list);
 			lib.guozhanPile_yingbian.addArray(info.list);
@@ -97,11 +119,9 @@ export async function content(config, pack) {
 		// }, lib.characterPack.mode_guozhan);
 		// lib.characterPack.mode_guozhan = lit_pack;
 	}
-	// 联机模式修改
-	if (get.mode() === 'connect') {
-		if (!lib.config.all.stockmode.includes(lib.lit.sdhh_connectName)) {
-			lib.config.all.stockmode.push(lib.lit.sdhh_connectName);
-		}
+	// 联机模式
+	if (get.mode() === 'connect' && !game.getExtensionConfig('叁岛世界', 'lit_sdhhBanned')) {
+		lib.config.all.stockmode.add(lib.lit.sdhh_connectName);
 	}
 	// 乱斗模式
 	if (lib.brawl) {

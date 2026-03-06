@@ -25,14 +25,14 @@ export const translate = {
     "lit_yiyu": "呓语",
     "lit_yiyu_info": "出牌阶段限2次，你选择攻击范围内的1人，可弃其区域内的1张牌，然后强制使用手牌中所有的“杀”，除非其死亡，否则你弃置其他手牌。",
     "lit_moshou": "墨守",
-    "lit_moshou_info": "锁定技；出牌阶段，你的非♥“闪”视为“杀”；每有1人死亡：<br><li>①在你的回合外，你摸2张牌；<br><li>②在你的回合内，你摸x张牌。（x为你的体力上限）",
+    "lit_moshou_info": "锁定技；出牌阶段，你的非♥️“闪”视为“杀”；每有1人死亡：<br><li>①在你的回合外，你摸2张牌；<br><li>②在你的回合内，你摸x张牌。（x为你的体力上限）",
     // 9曾品嘉
     "lit_yingjun": "英俊",
     "lit_yingjun_info": "你准备/结束阶段开始时可以摸1张牌。",
     "lit_kuizeng": "馈赠",
     "lit_kuizeng_info": "出牌阶段，你可以把你区域内任意的牌给予其他人；本回合给予牌的总数量<span class='redtext' style='color:Red'>每</span>达到3的倍数时，你选择+1体力或对人造成1点伤害。",
     "lit_chuangshi": "创世",
-    "lit_chuangshi_info": "受到伤害时可摸1张牌并令1人判定：为♥♦则+1点体力；为♠♦♣则摸x张牌；为9额外+1点体力。（x为受到的伤害）",
+    "lit_chuangshi_info": "受到伤害时可摸1张牌并令1人判定：为♥️♦️则+1点体力；为♠️♦️♣️则摸x张牌；为9额外+1点体力。（x为受到的伤害）",
     // 王思媛
     "lit_daha": "大哈",
     "lit_daha_info": "锁定技；你即将造成的伤害视作失去体力，<span class='redtext' style='color:Red'>除非</span>你弃置所有手牌。",
@@ -42,7 +42,7 @@ export const translate = {
     "lit_jinshan": "尽善",
     "lit_jinshan_info": "若你在出牌阶段没有使用过“杀”，则你可以跳过弃牌阶段；锁定技；死亡时<span class='redtext' style='color:Red'>所有人</span>-1点体力。",
     "lit_danchun": "单纯",
-    "lit_danchun_info": "出牌阶段限1次，你可以观看其他1人手牌并可以将其1张♥牌拿走或放至牌堆顶。",
+    "lit_danchun_info": "出牌阶段限1次，你可以观看其他1人手牌并可以将其1张♥️牌拿走或放至牌堆顶。",
     "lit_cidi": "次第",
     "lit_cidi_info": "当你在回合外失去牌时，可以判定：<span class='redtext' style='color:Red'>不为A</span>则将判定牌明置在你的人物牌上称为“第”，你的“第”可作顺手牵羊使用。锁定技；你与他人计算的距离-“第”数。",
     // 彭丽颖

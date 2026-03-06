@@ -32,14 +32,24 @@ export let lib_lit = {
 	dkSkills: ['lit_zigaodebeixin', 'lit_zenggedeshouzhou', 'lit_qianlaoshidejialian', 'lit_pandejianpan', 'lit_zhongyutongdebiji', 'lit_liyangdeziyou',
 		'lit_zhangxuandemp5', 'lit_yibandelajitong', 'lit_xiaohongtanver', 'lit_qbzhimao', 'lit_jiegededifengfenger', 'lit_caichendekuangre', 'lit_rongshaodejian'],
 	dkCheck(skill) {
-		let count = game.playerx ? game.playerx() : game.countPlayer();
+		let count = this.getPlayers();
 		switch (skill) {
 			case "lit_zigaodebeixin": case "lit_qbzhimao":
 				return count > 4;
-			case "lit_jiegededifengfenger": case "lit_caichendekuangre":
-				return 2 < count && count < 6;
+			case "lit_caichendekuangre":
+				return count > 2;
+			case "lit_jiegededifengfenger":
+				return 2 < count && count < 6 && !get.mode().includes('sandaohuanhua');
 		}
 		return lib.lit.dkSkills.includes(skill);
+	},
+	getPlayers() {
+		if (game.playerx) return game.playerx();
+		if (get.playerx) return get.playerx();
+		return game.countPlayer();
+	},
+	isShengjiSkill(skill) {
+		return skill !== "lit_shengji" && skill.startsWith("lit_shengji") && !skill.startsWith("lit_shengji_");
 	},
 	// 国战Key势力是否开启
 	isGuozhanKeyEnabled() {
@@ -55,9 +65,6 @@ export let lib_lit = {
 		// 国战Key势力模式下的跨势力判定
 		return this.isBigGroupKey(targetGroup) && this.isBigGroupKey(player.group || player.groupInGuozhan);
 	},
-	shengjiFilter(skill) {
-		return skill !== "lit_shengji" && skill.startsWith("lit_shengji") && !skill.startsWith("lit_shengji_");
-	},
 };
 
 export async function precontent(config, pack) {
@@ -72,15 +79,17 @@ export async function precontent(config, pack) {
 	lib.lit = lib_lit;
 
 	// 注册叁岛幻化模式
-	const { default: sandaohuanhuaMode } = await import('./mode/sandaohuanhua.js');
-	const modeConfig = sandaohuanhuaMode();
+	if (!game.getExtensionConfig('叁岛世界', 'lit_sdhhBanned')) {
+		const { default: sandaohuanhuaMode } = await import('./mode/sandaohuanhua.js');
+		const modeConfig = sandaohuanhuaMode();
 
-	game.addMode(lib.lit.sdhh_connectName, modeConfig, {
-		translate: '叁岛幻化',
-		extension: '叁岛世界',
-	});
-	lib.mode[lib.lit.sdhh_connectName].config = modeConfig.config || {};
-	lib.mode[lib.lit.sdhh_connectName].connect = modeConfig.connect || {};
+		game.addMode(lib.lit.sdhh_connectName, modeConfig, {
+			translate: '叁岛幻化',
+			extension: '叁岛世界',
+		});
+		lib.mode[lib.lit.sdhh_connectName].config = modeConfig.config || {};
+		lib.mode[lib.lit.sdhh_connectName].connect = modeConfig.connect || {};
+	}
 
 	// 加入势力
 	lib.init.css(`${basic.path}/style/css`, 'extension');
@@ -143,7 +152,6 @@ export async function precontent(config, pack) {
 		lib.lit.infopack[info.name] = info;
 		if (!info.mode) {
 			game.import('character', () => info);
-			// lib.config.all.characters.push(info.name); // 本体自己都没修好all.characters对武将包的管理，那还说啥了
 		}
 		if (!game.getExtensionConfig('叁岛世界', `${info.name}_character_pack`) && charPack[packName].init !== false) {
 			lib.config.characters.add(info.name);
@@ -162,7 +170,6 @@ export async function precontent(config, pack) {
 			}
 		}
 		game.import('card', () => info);
-		// lib.config.all.cards.push(info.name);
 		if (!game.getExtensionConfig('叁岛世界', `${info.name}_card_pack`) && cardPack[packName].init !== false) {
 			lib.config.cards.add(info.name);
 			game.saveConfig('cards', lib.config.cards);
