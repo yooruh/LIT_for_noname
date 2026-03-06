@@ -57,18 +57,48 @@ const utils = {
         return 0;
     },
 
+    // 匹配对应版本
     matchVersion(gameVer, rule) {
         if (!rule || rule === '*') return true;
         gameVer = String(gameVer).replace(/^v/, '');
-        if (rule.startsWith('>=')) return utils.compareVersion(gameVer, rule.slice(2)) >= 0;
-        if (rule.startsWith('<=')) return utils.compareVersion(gameVer, rule.slice(2)) <= 0;
-        if (rule.startsWith('>')) return utils.compareVersion(gameVer, rule.slice(1)) > 0;
-        if (rule.startsWith('<')) return utils.compareVersion(gameVer, rule.slice(1)) < 0;
-        if (/[\dxX*]/.test(rule)) {
-            const base = rule.split(/[xX*]/)[0];
-            return gameVer.startsWith(base);
+
+        // 支持数组格式：['1.2.0', '1.3.x', '>=2.0.0']
+        if (Array.isArray(rule)) {
+            return rule.some(r => this.matchSingleVersion(gameVer, r));
         }
-        return utils.compareVersion(gameVer, rule) === 0;
+
+        // 支持字符串或分隔：'1.2.0 || 1.3.x || >=2.0.0'
+        if (typeof rule === 'string' && rule.includes('||')) {
+            const rules = rule.split('||').map(r => r.trim());
+            return rules.some(r => this.matchSingleVersion(gameVer, r));
+        }
+
+        // 支持复合区间：'>=1.0.0 <2.0.0' 表示 [1.0.0, 2.0.0)
+        if (typeof rule === 'string' && rule.includes(' ') && !rule.includes('||')) {
+            const conditions = rule.split(/\s+/).filter(Boolean);
+            return conditions.every(cond => this.matchSingleVersion(gameVer, cond));
+        }
+
+        return this.matchSingleVersion(gameVer, rule);
+    },
+
+    // 单例匹配
+    matchSingleVersion(gameVer, rule) {
+        rule = String(rule).trim();
+        if (rule === '*') return true;
+
+        if (rule.startsWith('>=')) return this.compareVersion(gameVer, rule.slice(2)) >= 0;
+        if (rule.startsWith('<=')) return this.compareVersion(gameVer, rule.slice(2)) <= 0;
+        if (rule.startsWith('>')) return this.compareVersion(gameVer, rule.slice(1)) > 0;
+        if (rule.startsWith('<')) return this.compareVersion(gameVer, rule.slice(1)) < 0;
+
+        // 处理 1.2.x / 1.2.* / 1.2.X 通配
+        if (/[\dxX*]/.test(rule)) {
+            const base = rule.split(/[xX*]/)[0].replace(/\.+$/, '');
+            if (base) return gameVer.startsWith(base);
+        }
+
+        return this.compareVersion(gameVer, rule) === 0;
     },
 
     getFileType(filename) {
