@@ -44,8 +44,8 @@ export let lib_lit = {
 		return lib.lit.dkSkills.includes(skill);
 	},
 	getPlayers() {
-		if (game.playerx) return game.playerx();
-		if (get.playerx) return get.playerx();
+		if (game.playerx) return game.playerx().length;
+		if (get.playerx) return get.playerx().length;
 		return game.countPlayer();
 	},
 	isShengjiSkill(skill) {
@@ -110,6 +110,8 @@ export async function precontent(config, pack) {
 			return span.outerHTML;
 		},
 	});
+
+	// 导入角色和卡牌
 	for (let packName in charPack) {
 		let { info } = await import(`./character/${packName}.js`);
 		if (!info) continue;

@@ -1,14 +1,14 @@
 import { lib, game, ui, get, ai, _status } from '../../noname.js'
-import basic from './source/tool/basic.js'
-import help from './source/help.js'
 import { config } from './source/config.js'
 import { precontent } from './source/precontent.js'
 import { content } from './source/content.js'
+import help from './source/help.js'
+import basic from './source/tool/basic.js'
 export let type = 'extension';
 
 export default async function () {
 	// 特别提醒+最低版本限制
-	let litVersion = "26.3.7", minGameVersion = "1.11.0".split('.').slice(), gameVersion = lib.version.split('.').slice();
+	const litVersion = "26.3.15.3", minGameVersion = "1.11.2".split('.').slice(), gameVersion = lib.version.split('.').slice();
 	const alertsConfig = [
 		{
 			id: 'onlineFix',
@@ -106,11 +106,13 @@ export default async function () {
 		game.saveConfig("customforbid", lib.config.customforbid);
 		game.reload();
 	}
-	let extension = {
+	const extension = {
 		name: extensionInfo.name, editable: false,
 		content, precontent, config, help,
 		package: {/*intro:+"<img style=width:238px src=" + lib.assetURL + "></img>", 插入图片*/ },
 	};
-	extension.config.intro.name += extensionInfo.intro;
+	if (!extension.config.intro.name.endsWith(extensionInfo.intro)) {
+		extension.config.intro.name += extensionInfo.intro;
+	}
 	return extension;
 }

@@ -22,7 +22,6 @@ import basic from './tool/basic.js'
 // 		map.fun_beginDraw.hide();
 // 		map.fun_replaceHandCards.hide();
 // 		map.edit_cardsInfo.hide();
-// 		map.edit_errorIgnore.hide();
 // 	} else {
 // 		map.lit_fg0.show();
 // 		map.main_audio.show();
@@ -44,7 +43,6 @@ import basic from './tool/basic.js'
 // 			map.fun_replaceHandCards.hide();
 // 		}
 // 		map.edit_cardsInfo.show();
-// 		map.edit_errorIgnore.show();
 // 	}
 // }
 
@@ -168,7 +166,7 @@ export const config = {
 		intro: '开启后，在下方会出现一个输入密码的按钮，加入你的房间时必须输入此密码才可加入，重启后生效',
 		init: false,
 		onclick(bool) {
-			game.saveConfig('extension_叁岛世界_play_mima', bool)
+			game.saveConfig('extension_叁岛世界_play_mima', bool);
 			// suiSet.setMima()
 		}
 	},
@@ -180,9 +178,9 @@ export const config = {
 				clear: true,
 				onclick() {
 					game.prompt(`请输入要设置的密码<br>当前密码：${lib.config['叁岛世界mima'] || '无'}`, str => {
-						if (str) game.saveConfig('叁岛世界mima', str)
+						if (str) game.saveConfig('叁岛世界mima', str);
 						game.prompt(`给密码输入错误的玩家的提示<br>当前提示：${lib.config['叁岛世界_tip'] || '无'}`, str2 => {
-							if (str2) game.saveConfig('叁岛世界_tip', str2)
+							if (str2) game.saveConfig('叁岛世界_tip', str2);
 						})
 					})
 				}
@@ -229,11 +227,6 @@ export const config = {
 		name: '卡牌上显示出牌信息',
 		intro: '在打出的卡牌下方显示一行小字：“xx对xx使用”“xx打出”等',
 		init: true,
-	},
-	edit_errorIgnore: {
-		name: '忽略弹窗报错',
-		intro: '不建议打开，除非我们不得不这么做',
-		init: false,
 	},
 	intro: {
 		name: "作者：一个月惹",

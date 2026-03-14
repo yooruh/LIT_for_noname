@@ -1,6 +1,6 @@
-﻿import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
+import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
 import { Lit_dialog } from '../tool/extraUI.js';
-import basic from '../tool/basic.js'
+import basic, { poptipInit } from '../tool/basic.js'
 export const type = "mode";
 
 // ==================== 常量定义区 ====================
@@ -1024,6 +1024,7 @@ export default () => {
 		get: {
 			// 全局初始化
 			sdhhInit() {
+				poptipInit();
 				lib.inpile.addArray(["sdhh_fudichouxin", "sdhh_toulianghuanzhu"]);
 				if (!lib.sandaohuanhua) lib.sandaohuanhua = {};
 
@@ -1552,20 +1553,8 @@ export default () => {
 		},
 
 		skill: {
-			_lingli_damage: {
-				trigger: { source: "damage" },
-				forced: true,
-				popup: false,
-				filter(event, player) {
-					return event.player == player._toKill;
-				},
-				content() {
-					game.log(player, "对杀伤目标造成了伤害");
-					player.changeLingli(trigger.num);
-				},
-			},
-
 			_lingli: {
+				ruleSkill: true,
 				mark: true,
 				marktext: "灵",
 				popup: "聚灵",
@@ -1639,11 +1628,27 @@ export default () => {
 						const canRefresh = player.storage._lingli >= baseCost + 1;
 						const choices = canRefresh ? [...candidates, "刷新"] : candidates;
 
-						const dialog = get.skillDialog(choices, "选择获得一个技能");
-						const { control } = await player.chooseControl(choices.concat('cancel2'))
-							.set("ai", () => get.max(candidates, get.skillRank, "item"))
-							.set("dialog", dialog)
-							.forResult();
+						// 不知道为什么坏了，以后修
+						// const { control } = await player.chooseControl(choices, 'cancel2')
+						// 	.set("ai", () => get.max(candidates, get.skillRank, "item"))
+						// 	.set("dialog", get.skillDialog(choices, "选择获得一个技能"))
+						// 	.forResult();
+
+						// 定义技能选择函数
+						const chooseSkill = function (player, choices, skills) {
+							const next = player.chooseControl(choices, 'cancel2');
+							next.set("ai", () => get.max(skills, get.skillRank, "item"));
+							next.set("dialog", get.skillDialog(choices, "选择获得一个技能"));
+							return next;
+						};
+
+						const chooseResult = await game.chooseAnyOL(
+							[player], chooseSkill, [choices, candidates]
+						).forResult();
+
+						// 转换 Map 结果为 skillMap 格式
+						const result = chooseResult.get(player);
+						const control = result ? result.control : "cancel2";
 
 						if (control === "刷新") {
 							player.changeLingli(-1);
@@ -1680,18 +1685,8 @@ export default () => {
 					player.addLingliSkill(selectedSkill);
 				},
 			},
-
-			_lingli_round: {
-				trigger: { global: "roundStart" },
-				forced: true,
-				popup: false,
-				filter: (event, player) => !_status._aozhan && game.roundNumber > 1,
-				content() {
-					player.changeLingli(1);
-				},
-			},
-
 			_lingli_draw: {
+				ruleSkill: true,
 				enable: "phaseUse",
 				filter: (event, player) => player.storage._lingli > 0,
 				content() {
@@ -1710,7 +1705,31 @@ export default () => {
 				},
 			},
 
+			_lingli_round: {
+				ruleSkill: true,
+				trigger: { global: "roundStart" },
+				forced: true,
+				popup: false,
+				filter: (event, player) => !_status._aozhan && game.roundNumber > 1,
+				content() {
+					player.changeLingli(1);
+				},
+			},
+			_lingli_damage: {
+				ruleSkill: true,
+				trigger: { source: "damage" },
+				forced: true,
+				popup: false,
+				filter(event, player) {
+					return event.player == player._toKill;
+				},
+				content() {
+					game.log(player, "对杀伤目标造成了伤害");
+					player.changeLingli(trigger.num);
+				},
+			},
 			_lingli_save: {
+				ruleSkill: true,
 				trigger: { target: "useCardToTargeted" },
 				forced: true,
 				popup: false,
@@ -1722,6 +1741,7 @@ export default () => {
 			},
 
 			_sdhh_qiankunbagua: {
+				ruleSkill: true,
 				trigger: { player: "phaseAfter" },
 				forced: true,
 				forceDie: true,
@@ -1732,8 +1752,8 @@ export default () => {
 
 				async content(event, trigger, player) {
 					if (_status._aozhan && !player.getStat("damage") && !player.name?.startsWith("sdhh_")) {
-						player.loseHp();
-						player.changeLingli(1);
+						await player.loseHp();
+						await player.changeLingli(1);
 						game.log(player, "本回合内未造成伤害，触发死战扣血");
 					}
 
@@ -1746,6 +1766,8 @@ export default () => {
 			},
 
 			sdhh_noCard: {
+				charlotte: true,
+				ruleSkill: true,
 				mod: {
 					cardEnabled: () => false,
 					cardSavable: () => false,
@@ -1792,7 +1814,7 @@ export default () => {
 				ai: {
 					effect: {
 						target(card, player, target) {
-							if (get.tag(card, "damage")) return [-5, 0];
+							if (get.tag(card, "damage")) return [1, -5];
 						},
 					},
 				},
@@ -1862,7 +1884,7 @@ export default () => {
 				ai: {
 					effect: {
 						target(card, player, target) {
-							if (get.tag(card, "damage")) return [15, 0];
+							if (get.tag(card, "damage")) return [1, 5];
 						},
 					},
 				},
@@ -1885,7 +1907,7 @@ export default () => {
 				filterCard: true,
 				selectCard: [1, 2],
 				allowChooseAll: true,
-				prompt: "弃置1/2张牌并摸2/3张牌",
+				prompt: "弃置1/2张牌并摸等量张牌",
 				check(card) {
 					const player = _status.event.player;
 					if (get.position(card) == "e") {
@@ -1897,12 +1919,11 @@ export default () => {
 					return 6 - get.value(card);
 				},
 				async content(event, trigger, player) {
-					player.draw(event.cards.length + 1);
+					player.draw(event.cards.length);
 				},
 				ai: {
 					order: 1,
 					result: { player: 1 },
-					threaten: 1.1,
 				},
 			},
 		},
@@ -1924,7 +1945,7 @@ export default () => {
 			sdhh_huizhen_info: "锁定技，杀死你的角色摸三张牌并随机获得一个技能(已满则先随机移除一个)。",
 			sdhh_jubao_info: "锁定技，当你受到伤害的点数确定时，伤害来源随机获得你区域内的X张牌（X为伤害点数）。",
 			sdhh_shulv: "熟虑",
-			sdhh_shulv_info: "出牌阶段限一次，你可以弃置1/2张牌并摸2/3张牌。",
+			sdhh_shulv_info: "出牌阶段限一次，你可以弃置1/2张牌并摸等量张牌。",
 			sdhh_shiona: "汐奈",
 			sdhh_kanade: "立华奏",
 			sdhh_takaramono1: "坚实宝箱",

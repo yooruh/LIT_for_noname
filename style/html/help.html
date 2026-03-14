@@ -221,12 +221,18 @@
 
 		<!-- 前言 -->
 		<div class="effect-section">
-			<h2>前言</h2>
+			<h2>前言（村规）</h2>
 			<ul>
 				<li>关于技能描述：
 					<ul>
 						为了排版简洁，同时便于快速上手，在选将后的技能描述与选将前会有些许不同。选将前的技能描述会更加规范且详细，而选将后的技能描述是为了快速弄清楚其他人选的是什么东西而准备的，因此会更加简短。
 						<li>如果遇到技能理解上的问题，可以点击技能介绍的最下方“查看资料”处，查看角色的详细信息。此处不仅有游玩建议，而且有详细版本的技能描述，对可能的部分歧义还有FAQ</li>
+					</ul>
+				</li>
+				<li>关于属性伤害加成对横置角色的生效情况：
+					<ul>
+						<li>如果传导伤害的起始角色触发过了属性伤害加成，则横置的角色受到传导伤害时，即使满足伤害加成条件，也不会因再次触发伤害加成而额外受到伤害，只会按照铁索传导的伤害来计算。</li>
+						<li>反之，如果传导伤害的起始角色没有触发，则横置的角色受到传导伤害时，会按伤害加成条件触发伤害加成，不满足伤害加成条件的角色受到的伤害不变。</li>
 					</ul>
 				</li>
 				<li>关于以下所称的“存活人数”：
@@ -624,8 +630,8 @@
 		// 更新日志跳转处理
 		function handleUpdateLogClick() {
 			// 在无名杀环境中，调用父窗口的函数打开模态对话框
-			if (window.parent && typeof window.parent.lit_changelogOnclick === 'function') {
-				window.parent.lit_changelogOnclick();
+			if (window.parent && typeof window.parent.lit.changelogOnclick === 'function') {
+				window.parent.lit.changelogOnclick();
 			} else {
 				window.location.href = './update.html';
 			}

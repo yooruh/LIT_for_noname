@@ -124,9 +124,7 @@ export const card = {
                     evt.goto(11);
                 }
                 const evtx = event.getParent("phaseJudge", true);
-                if (evtx) {
-                    evtx.skipped = true;
-                }
+                if (evtx) evtx.cancel();
             } else {
                 player.addSkill("lit_qianfanpai_skill");
             }
@@ -134,8 +132,8 @@ export const card = {
         ai: {
             basic: {
                 order: 1,
-                useful: 1,
-                value: 9,
+                useful: 3.5,
+                value: 8.5,
             },
             result: {
                 ignoreStatus: true,
@@ -295,8 +293,13 @@ export const skill = {
         trigger: {
             source: 'damageBegin1',
         },
-        filter: (event) => {
-            return event.hasNature("linked");
+        filter: (event, player) => {
+            if (!event.hasNature("linked")) return false;
+            if (event.notLink()) return true;
+            // 如果传导源已经被肘击过了，不再重复触发
+            const damageTrigger = event.getParent(4);
+            const histories = player.getHistory('useSkill', e => e.skill === 'lit_zenggedeshouzhou');
+            return !histories.find(history => history.event.getParent(2) === damageTrigger);
         },
         async content(event, trigger, player) {
             trigger.num++;
@@ -710,7 +713,7 @@ export const skill = {
                     name: "好热好热！",
                     content: "将狂热地进行#次额外回合",
                 },
-                init(player){
+                init(player) {
                     player.setStorage("lit_caichendekuangre_mark", 0);
                 },
                 trigger: { player: "phaseBefore" },

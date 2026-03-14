@@ -1,64 +1,31 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js';
+import { poptipInit } from './tool/basic.js';
+
+// 记得改help.html
+export const updateContent = [
+	{ type: "players", data: ['lit_zhangshengjie张盛杰'] },
+	{
+		type: "text", addText: true, data: `<div style="text-align: left;font-size: 16px;">
+① 准备加入角色“羲烨”“雨桐”，敬请期待；<br>
+② 修改了${get.poptip("lit_zhangshengjie9张盛杰")} ${get.poptip("lit_zhangqinyi张钦奕")} ${get.poptip("lit_zengpinjia曾品嘉")} ${get.poptip("lit_jianghaixu蒋海旭")}的技能
+<li>重做了${get.poptip("lit_zhangshengjie张盛杰")}；</li>
+③ 现在，选将结束后的局内技能描述会更简洁，而选将之前的技能描述会更完善，如果产生歧义，请以后者为标准！<br>
+④ “叁岛测试”会持续更新“九班杀”“叁岛篇”角色，以实验技能和代码兼容为主，强度和AI暂不过度处理；<br>
+⑤ “叁岛幻化”已被单独提取为独立模式，且支持线上联机游玩，位于乱斗模式的“叁岛幻化”将暂停更新；<br>
+⑥ 对无名杀1.11.2进行了些许适配，未来将调整额外功能以支持重构后的无名杀（可能因此放弃对1.11.2及之前的版本支持）<br>
+<hr>
+<li>开学了~</li>
+<li>可在「选项」-「扩展」-「叁岛世界」中查看帮助文档<span style='opacity: 0.315;color:Red'> =)</span></li>
+</div>`
+	}];
 
 export async function content(config, pack) {
 	lib.extensionPack['叁岛世界'].author = "一个月惹";
 	lib.extensionPack['叁岛世界'].version = game.getExtensionConfig('叁岛世界', 'version');
-	// 记得改help.js
-	let str = [
-		{ type: "players", data: ['lit_hupan9胡畔'] },
-		{
-			type: "text", addText: true, data: `<div style="text-align: left;font-size: 16px;">
-① 准备加入角色“羲烨”“雨桐”；<br>
-② 修改了${get.poptip("lit_zhangshengjie9张盛杰")} ${get.poptip("lit_zhangqinyi张钦奕")} ${get.poptip("lit_zengpinjia曾品嘉")} ${get.poptip("lit_jianghaixu蒋海旭")}的技能
-<li>准备重做${get.poptip("lit_zhangshengjie张盛杰")}；</li><br>
-③ 现在，选将结束后的局内技能描述会更简洁，而选将之前的技能描述会更完善，如果产生歧义，请以后者为标准！<br>
-④ “叁岛测试”角色包将会持续更新“九班杀”“叁岛篇”的角色，更多以实验技能和代码兼容为主，强度和AI暂不过度处理；<br>
-⑤ “叁岛幻化”已被单独提取为独立模式，且支持线上联机游玩，位于乱斗模式的“叁岛幻化”将暂停更新（会和独立模式对齐，之后可能会有小修小补）；<br>
-⑥ 对无名杀1.11.2进行了些许适配，未来将调整“应用推荐的无名杀全局设置”等功能，以便更好地支持重构后的无名杀版本（因此会放弃对1.11.2及之前的版本支持）<br>
-<li>开学了~</li>
-<li>可在「选项」-「扩展」-「叁岛世界」中查看帮助文档<span style='opacity: 0.315;color:Red'> =)</span></li>
-</div>`
-		}];
-	game.showExtensionChangeLog(str, '叁岛世界');
+	game.showExtensionChangeLog(updateContent, '叁岛世界');
 
-	// 角色及其他杂项的poptip注册
-	for (const packName in lib.lit.infopack) {
-		const pack = lib.lit.infopack[packName];
-		const characterList = Object.keys(pack.character);
-		for (const charName of characterList) {
-			const shownName = charName.match(/[\u4e00-\u9fa5\d]+|[A-Z][\s\S]*/g)?.join('') || '';
-			get.poptip({
-				id: charName,
-				name: shownName,
-				type: "character",
-				dialog: "characterDialog",
-			});
-		}
-	}
-	get.poptip({
-		id: "lit_zhanshi_sub_tip",
-		name: "展示",
-		type: "skill",
-		info: `<span class='bluetext'>直到下回合结束，使用牌点数为<span style='color:Pink'>Y</span>的：<li>倍数，无次数限制；<li>约数，+1牌<br>（<span style='color:Pink'>Y</span>为使用的上一牌的点数）</span>`,
-	});
-	get.poptip({
-		id: "lit_btCard",
-		name: "牌",
-		type: "character",
-		info: `基本牌或普通锦囊牌`,
-	});
-	get.poptip({
-		id: "lit_exdeCard",
-		name: "牌",
-		type: "character",
-		info: `装备牌和延时锦囊牌除外`,
-	});
-	get.poptip({
-		id: "lit_hej",
-		name: "区域内的牌",
-		type: "character",
-		info: `指手牌、装备区的牌和判定区的牌`,
-	});
+	// 注册自定义poptip
+	poptipInit();
 
 	// 将角色加入国战模式
 	if (get.mode() === 'guozhan' && game.getExtensionConfig('叁岛世界', 'lit_guozhanAllowed')) {

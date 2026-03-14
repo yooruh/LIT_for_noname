@@ -452,9 +452,6 @@ const edits = {
 	emojiAllowed() {
 		get.is.banWords = (str) => window.bannedKeyWords.some(item => str.includes(item));
 	},
-	errorIgnore() {
-		window.onerror = function (msg, src, line, column, err) {};
-	},
 }
 Object.keys(config).forEach(s => {
 	if(s.startsWith('main_') || s.startsWith('edit_')){

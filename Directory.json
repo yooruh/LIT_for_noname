@@ -3,130 +3,133 @@
         "size": 35475
     },
     "extension.js": {
-        "size": 5014
+        "size": 5092
     },
     "image/card/lit_diaoka.png": {
-        "size": 5653
+        "size": 4793
     },
     "image/card/lit_qianfanpai.png": {
-        "size": 16160
+        "size": 12609
     },
     "image/character/lit_boshu.png": {
-        "size": 168220
+        "size": 160379
     },
     "image/character/lit_chenke.png": {
-        "size": 191594
+        "size": 189623
     },
     "image/character/lit_hujunwei.png": {
-        "size": 169992
+        "size": 163481
     },
     "image/character/lit_hupan.png": {
-        "size": 274246
+        "size": 272201
     },
     "image/character/lit_hupan9.png": {
-        "size": 161645
+        "size": 162484
     },
     "image/character/lit_huxinyu.png": {
-        "size": 236810
+        "size": 229147
     },
     "image/character/lit_jianghaixu.png": {
-        "size": 304244
+        "size": 302170
     },
     "image/character/lit_lanboxun.png": {
-        "size": 324427
+        "size": 320573
     },
     "image/character/lit_linmiao.png": {
-        "size": 198156
+        "size": 195517
     },
     "image/character/lit_liuchenmu.png": {
-        "size": 266362
+        "size": 261075
     },
     "image/character/lit_liyang9.png": {
-        "size": 194053
+        "size": 192081
     },
     "image/character/lit_pangjianlong.png": {
-        "size": 206820
+        "size": 200013
     },
     "image/character/lit_pengliying.png": {
-        "size": 181136
+        "size": 177974
     },
     "image/character/lit_qb.png": {
-        "size": 159996
+        "size": 152890
     },
     "image/character/lit_qianbaocan.png": {
-        "size": 128169
+        "size": 121517
     },
     "image/character/lit_rita.png": {
-        "size": 225176
+        "size": 218598
     },
     "image/character/lit_wangcan9.png": {
-        "size": 203228
+        "size": 200850
     },
     "image/character/lit_wangrong.png": {
-        "size": 314510
+        "size": 309999
     },
     "image/character/lit_wangsiyuan.png": {
-        "size": 123899
+        "size": 123123
     },
     "image/character/lit_wuxiaoqi.png": {
-        "size": 259587
+        "size": 253844
     },
     "image/character/lit_yangxiangling.png": {
-        "size": 373634
+        "size": 371926
     },
     "image/character/lit_zengpinjia.png": {
-        "size": 252855
+        "size": 246566
     },
     "image/character/lit_zengpinjia9.png": {
-        "size": 134942
+        "size": 134717
     },
     "image/character/lit_zhangchi.png": {
-        "size": 356516
+        "size": 352008
     },
     "image/character/lit_zhangchi9.png": {
-        "size": 162757
+        "size": 160888
     },
     "image/character/lit_zhangqinyi.png": {
-        "size": 131272
+        "size": 124279
     },
     "image/character/lit_zhangshengjie.png": {
-        "size": 240427
+        "size": 272115
     },
     "image/character/lit_zhangshengjie9.png": {
-        "size": 189844
+        "size": 187353
     },
     "image/character/lit_zhengmohan.png": {
-        "size": 185546
+        "size": 177155
     },
     "image/character/lit_zhengmohan9.png": {
-        "size": 174434
+        "size": 170125
     },
     "image/character/lit_zhongyutong9.png": {
-        "size": 183630
+        "size": 179362
     },
     "image/character/lit_zigao.png": {
-        "size": 176679
+        "size": 169163
     },
-    "image/skin/lit_hupan9/lit_hupan_chara.jpg": {
-        "size": 107161
+    "image/skin/lit_hupan9/lit_hupan_chara.png": {
+        "size": 124049
     },
     "image/skin/lit_jianghaixu/lit_jianghaixu_azure.png": {
-        "size": 295013
+        "size": 292920
     },
     "image/skin/lit_wangrong/lit_wangrong_pale.png": {
-        "size": 284308
+        "size": 279697
+    },
+    "image/skin/lit_zhangshengjie/lit_zhangshengjie_origin.png": {
+        "size": 232548
     },
     "image/splash/sandaohuanhua.png": {
-        "size": 244182
+        "size": 241308
     },
     "info.json": {
-        "size": 235
+        "size": 237
     },
     "script/content.js": {
         "size": 4530
     },
     "script/function.js": {
-        "size": 13827
+        "size": 13744
     },
     "script/modeset.js": {
         "size": 12478
@@ -138,7 +141,7 @@
         "size": 1201
     },
     "script/useFunction.js": {
-        "size": 1667
+        "size": 1615
     },
     "script/video.js": {
         "size": 4824
@@ -147,7 +150,7 @@
         "size": 537
     },
     "source/card/lit_cardSkills.js": {
-        "size": 28267
+        "size": 28614
     },
     "source/card/lit_cardTranslate.js": {
         "size": 3686
@@ -156,13 +159,13 @@
         "size": 1310
     },
     "source/character/lit/lit_characters.js": {
-        "size": 22351
+        "size": 22595
     },
     "source/character/lit/lit_skills.js": {
-        "size": 284871
+        "size": 298052
     },
     "source/character/lit/lit_translate.js": {
-        "size": 56006
+        "size": 57289
     },
     "source/character/lit_gz.js": {
         "size": 3235
@@ -180,25 +183,25 @@
         "size": 4614
     },
     "source/config.js": {
-        "size": 7806
+        "size": 7610
     },
     "source/content.js": {
-        "size": 5256
+        "size": 4111
     },
     "source/help.js": {
-        "size": 3706
+        "size": 3511
     },
     "source/mode/sandaohuanhua.js": {
-        "size": 61606
+        "size": 60494
     },
     "source/mode/sandaohuanhua_brawl.js": {
-        "size": 60143
+        "size": 72637
     },
     "source/precontent.js": {
-        "size": 6960
+        "size": 6811
     },
     "source/tool/basic.js": {
-        "size": 795
+        "size": 2414
     },
     "source/tool/configSetter.js": {
         "size": 26078
@@ -207,10 +210,10 @@
         "size": 45154
     },
     "source/tool/suiSet.js": {
-        "size": 36637
+        "size": 35519
     },
     "source/tool/update.js": {
-        "size": 87942
+        "size": 89017
     },
     "style/css/cards.css": {
         "size": 88
@@ -222,13 +225,13 @@
         "size": 10489
     },
     "style/html/help.html": {
-        "size": 16271
+        "size": 16862
     },
     "style/html/sandaohuanhua.html": {
-        "size": 9101
+        "size": 9104
     },
     "style/html/update.html": {
-        "size": 10712
+        "size": 11660
     },
     "style/nncfg/android_wide11.0.nncfg": {
         "size": 3956
