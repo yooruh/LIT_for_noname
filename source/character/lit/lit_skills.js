@@ -1710,8 +1710,27 @@ export const skill = {
 
                 return value;
             },
+            // 能否在无视判定区已有牌的情况下加入牌
+            blankCanAddJudge(player, card) {
+                if (!player || !card) return false;
+                if (player.isDisabledJudge()) return false;
+                if (player.isOut()) return false;
+
+                let cardName;
+                if (typeof card == "string") {
+                    cardName = card;
+                } else {
+                    cardName = card.viewAs || card.name;
+                }
+                if (!cardName) return false;
+
+                const cardInfo = lib.card[cardName];
+                if (!cardInfo) return false;
+                return true;
+            },
         },
-        group: ['lit_youxia_move', 'lit_youxia_draw'],
+        derivation: "lit_youxia_faq",
+        group: ["lit_youxia_move", "lit_youxia_draw"],
         subSkill: {
             move: {
                 trigger: { player: 'phaseUseBefore' },
@@ -1719,6 +1738,7 @@ export const skill = {
                     return player.canMoveCard(null, false, 'canReplace');
                 },
                 async cost(event, trigger, player) {
+                    const blankCanAddJudge = lib.skill.lit_youxia.utils.blankCanAddJudge;
                     const next = player.chooseTarget(2, (card, player, target) => {
                         if (ui.selected.targets.length) {
                             let from = ui.selected.targets[0];
@@ -1726,7 +1746,7 @@ export const skill = {
                             let es = from.getCards('e');
                             let js = from.getCards('j');
                             for (let e of es) if (target.canEquip(e, true)) return true;
-                            for (let j of js) if (target.canAddJudge(j)) return true;
+                            for (let j of js) if (blankCanAddJudge(target, j)) return true;
                             return false;
                         } else {
                             return target.countCards('ej') > 0;
@@ -1754,7 +1774,7 @@ export const skill = {
                                 for (const to of game.filterPlayer()) {
                                     if (to === from) continue;
                                     if (pos === 'e' && !to.canEquip(card, true)) continue;
-                                    if (pos === 'j' && !to.canAddJudge(card)) continue;
+                                    if (pos === 'j' && !blankCanAddJudge(to, card)) continue;
 
                                     const value = calcMoveValue(player, from, to, card);
                                     if (value > maxValue) maxValue = value;
@@ -1772,7 +1792,7 @@ export const skill = {
                         const movableCards = from.getCards('ej').filter(c => {
                             const pos = get.position(c);
                             if (pos === 'e') return to.canEquip(c, true);
-                            if (pos === 'j') return to.canAddJudge(c);
+                            if (pos === 'j') return blankCanAddJudge(to, c);
                             return false;
                         });
 
@@ -1800,7 +1820,7 @@ export const skill = {
                             const target = get.event().targets[1];
                             const link = button.link;
                             if (get.position(link) === 'j') {
-                                return target.canAddJudge(link);
+                                return blankCanAddJudge(target, link);
                             } else {
                                 return target.canEquip(link, true);
                             }

@@ -7,14 +7,11 @@ export const updateContent = [
 	{
 		type: "text", addText: true, data: `<div style="text-align: left;font-size: 16px;">
 ① 准备加入角色“羲烨”“雨桐”，敬请期待；<br>
-② 修改了${get.poptip("lit_zhangshengjie9张盛杰")} ${get.poptip("lit_zhangqinyi张钦奕")} ${get.poptip("lit_zengpinjia曾品嘉")} ${get.poptip("lit_jianghaixu蒋海旭")}的技能
-<li>重做了${get.poptip("lit_zhangshengjie张盛杰")}；</li>
-③ 现在，选将结束后的局内技能描述会更简洁，而选将之前的技能描述会更完善，如果产生歧义，请以后者为标准！<br>
-④ “叁岛测试”会持续更新“九班杀”“叁岛篇”角色，以实验技能和代码兼容为主，强度和AI暂不过度处理；<br>
-⑤ “叁岛幻化”已被单独提取为独立模式，且支持线上联机游玩，位于乱斗模式的“叁岛幻化”将暂停更新；<br>
-⑥ 对无名杀1.11.2进行了些许适配，未来将调整额外功能以支持重构后的无名杀（可能因此放弃对1.11.2及之前的版本支持）<br>
+② 准备削弱 Qb、张钦奕技能、曾品嘉升级，重做Rita升级、蒋海旭输出，增强菠树、9王灿；</li>
+③ “叁岛测试”将会加入“金语欣”“邱艺沁”“陈奕舟”“何英奇”；<br>
+④ “叁岛国战”将会开始适配In/Out技能，以及preHidden标签，可能会有些许平衡性调整；<br>
 <hr>
-<li>开学了~</li>
+<li>预计端午更新~</li>
 <li>可在「选项」-「扩展」-「叁岛世界」中查看帮助文档<span style='opacity: 0.315;color:Red'> =)</span></li>
 </div>`
 	}];

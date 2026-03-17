@@ -162,10 +162,10 @@
         "size": 22595
     },
     "source/character/lit/lit_skills.js": {
-        "size": 298052
+        "size": 298904
     },
     "source/character/lit/lit_translate.js": {
-        "size": 57289
+        "size": 57583
     },
     "source/character/lit_gz.js": {
         "size": 3235
@@ -183,10 +183,10 @@
         "size": 4614
     },
     "source/config.js": {
-        "size": 7610
+        "size": 7625
     },
     "source/content.js": {
-        "size": 4111
+        "size": 3587
     },
     "source/help.js": {
         "size": 3511

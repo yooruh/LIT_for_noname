@@ -163,7 +163,7 @@ export const config = {
 	},
 	play_mima: {
 		name: '进入房间需输入密码',
-		intro: '开启后，在下方会出现一个输入密码的按钮，加入你的房间时必须输入此密码才可加入，重启后生效',
+		intro: '开启并重启后，在下方会出现一个输入密码的按钮，加入你的房间时必须输入此密码才可加入，再次重启后生效',
 		init: false,
 		onclick(bool) {
 			game.saveConfig('extension_叁岛世界_play_mima', bool);
