@@ -27,7 +27,7 @@ export const translate = {
     'lit_pandejianpan': '畔的键盘',
     'lit_pandejianpan_info': '出牌阶段限1次，交换两人手牌',
     'lit_zhongyutongdebiji': '钟雨桐的笔记',
-    'lit_zhongyutongdebiji_info': '从正面翻至背面或失去最后一张手牌时，获得2点护甲；从背面翻至正面或手牌数发生变化导致手牌数不再为0时，失去2点护甲',
+    'lit_zhongyutongdebiji_info': '锁；从正面翻至背面或失去最后一张手牌时，获得2点护甲；从背面翻至正面或手牌数发生变化导致手牌数不再为0时，失去2点护甲',
     'lit_liyangdeziyou': '李洋的自由',
     'lit_liyangdeziyou_info': '锁；没有手牌上限（+∞）',
     'lit_zhangxuandemp5': '张轩的MP5',

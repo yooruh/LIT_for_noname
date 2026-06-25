@@ -2,7 +2,7 @@
   "defaultBranch": "main",
   "versions": [
     {
-      "extensionVersion": "26.6.25.2",
+      "extensionVersion": "26.6.25.3",
       "gameVersion": ">=1.11.2",
       "branch": "main",
       "description": "支持无名杀1.11.2以上的版本"

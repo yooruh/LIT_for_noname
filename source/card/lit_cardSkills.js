@@ -381,59 +381,70 @@ export const skill = {
         },
     },
     lit_zhongyutongdebiji: {
-        direct: true,
-        locked: false,
+        forced: true,
         unique: true,
         lit_dk: true,
         charlotte: true,
         nobracket: true,
+        mark: true,
+        marktext: "笔",
+        intro: {
+            name: "笔记内容",
+            content: (storage, player) => {
+                const [turnHujia, hpHujia] = player.getStorage("lit_zhongyutongdebiji", [false, false]);
+                return `<li>${turnHujia ? "已" : "暂未"}获得翻面对应的护甲</li><li>${hpHujia ? "已" : "暂未"}获得无牌对应的护甲</li>`
+            },
+        },
+
         trigger: {
             player: ["turnOverAfter", "loseAfter"],
+            global: ["gameDrawAfter", "equipAfter", "addJudgeAfter", "gainAfter", "loseAsyncAfter", "addToExpansionAfter"],
         },
         filter: (event, player, name) => {
-            if (name === "turnOverAfter") {
-                return true;
+            const [turnHujia, hpHujia] = player.getStorage("lit_zhongyutongdebiji", [false, false]);
+            if (name === "turnOverAfter") return true;
+
+            if (event.name === "gameDraw" || event.name === "gain" && event.player === player) {
+                if (!hpHujia) return false;
+                return player.countCards("h") > 0;
             }
-            if (name === "loseAfter") {
-                let evt = event.getl(player);
-                if (!evt || !evt.hs || !evt.hs.length) return false;
-                let lostNum = evt.hs.length;
-                let currentHs = player.countCards('h');
-                let beforeHs = currentHs + lostNum;
-                if (beforeHs > 0 && currentHs === 0) return true;
-                if (beforeHs === 0 && currentHs > 0) return true;
-                return false;
-            }
-            return false;
+
+            if (hpHujia) return false;
+            if (player.countCards("h")) return false;
+            const evt = event.getl(player);
+            return evt && evt.player === player && evt.hs && evt.hs.length > 0;
         },
         async content(event, trigger, player) {
+            let [turnHujia, hpHujia] = player.getStorage("lit_zhongyutongdebiji", [false, false]);
+
             if (event.triggername === "turnOverAfter") {
                 if (player.isTurnedOver()) {
-                    await player.changeHujia(2);
+                    if (!turnHujia) await player.changeHujia(2);
+                    turnHujia = true;
                 } else {
-                    await player.changeHujia(-2);
+                    if (turnHujia) await player.changeHujia(-2);
+                    turnHujia = false;
                 }
-            } else if (event.triggername === "loseAfter") {
-                let evt = trigger.getl(player);
-                let lostNum = evt.hs ? evt.hs.length : 0;
-                let currentHs = player.countCards('h');
-                let beforeHs = currentHs + lostNum;
-                if (beforeHs > 0 && currentHs === 0) {
-                    await player.changeHujia(2);
-                } else if (beforeHs === 0 && currentHs > 0) {
-                    await player.changeHujia(-2);
-                }
+                player.setStorage("lit_zhongyutongdebiji", [turnHujia, hpHujia]);
+                return;
             }
+            if (player.countCards("h") === 0) {
+                if (!hpHujia) await player.changeHujia(2);
+                hpHujia = true;
+            } else {
+                if (hpHujia) await player.changeHujia(-2);
+                hpHujia = false;
+            }
+            player.setStorage("lit_zhongyutongdebiji", [turnHujia, hpHujia]);
         },
         ai: {
             threaten(target) {
-                if (target.countCards("he") === 0) return 1.5;
+                if (target.countCards("he") === 0) return 1.2;
                 return 1;
             },
-            nodiscard: true,
-            nolose: true,
         },
-    },lit_liyangdeziyou: {
+    },
+    lit_liyangdeziyou: {
         unique: true,
         lit_dk: true,
         charlotte: true,

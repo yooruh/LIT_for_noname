@@ -159,10 +159,10 @@
         "size": 537
     },
     "source/card/lit_cardSkills.js": {
-        "size": 29233
+        "size": 29848
     },
     "source/card/lit_cardTranslate.js": {
-        "size": 3782
+        "size": 3788
     },
     "source/character/lit.js": {
         "size": 1310
@@ -171,10 +171,10 @@
         "size": 24735
     },
     "source/character/lit/lit_skills.js": {
-        "size": 316835
+        "size": 316861
     },
     "source/character/lit/lit_translate.js": {
-        "size": 59879
+        "size": 59927
     },
     "source/character/lit_gz.js": {
         "size": 3235
@@ -234,7 +234,7 @@
         "size": 10489
     },
     "style/html/help.html": {
-        "size": 16957
+        "size": 16969
     },
     "style/html/sandaohuanhua.html": {
         "size": 9104
