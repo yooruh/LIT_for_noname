@@ -3,15 +3,22 @@ import { poptipInit } from './tool/basic.js';
 
 // 记得改help.html
 export const updateContent = [
-	{ type: "players", data: ['lit_zhangshengjie张盛杰'] },
+	{ type: "players", data: ['lit_sunnan孙楠'] },
 	{
 		type: "text", addText: true, data: `<div style="text-align: left;font-size: 16px;">
-① 准备加入角色“羲烨”“雨桐”，敬请期待；<br>
-② 准备削弱 Qb、张钦奕技能、曾品嘉升级，重做Rita升级、蒋海旭输出，增强菠树、9王灿；</li>
-③ “叁岛测试”将会加入“金语欣”“邱艺沁”“陈奕舟”“何英奇”；<br>
-④ “叁岛国战”将会开始适配In/Out技能，以及preHidden标签，可能会有些许平衡性调整；<br>
+① 临时更新，用于测试平衡性与检验新版本适配状况，正式更新约莫会在7月中下旬；<br>
+② 加入了新角色 ${get.poptip("lit_sunnan孙楠")}；<br>
+③ 调整了：<br>
+${get.poptip("lit_zhangshengjie张盛杰")}（优化了心毅因场上缺少判定牌导致后续爆发不足，伤害低的问题）、<br>
+${get.poptip("lit_boshu菠树")}（增加过牌量，并且将闺蜜效果调整得更加贴合易碎的需要）、<br>
+${get.poptip("lit_ritaRita")}（优化补牌能力）、<br>
+${get.poptip("lit_hupan胡畔")}（优化升级后的技能体验，避免两个技能联动过低，设计割裂且缺乏爽感）、<br>
+${get.poptip("lit_huxinyu胡馨予")}（技能组变动较大，主要从被动弃牌改为主动攻击，将0手牌的技能效果转为次要位置）、<br>
+${get.poptip("lit_hujunwei胡峻玮")}（优化卖血体验，加强其控制地位）、<br>
+${get.poptip("lit_qianbaocan钱保灿")}（避免过多判定打断技能体验，优化升级方向，将其定位放得更明确）；<br>
+④ 由于更新时间较紧张，故叁岛国战的进一步适配，以及叁岛测试的转正要延后了；<br>
 <hr>
-<li>预计端午更新~</li>
+<li>总之还是在端午后一周赶出来了~</li>
 <li>可在「选项」-「扩展」-「叁岛世界」中查看帮助文档<span style='opacity: 0.315;color:Red'> =)</span></li>
 </div>`
 	}];

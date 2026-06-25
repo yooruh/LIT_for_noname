@@ -388,22 +388,41 @@ export const skill = {
         charlotte: true,
         nobracket: true,
         trigger: {
-            player: "discardAfter",
+            player: ["turnOverAfter", "loseAfter"],
         },
-        filter: (event, player) => {
-            return game.hasPlayer(current => current !== player && current.countCards('hej') > 0);
+        filter: (event, player, name) => {
+            if (name === "turnOverAfter") {
+                return true;
+            }
+            if (name === "loseAfter") {
+                let evt = event.getl(player);
+                if (!evt || !evt.hs || !evt.hs.length) return false;
+                let lostNum = evt.hs.length;
+                let currentHs = player.countCards('h');
+                let beforeHs = currentHs + lostNum;
+                if (beforeHs > 0 && currentHs === 0) return true;
+                if (beforeHs === 0 && currentHs > 0) return true;
+                return false;
+            }
+            return false;
         },
         async content(event, trigger, player) {
-            const { result } = await player.chooseTarget(get.prompt('lit_zhongyutongdebiji'), '选择1人观看并弃置其区域内的1张牌', (event, player, target) => {
-                return target !== player && target.countCards('hej') > 0;
-            }).set("ai", target => {
-                return get.effect(target, { name: 'guohe' }, player, player);
-            });
-            if (result.bool) {
-                let target = result.targets[0];
-                await player.logSkill('lit_zhongyutongdebiji', target);
-                player.line(target, 'red');
-                await player.discardPlayerCard(target, 'hej', "visible");
+            if (event.triggername === "turnOverAfter") {
+                if (player.isTurnedOver()) {
+                    await player.changeHujia(2);
+                } else {
+                    await player.changeHujia(-2);
+                }
+            } else if (event.triggername === "loseAfter") {
+                let evt = trigger.getl(player);
+                let lostNum = evt.hs ? evt.hs.length : 0;
+                let currentHs = player.countCards('h');
+                let beforeHs = currentHs + lostNum;
+                if (beforeHs > 0 && currentHs === 0) {
+                    await player.changeHujia(2);
+                } else if (beforeHs === 0 && currentHs > 0) {
+                    await player.changeHujia(-2);
+                }
             }
         },
         ai: {
@@ -414,8 +433,7 @@ export const skill = {
             nodiscard: true,
             nolose: true,
         },
-    },
-    lit_liyangdeziyou: {
+    },lit_liyangdeziyou: {
         unique: true,
         lit_dk: true,
         charlotte: true,

@@ -1143,12 +1143,14 @@ export let info = {
                             const skillInfo = get.info(this.link);
                             if (!skillInfo?.derivation) return;
 
-                            const derivationList = Array.isArray(skillInfo.derivation) ? skillInfo.derivation : [skillInfo.derivation];
+                            const derivationList = Array.isArray(info.derivation) ? info.derivation : [info.derivation];
                             let newContent = derivationList.map(key => {
                                 const content = get.translation(key + "_info");
                                 if (!content) return '';
-                                return `<div><div class="skill"><span style="font-family:yuanli">${get.translation(key)}:</span></div>` +
-                                    `<div><span style="font-family:yuanli">${content}</span></div></div>`;
+                                return `<div><div style="width:100%;">` +
+                                    `<span style="font-family:yuanli; line-height:1.6; display:inline-block;">${get.translation(key)}:</span>` +
+                                    `<ul style="display:table-cell; list-style:none;"><span style="font-family:yuanli">${content}</span></div></ul>` +
+                                    `</div>`;
                             }).filter(Boolean).join('<br>');
 
                             if (newContent) {
@@ -1164,7 +1166,7 @@ export let info = {
                             const html =
                                 `<div class="popup pointerdiv" style="width:100%;display:inline-block">` +
                                 `<div class="skill" style="width:auto!important;">【${get.translation(skill)}】</div><br>` +
-                                `<div>${lib.translate[skill + "_info"] || ''}</div>` +
+                                `<div style="width:100%;">${lib.translate[skill + "_info"] || ''}</div>` +
                                 `</div>`;
                             const item = dialog.add(html);
                             const trigger = item.firstChild;

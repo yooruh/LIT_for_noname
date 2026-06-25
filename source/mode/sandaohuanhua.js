@@ -882,13 +882,85 @@ export default () => {
 				}
 
 				// 初始化玩家任务目标
-				if (!_status.playback) {
-					const players = game.filterPlayer2();
-					const targets = get.playerx();
-					players.forEach(player => {
-						const others = targets.filter(p => p !== player).randomSort();
-						[player._toKill, player._toSave] = [others[0], others[1]];
+				function assignMissions(assigners, targets) {
+					// 记录每个目标的 被追杀数 和 被保护数
+					const stats = {};
+					const getKey = p => (p.dataset ? parseInt(p.dataset.position) : p);
+
+					targets.forEach(t => {
+						stats[getKey(t)] = { target: t, kill: 0, save: 0 };
 					});
+
+					const half = Math.floor(assigners.length / 2); // 仇人不超过一半
+
+					// 分配击杀目标，优先选择追杀数少的目标
+					const shuffled1 = assigners.slice().randomSort();
+					shuffled1.forEach(player => {
+						const playerKey = getKey(player);
+
+						// 不能是自己，且未达上限(<=half)
+						let candidates = targets.filter(t => {
+							const key = getKey(t);
+							return key !== playerKey && stats[key].kill < half;
+						});
+
+						// 全都满了，随机选一个不是自己
+						if (candidates.length === 0) {
+							candidates = targets.filter(t => getKey(t) !== playerKey);
+						}
+
+						// 优先选择被追杀少的目标，在前3个中随机选择
+						candidates.sort((a, b) => stats[getKey(a)].kill - stats[getKey(b)].kill);
+						const pickRange = Math.min(3, candidates.length);
+						const toKill = candidates[Math.floor(Math.random() * pickRange)];
+
+						player._toKill = toKill;
+						stats[getKey(toKill)].kill++;
+					});
+
+					// 分配保护目标，优先选择 kill-save 差值大的目标
+					const shuffled2 = assigners.slice().randomSort();
+					shuffled2.forEach(player => {
+						const playerKey = getKey(player);
+						const killKey = getKey(player._toKill);
+
+						// 不能是自己，也不能是自己的击杀目标
+						let candidates = targets.filter(t => {
+							const key = getKey(t);
+							return key !== playerKey && key !== killKey;
+						});
+
+						// 按 (kill - save) 差值降序排序，差值大的优先获得保护
+						candidates.sort((a, b) => {
+							const sa = stats[getKey(a)], sb = stats[getKey(b)];
+							return (sb.kill - sb.save) - (sa.kill - sa.save);
+						});
+						let toSave = candidates.find(t => {
+							const s = stats[getKey(t)];
+							const newSave = s.save + 1;
+							return Math.abs(s.kill - newSave) <= 2;
+						});
+
+						// 如果没有满足的，选差值最大的那个
+						if (!toSave) {
+							toSave = candidates[0];
+						}
+
+						player._toSave = toSave;
+						stats[getKey(toSave)].save++;
+					});
+
+					return stats;
+				}
+
+				// 广播玩家任务目标
+				if (!_status.playback) {
+					const assigners = game.filterPlayer2(); // 被分配任务
+					const targets = get.playerx();			// 作为任务被分配
+
+					// 调用新函数完成分配
+					assignMissions(assigners, targets);
+
 					let map = {};
 					for (let i in lib.playerOL) {
 						map[i] = [lib.playerOL[i]._toKill, lib.playerOL[i]._toSave];
@@ -950,13 +1022,16 @@ export default () => {
 					1: async () => {
 						logArg.push("#r每人失去1点体力");
 						game.log.apply(this, logArg);
-						game.countPlayer(async p => await p.loseHp());
-
+						for (const p of game.filterPlayer()) {
+							await p.loseHp();
+						}
 					},
 					2: async () => {
 						logArg.push("#y每人摸2张牌");
 						game.log.apply(this, logArg);
-						game.countPlayer(async p => await p.draw(2, "nodelay"));
+						for (const p of game.filterPlayer()) {
+							await p.draw(2, "nodelay");
+						}
 					},
 					3: async () => {
 						logArg.addArray([`上一位阵亡玩家（`, `#b${get.translation(deadPlayer)}`, `）3血复活，摸3牌`]);
@@ -968,7 +1043,7 @@ export default () => {
 						logArg.push("#r每人随机失去1张牌");
 						game.log.apply(this, logArg);
 						let lose_list = [];
-						game.countPlayer(async p => {
+						game.countPlayer(p => {
 							const he = p.getCards("he");
 							if (he.length) lose_list.push([p, [he.randomGet()]]);
 						});
@@ -983,28 +1058,26 @@ export default () => {
 						logArg.push("#y每人获得1张装备牌");
 						game.log.apply(this, logArg);
 						const cards = [];
-						game.countPlayer(async p => {
+						for (const p of game.filterPlayer()) {
 							const card = get.cardPile(c => !cards.includes(c) && get.type(c) === "equip");
-							if (card) {
-								cards.push(card);
-								await p.gain(card);
-							}
-						});
+							if (!card) continue;
+							cards.push(card);
+							await p.gain(card);
+						}
 					},
 					7: async () => {
 						logArg.push("#y每人获得1个技能");
 						game.log.apply(this, logArg);
-						game.countPlayer(p => {
+						for (const p of game.filterPlayer()) {
 							p.fixLingliSkill();
-							if (p.lingliSkill?.length < 3) {
-								const skills = lib.sandaohuanhua.skills.randomSort();
-								for (const skill of skills) {
-									if (p.lingliSkill.includes(skill)) continue;
-									p.addLingliSkill(skill);
-									break;
-								}
+							if (p.lingliSkill?.length >= 3) continue;
+							const skills = lib.sandaohuanhua.skills.randomSort();
+							for (const skill of skills) {
+								if (p.lingliSkill.includes(skill)) continue;
+								p.addLingliSkill(skill);
+								break;
 							}
-						});
+						}
 					},
 					8: async () => {
 						const initTarget = lib.sandaohuanhua.NPC.randomGet();
@@ -1075,8 +1148,10 @@ export default () => {
 					let newContent = derivationList.map(key => {
 						const content = get.translation(key + "_info");
 						if (!content) return '';
-						return `<div><div class="skill"><span style="font-family:yuanli">${get.translation(key)}:</span></div>` +
-							`<div><span style="font-family:yuanli">${content}</span></div></div>`;
+						return `<div><div style="width:100%;">` +
+							`<span style="font-family:yuanli; line-height:1.6; display:inline-block;">${get.translation(key)}:</span>` +
+							`<ul style="display:table-cell; list-style:none;"><span style="font-family:yuanli">${content}</span></div></ul>` +
+							`</div>`;
 					}).filter(Boolean).join('<br>');
 
 					if (newContent) {
@@ -1092,7 +1167,7 @@ export default () => {
 					const html =
 						`<div class="popup pointerdiv" style="width:100%;display:inline-block">` +
 						`<div class="skill" style="width:auto!important;">【${get.translation(skill)}】</div><br>` +
-						`<div>${lib.translate[skill + "_info"] || ''}</div>` +
+						`<div style="width:100%;">${lib.translate[skill + "_info"] || ''}</div>` +
 						`</div>`;
 					const item = dialog.add(html);
 					const trigger = item.firstChild;
@@ -1758,10 +1833,11 @@ export default () => {
 					}
 
 					if (trigger._lastDead) {
-						await game.executeQiankunBagua(trigger._lastDead, trigger);
+						await game.executeQiankunBagua(trigger._lastDead);
 					}
 					if (_status._aozhan) return;
 					game.randomMission();
+					game.delay(1.5);
 				},
 			},
 

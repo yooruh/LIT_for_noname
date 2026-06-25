@@ -14,12 +14,14 @@ export const fullTranslate = {
     // 皮肤
     'lit_hupan_chara': "决心",
     'lit_jianghaixu_azure': "蔚蓝色",
+    'lit_huxinyu_thenis': "无定",
     'lit_wangrong_pale': "青衣",
-    'lit_zhangshengjie_origin': "原画",
+    'lit_zhangshengjie_origin': "旧",
+    'lit_sunnan_dark': "暗面",
 
     // 特殊机制
     'lit_negClear_faq': "负面效果",
-    'lit_negClear_faq_info': "均视为锁定技，在死亡后清除",
+    'lit_negClear_faq_info': "视为锁定技，满足条件或执行完成后清除，也会在死亡后清除。在清除后会恢复因负面效果而临时造成的影响",
 
     // 九班杀部分
     'lit_zhangchi9张驰': "9张驰",
@@ -49,7 +51,7 @@ export const fullTranslate = {
     'lit_xiaoqiao': "小巧",
     'lit_xiaoqiao_info': "锁定技，你的♠️牌均视为♥️牌",
     'lit_huoshan': "火山",
-    'lit_huoshan_info': `锁定技，结束阶段，你进行判定，若结果为♥️，你获得1枚“爆”；准备阶段，你可以移去所有“爆”，摸${X}张牌，然后本回合你造成的伤害+${X}（${X}为你移去的“爆”数）`,
+    'lit_huoshan_info': `锁定技，结束阶段，你进行判定，若结果为♥️，你获得1枚"爆"。准备阶段，你可以移去所有"爆"，摸${X}张牌，然后你选择一项：<br>（1）本回合造成的伤害+${X}；<br>（2）恢复${X}点体力（${X}为你移去的"爆"数）`,
     'lit_renxiao': "人小",
     'lit_renxiao_info': `当你使用或打出牌后，你可判定，若结果为♥️，你从弃牌堆中获得此牌；${Styled('r', '以此法获得牌后，本回合不能再发动此技能')}`,
     // 9李洋
@@ -80,9 +82,7 @@ export const fullTranslate = {
     'lit_shenge_faq': "关于神鸽的两种效果",
     'lit_shenge_faq_info': "选择发动神鸽后，只要满足条件，就会执行对应效果。因此同时满足①②时，不能只选择发动其中的一项",
     'lit_gugu': "咕咕",
-    'lit_gugu_info': `当你${Styled('r', '因受到伤害')}进入濒死状态时，你可以将体力值恢复至1点，获得${X}枚“咕”，然后依次使用牌堆顶的${X}张牌；（${X}为你以此法恢复的体力值）<li>锁定技，回合结束时，你移去所有“咕”，然后失去${Y}点体力（${Y}为你移去的“咕”数-1）</li>`,
-
-    // 一班杀与叁岛篇部分
+    'lit_gugu_info': `当你${Styled('r', '因受到伤害')}进入濒死状态时，你可以将体力值恢复至1点，获得${X}枚"咕"，然后依次使用牌堆顶的${X}张牌（${X}为你以此法恢复的体力值）。<li>锁定技，每人的回合结束时，若你有“咕”，移去所有"咕"，恢复1点体力，然后失去等量体力。</li>`,// 一班杀与叁岛篇部分
     'lit_qbQb': "Qb",
     'lit_zhangshengjie张盛杰': "张盛杰",
     'lit_zhangqinyi张钦奕': "张钦奕",
@@ -103,6 +103,7 @@ export const fullTranslate = {
     'lit_qianbaocan钱保灿': "钱保灿",
     'lit_zhangchi张驰': "张驰",
     'lit_yangxiangling杨湘铃': "杨湘铃",
+    'lit_sunnan孙楠': "孙楠",
 
     'lit_shengji': "升级",
     'lit_shengji_info': "场上每有一名角色死亡，所有角色获得1点经验，击杀者额外获得1点经验，当经验值达到3或全场角色数小于5时升级",
@@ -119,23 +120,21 @@ export const fullTranslate = {
     'lit_shengjizg': "升级·自高",
     'lit_shengjizg_info': `${get.poptip('lit_zhanshiV2')} 获得并修改〖展示〗：你也拥有后半段技能效果`,
     'lit_shengjizpj': "升级·曾品嘉",
-    'lit_shengjizpj_info': `${get.poptip('lit_saohuaV2')} 增加1点体力上限，恢复3点护甲，获得并修改〖骚话〗：此技能中，点数小于7的牌计算时的点数+7`,
+    'lit_shengjizpj_info': `${get.poptip('lit_saohuaV2')} 增加1点体力上限，获得并修改〖骚话〗：此技能中，点数小于7的牌计算时的点数+7`,
     'lit_shengjibs': "升级·菠树",
     'lit_shengjibs_info': `${get.poptip('lit_yisuiV2')} 获得并修改〖易碎〗：闺蜜死亡时，你不再失去体力`,
     'lit_shengjilcm': "升级·刘晨沐",
-    'lit_shengjilcm_info': `${get.poptip('lit_jijinV2')} 获得并修改〖激进〗：你造成的伤害越高，受激叠层越多`,
+    'lit_shengjilcm_info': `${get.poptip('lit_jijinV2')} 获得并修改〖激进〗：你造成的伤害越高，受激叠层越多，你对受激者使用的杀不计入出杀次数。`,
     'lit_shengjizmh': "升级·郑墨翰",
     'lit_shengjizmh_info': `${get.poptip('lit_jianrenV2')} 获得〖坚韧〗并于末尾增加：当你横置时，属性伤害+1`,
     'lit_shengjirita': "升级·Rita",
-    'lit_shengjirita_info': `${get.poptip('lit_dafang')}${get.poptip('lit_hengshuitiV2')}若你已拥有〖大方〗，则获得〖衡水体〗并于其中增加：恢复1点体力；否则，获得〖大方〗`,
+    'lit_shengjirita_info': `${get.poptip('lit_dafang')}${get.poptip('lit_hengshuiti')}若你已拥有〖大方〗，则获得〖衡水体〗；否则，获得〖大方〗`,
     'lit_shengjihp': "升级·胡畔",
-    'lit_shengjihp_info': `失去1点体力上限，获得：${get.poptip('lit_yinren')}${get.poptip('lit_fumeng')}`,
-    'lit_shengjigy_info': "获得〖誓仇〗和〖消散〗",
-    'lit_shengjip_info': "将角色改为“月惹”",
+    'lit_shengjihp_info': `失去1点体力上限，获得：${get.poptip('lit_yigou')}`,
     'lit_shengjilbx': "升级·兰柏勋",
     'lit_shengjilbx_info': "增加1点体力上限，恢复体力至上限",
     'lit_shengjihxy': "升级·胡馨予",
-    'lit_shengjihxy_info': `${get.poptip('lit_shihuaiV2')} 获得并修改〖释怀〗选项②：交给你一张装备牌`,
+    'lit_shengjihxy_info': `${get.poptip('lit_mimangV2')} 获得并于〖迷茫〗前增加：【闪】和装备牌点数视为K`,
     'lit_shengjihjw': "升级·胡峻玮",
     'lit_shengjihjw_info': `${get.poptip('lit_wutongV2')} 获得并修改〖梧桐〗条件：你有手牌时，还可以弃置全部手牌发动`,
     'lit_shengjirs': "升级·王荣",
@@ -143,7 +142,7 @@ export const fullTranslate = {
     'lit_shengjijhx': "升级·蒋海旭",
     'lit_shengjijhx_info': `${get.poptip('lit_shanliangV2')} 获得并于〖善良〗末尾增加：若恢复的体力值溢出，则增加等溢出量的体力上限后恢复体力至上限`,
     'lit_shengjiqbc': "升级·钱保灿",
-    'lit_shengjiqbc_info': `${get.poptip('lit_chushouV2')} 获得并修改〖出手〗：不再跳过摸牌阶段`,
+    'lit_shengjiqbc_info': `${get.poptip('lit_chushouV2')} 获得并在〖出手〗中增加：你的【杀】目标数+1`,
     'lit_shengjizc': "升级·张驰",
     'lit_shengjizc_info': `${get.poptip('lit_shuxinV2')} 获得并修改〖竖心〗：不再为锁定技`,
     'lit_shengjiyxl': "升级·杨湘铃",
@@ -155,9 +154,9 @@ export const fullTranslate = {
     'lit_33_2': "33",
     'lit_33_3': "33",
     'lit_tianna': "天呐",
-    'lit_tianna_info': "锁定技，当你造成伤害后，若于回合外，你摸两张牌；若于回合内，你弃置一张手牌，然后恢复1点体力",
+    'lit_tianna_info': "锁定技，当你造成伤害后，若于回合外，你摸一张牌；若于回合内，你恢复1点体力，然后弃置一张手牌",
     'lit_tiannaV2': "天呐V2",
-    'lit_tiannaV2_info': "锁定技，当你造成伤害后，若于回合外，你摸两张牌；若于回合内，你弃置一张手牌，然后恢复1点体力；当你体力值大于1点且受到伤害时，若此伤害会使你体力值小于1，则防止此伤害并将体力值减至1",
+    'lit_tiannaV2_info': "锁定技，当你造成伤害后，若于回合外，你摸一张牌；若于回合内，你恢复1点体力，然后弃置一张手牌；当你体力值大于1点且受到伤害时，若此伤害会使你体力值小于1，则防止此伤害并将体力值减至1",
     'lit_qiantui': "遣退",
     'lit_qiantui_info': `当你的体力值由3以上减至3或以下时，你可以令一名不带有${get.poptip('lit_kuanshu')}的角色获得${get.poptip('lit_qianfan')}`,
 	/*负面效果*/'lit_qianfan': "遣返",
@@ -168,11 +167,11 @@ export const fullTranslate = {
     'lit_wutou': "无头",
     'lit_wutou_info': "锁定技，回合开始前，你跳过准备阶段和判定阶段；你的延时锦囊牌可以指定自己为目标",
     'lit_youxia': "游侠",
-    'lit_youxia_info': "①出牌阶段前，你可以移动场上的一张牌，并在此前获得移动目标位置原来的牌<br>②锁定技，你的判定区每失去1张实体牌，你摸一张牌",
+    'lit_youxia_info': "①出牌阶段前，你可以移动场上的一张牌，并在移动前获得移动目标位置原来的牌<br>②锁定技，你的判定区每失去1张实体牌，你判定：若判定牌的花色对应的延时锦囊牌不存在于你的判定区中，则你将此判定牌视为此延时锦囊牌并置入判定区中。对应方式：♠️闪电、♥️乐不思蜀、♣️兵粮寸断、♦️遣返牌",
     'lit_youxia_faq': "关于获得原来的牌",
     'lit_youxia_faq_info': "如果将要移动到的位置存在多张牌（是分离的，不相关的多张牌，如两张【闪电】。而不是将多张牌当作一张牌使用的那种情况），则获得后进入此位置的那张牌",
     'lit_xinyi': "心毅",
-    'lit_xinyi_info': `觉醒技，出牌阶段，若你的判定区内存在或存在过≥2种延时锦囊牌，则你失去1点体力上限，然后获得${get.poptip('lit_xinhen')}`,
+    'lit_xinyi_info': `觉醒技，出牌阶段，若你的判定区内存在或存在过≥3种延时锦囊牌，则你失去1点体力上限，然后获得${get.poptip('lit_xinhen')}`,
     'lit_xinyi_faq': "关于存在或存在过",
     'lit_xinyi_faq_info': "此项记录从获得技能时开始，如果中途失去，则需重新记录",
     'lit_xinhen': "心痕",
@@ -236,18 +235,18 @@ export const fullTranslate = {
     // 'lit_saohua_append': "<span style='font-family:yuanli'>使用中断的牌、装备牌和延时锦囊牌除外</span>",
     // 菠树
     'lit_guimi': "闺蜜",
-    'lit_guimi_info': "锁定技，摸初始牌前，你选择一名“闺蜜”，其造成的雷属性伤害+1，且每间隔1轮的轮次中每回合首次受到伤害后恢复1点体力；你进入濒死状态时，闺蜜可以将一张♥️♦️牌当【桃】使用（场上无你的闺蜜时重选）",
+    'lit_guimi_info': "锁定技，摸初始牌前，你选择一名“闺蜜”，其手牌上限+2，且每间隔1轮的轮次中每回合首次受到伤害后恢复1点体力；你进入濒死状态时，闺蜜可以将一张♥️♦️牌当【桃】使用（场上无你的闺蜜时重选）",
     'lit_yisui': "易碎",
-    'lit_yisui_info': "锁定技，闺蜜在场时，你的手牌数恒为2；闺蜜满血时，你免疫伤害，若此伤害源不为你，则其失去等伤害量体力；闺蜜死亡时，你失去所有体力",
+    'lit_yisui_info': "锁定技，闺蜜在场时，你的手牌数恒为3；闺蜜满血时，你免疫伤害；闺蜜死亡时，你失去所有体力",
     'lit_yisuiV2': "易碎V2",
-    'lit_yisuiV2_info': "锁定技，闺蜜在场时，你的手牌数恒为2；闺蜜满血时，你免疫伤害，若此伤害源不为你，则其失去等伤害量体力",
+    'lit_yisuiV2_info': "锁定技，闺蜜在场时，你的手牌数恒为3；闺蜜满血时，你免疫伤害，若此伤害源不为你，则其失去等伤害量体力",
     // 刘晨沐
     'lit_gufeng': "古风",
     'lit_gufeng_info': `每回合限一次，当其他角色使用${get.poptip("lit_exDelayEquipCard")}指定目标后，你可以为此牌增加一个目标`,
     'lit_jijin': "激进",
     'lit_jijin_info': `锁定技，当你使用【杀】造成伤害后，你令受伤者获得${get.poptip('lit_shouji')}`,
     'lit_jijinV2': "激进V2",
-    'lit_jijinV2_info': `锁定技，当你使用【杀】造成伤害后，你令受伤者获得${get.poptip('lit_shouji')}，造成的伤害越高，受激叠层越多`,
+    'lit_jijinV2_info': `锁定技，当你使用【杀】造成伤害后，你令受伤者获得${get.poptip('lit_shouji')}，造成的伤害越高，受激叠层越多，你对受激者使用的杀不计入出杀次数`,
 	/*负面效果*/'lit_shouji': "受激",
     'lit_shouji_info': "负面效果，下一名使用【杀】的角色强制选择你为目标（无视距离）",
     // 郑墨翰
@@ -262,24 +261,26 @@ export const fullTranslate = {
 
     // Rita
     'lit_dafang': "大方",
-    'lit_dafang_info': "主公技，你装备区每失去1张牌后，你可以令一名“叁”势力角色将手牌补至全场最多（至多补至其体力上限）",
+    'lit_dafang_info': "主公技，你装备区每失去1张牌后，你可以令一名“叁”势力角色将手牌补至其体力上限（至多补至9），如果其手牌数已经达到体力上限，你恢复1点体力。",
     'lit_nuoruo': "懦弱",
     'lit_nuoruo_info': "其他角色的出牌阶段，当装备牌置入弃牌堆时，你可以获得之",
     'lit_hengshuiti': "衡水体",
     'lit_hengshuiti_info': "锁定技，当你使用装备牌后，你可以视为对一名角色使用冰【杀】",
-    'lit_hengshuitiV2': "衡水体V2",
-    'lit_hengshuitiV2_info': "锁定技，当你使用装备牌后，你恢复1点体力，然后可以视为对一名角色使用冰【杀】",
     // 胡畔
     'lit_cuiruo': "脆弱",
     'lit_cuiruo_info': `回合结束阶段，若你不为满体力，你可以摸${X}张牌，然后将体力值调整至${X}（${X}为你已损失的体力值）`,
     'lit_shichou': "誓仇",
     'lit_shichou_info': `锁定技，当你受到伤害后，伤害来源获得“誓”标记；当你体力值为1时，你对所有带“誓”标记的角色造成${Y}点伤害，然后移除所有“誓”标记（${Y}为其体力值与护甲值之和-1）`,
-    'lit_yinren': "殷刃",
-    'lit_yinren_info': "每回合限一次，当你需要使用或打出【杀】时，你可以失去1点体力，视为使用一张无距离和次数限制的【杀】，若此【杀】造成伤害，你恢复1点体力",
-    'lit_fumeng': "浮梦",
-    'lit_fumeng_info': `出牌阶段限一次，你可以选择一名体力上限大于1的角色，令其${get.poptip('lit_mengying')}层数+${Z}（${Z}为其已损失的体力值且至少为1）`,
-	/*负面效果*/'lit_mengying': "梦萦",
-    'lit_mengying_info': "负面效果，每层减少1点体力上限，每恢复1点体力减少1层",
+    'lit_yigou': "异构",
+    'lit_yigou_info': `限定技，令他人获得1点体力上限，你获得${get.poptip("lit_fenhua")}`,
+    'lit_fenhua': "分化",
+    'lit_fenhua_info': `转换技，失去1点体力，<li>阳：视为使用或打出一张无距离和次数限制的【杀】，若此杀造成伤害，你恢复1点体力；</li><li>阴：令体力上限>1的1人${get.poptip("lit_mengying")}层数+Z（Z为其已损失体力且至少为1）</li>`,
+    /*负面效果*/'lit_mengying': "梦萦",
+    'lit_mengying_info': "负面效果，每层临时减少1点体力上限，每恢复1点体力减少1层",
+    // 'lit_yinren': "殷刃",
+    // 'lit_yinren_info': "每回合限一次，当你需要使用或打出【杀】时，你可以失去1点体力，视为使用一张无距离和次数限制的【杀】，若此【杀】造成伤害，你恢复1点体力",
+    // 'lit_fumeng': "浮梦",
+    // 'lit_fumeng_info': `出牌阶段限一次，你可以选择一名体力上限大于1的角色，令其${get.poptip('lit_mengying')}层数+${Z}（${Z}为其已损失的体力值且至少为1）`,
     // 兰柏勋
     'lit_yuqiu': "欲求",
     'lit_yuqiu_info': `当${get.poptip("lit_damageCard")}对目标未造成伤害时：若此牌点数为质数，可以拿目标一张牌；若不为质数，可以弃置目标至多两张牌`,
@@ -287,21 +288,23 @@ export const fullTranslate = {
     'lit_shouwang_info': "锁定技，当你的手牌数或体力值为全场最多（之一）时，造成的伤害+1",
     // 胡馨予
     'lit_mimang': "迷茫",
-    'lit_mimang_info': "你每造成或受到1点伤害，获得1枚“茫”，结束阶段，你可以移去任意枚“茫”，重铸等量张牌，并弃置其他角色等量张牌",
+    'lit_mimang_info': "锁定技，你的【闪】和装备牌在【决斗】中视为【杀】",
+    'lit_mimangV2': "迷茫V2",
+    'lit_mimangV2_info': "锁定技，你的【闪】和装备牌点数视为K，在【决斗】中视为点数为K的【杀】",
+    'lit_xukong': "虚空",
+    'lit_xukong_info': `①出牌阶段限1次，与1人拼点：赢→视为对其使用【决斗】；没赢→视为其对你使用【决斗】。<br>②你的任意决斗造成伤害后，重置技能①次数，但拼点目标不能为本回合的同一人`,
     'lit_shihuai': "释怀",
-    'lit_shihuai_info': "出牌阶段限一次，你可以将一张装备牌当【决斗】使用；当你没有手牌时，你可以令一名其他角色选择一项：<li>受到1点伤害；</li><li>交给你一张牌</li>",
-    'lit_shihuaiV2': "释怀V2",
-    'lit_shihuaiV2_info': "V2 出牌阶段限一次，你可以将一张装备牌当【决斗】使用；当你没有手牌时，你可以令一名其他角色选择一项：<li>受到1点伤害；</li><li>交给你一张装备牌</li>",
+    'lit_shihuai_info': "当你没有手牌时，你可令有牌的1人给你1张牌，若其拒绝，你摸2张牌，本回合此技能失效",
     // 胡峻玮
     'lit_biaoxian': "表现",
     'lit_biaoxian_info': "当你使用【杀】指定目标后，你可以判定，若结果为♦️，则此【杀】基础伤害+1且不能被此目标响应",
     'lit_wutong': "梧桐",
-    'lit_wutong_info': "场上判定生效前，你可以失去1点体力，将此判定结果固定为任意花色（与判定牌无关）",
-    'lit_wutong_faq': "关于固定「判定结果」",
-    'lit_wutong_faq_info': "固定下来的结果，为技能直接修改过后的判定结果。此结果与判定牌上原有的数据无关。因此其他对判定牌的修改、视为或更换等行为都无法影响判定结果，除非还有其他技能也对「判定结果」进行了直接修改<br>" +
+    'lit_wutong_info': "场上判定生效前，你可以失去1点体力，获得1点护甲，并将此判定结果修改为任意花色（直接修改结果）",
+    'lit_wutong_faq': "关于修改判定结果",
+    'lit_wutong_faq_info': "直接修改结果，覆盖了判定牌的名字、花色、数字等属性，导致相关结果与判定牌上原有的数据无关。因此「针对判定牌」的修改来间接影响判定结果的技能无法改变判定结果，除非还有其他技能也对「判定结果」进行了直接修改<br>" +
         "<li>如：9王灿的“小巧”，即便将♠️判定牌视为♥️，如果判定结果被固定为了♠️，那还是可能被“闪电”判定命中</li>",
     'lit_wutongV2': "梧桐V2",
-    'lit_wutongV2_info': "场上判定生效前，你可以失去1点体力或弃置全部手牌，将此判定结果固定为任意花色（与判定牌无关）",
+    'lit_wutongV2_info': "场上判定生效前，你可以失去1点体力或弃置全部手牌，获得1点护甲，并将此判定结果固定为任意花色（与判定牌无关）",
 
     // 王荣
     'lit_manmanlai': "慢慢来",
@@ -331,19 +334,19 @@ export const fullTranslate = {
     'lit_chushou': "出手",
     'lit_chushou_info': "锁定技，回合开始前，你跳过摸牌阶段，视为使用一张你声明的普通锦囊牌，此牌不可被【无懈可击】响应",
     'lit_chushouV2': "出手V2",
-    'lit_chushouV2_info': "锁定技，回合开始前，你视为使用一张你声明的普通锦囊牌，此牌不可被【无懈可击】响应",
+    'lit_chushouV2_info': "锁定技，你的【杀】目标数+1。回合开始前，你跳过摸牌阶段，你视为使用一张你声明的普通锦囊牌，此牌不可被【无懈可击】响应",
     'lit_zhixun': "质询",
     'lit_zhixun_info': "当牌的目标数大于1时，你可以取消其中一个目标，视为对一名角色再次使用此牌",
     'lit_male': "麻了",
-    'lit_male_info': `当你造成伤害前，若此牌与上次造成伤害的牌${get.poptip("lit_sameName")}，你可以判定，若为：<li>♥️♦️，${Styled('r', '本回合你使用【杀】或【决斗】的目标数+1')}；</li><li>♠️♣️，本回合此技能中非红色部分失效，取消本次伤害，然后你摸一张牌</li>`,
+    'lit_male_info': "锁定技，当你造成伤害后，若伤害牌与你上次造成伤害的牌为同一张牌，你摸一张牌。",
     'lit_male_tag': "同名",
     // 张驰
     'lit_guibian': "诡辩",
     'lit_guibian_info': `出牌阶段限一次，你可以令一名其他角色展示所有手牌，你选择其中一张令其对你使用（无视距离），若其不使用或无法使用，则其交给你所有与之${get.poptip("lit_sameName")}的牌`,
     'lit_shuxin': "竖心",
-    'lit_shuxin_info': "锁定技，当你成为其他角色使用的基本牌或普通锦囊牌的目标后，你令使用者对其自己使用此牌",
+    'lit_shuxin_info': `锁定技，当你成为其他角色使用的${get.poptip("lit_basicTrickCard")}的目标后，你令使用者对其自己使用此牌`,
     'lit_shuxinV2': "竖心V2",
-    'lit_shuxinV2_info': "当你成为其他角色使用的基本牌或普通锦囊牌的目标后，你可以令使用者对其自己使用此牌",
+    'lit_shuxinV2_info': `当你成为其他角色使用的${get.poptip("lit_basicTrickCard")}目标后，你可以令使用者对其自己使用此牌`,
     // 杨湘铃
     'lit_lenmo': "冷漠",
     'lit_lenmo_info': `锁定技，当你造成伤害前，若受伤角色不为你且其攻击范围内不包括你，则你令其获得1层${get.poptip('lit_dongjie')}，若此时其“冻结”层数大于其体力值，其翻面`,
@@ -353,6 +356,15 @@ export const fullTranslate = {
     'lit_xiaosa_info': "每回合每种情况限一次：<li>场上有人因受到伤害而进入濒死状态时，你可以令一名角色翻面，然后你获得其装备区的牌；</li><li>场上有人因失去体力而进入濒死状态时，你可以将一张装备牌当无次数限制的【杀】使用，此【杀】不可被响应</li>",
     'lit_juji': "狙击",
     'lit_juji_info': "锁定技，你的回合内，其他角色与你的距离视为无限，你与其他角色的距离视为1",
+    // 孙楠
+    'lit_jiaoshui': "浇水",
+    'lit_jiaoshui_info': "他人使用【酒】后，或其弃牌阶段开始时，其可令你摸1张牌，若其不选择或忘记了选择，你可观看并获得其1张牌",
+    'lit_gonghuo': "拱火",
+    'lit_gonghuo_info': `你的回合内有人受伤后，若伤害源不为你，则你可令其获得1层${get.poptip('lit_langen')}`,
+    'lit_langen': "烂根",
+    'lit_langen_info': "负面效果，生效后失去1层。当你受到大于1的伤害时，令此伤害+1",
+    'lit_zhishu': "枝疏",
+    'lit_zhishu_info': "锁定技，你于回合外获得的牌不进入你的手牌区，而是放置在你的角色牌上称为“枝”<br>①出牌阶段限一次，你可选择3张“枝”，将其中第一张视为【酒】，后两张视为【杀】，询问1人是否喝酒后对其攻击范围内的1人使用杀；若其不使用，你获得这些牌<br>②你或你攻击范围内的角色使用【杀】后，你可使用1张“枝”，或将其置入手牌区",
 
 };
 export const simpleTranslate = {
@@ -366,11 +378,11 @@ export const simpleTranslate = {
 
     // 9王灿
     /*小巧*/
-    'lit_xiaoqiao_info': "锁；♠️牌视作♥️牌。",
+    'lit_xiaoqiao_info': "锁；♠️牌视作♥️牌",
     /*火山*/
-    'lit_huoshan_info': `锁；结束可判定，为♥️获1“爆”。准备可移去所有“爆”，+${X}牌且本回合伤害+${X}（${X}为移去“爆”数）`,
+    'lit_huoshan_info': `锁；结束判定为♥️获1"爆"。准备可移去所有"爆"，+${X}牌并选一项：（1）本回合伤害+${X}；（2）恢复${X}血（${X}为移去"爆"数）`,
     /*人小*/
-    'lit_renxiao_info': `${Styled('r', '成功后本回合不可再用')}；用牌后可判定，为♥️从弃牌堆获之`,
+    'lit_renxiao_info': `用牌后可判定，为♥️从弃牌堆获之；${Styled('r', '以此法获得牌后，本回合不能再发动此技能')}`,
 
     // 9李洋
     /*秀儿*/
@@ -398,7 +410,7 @@ export const simpleTranslate = {
         `<br>①血${Styled('g', '≤')}目标，对此目标${Styled('r', '伤害+1')}；` +
         `<br>②手牌数${Styled('g', '≤')}目标${get.poptip("lit_hejCard")}数，${Styled('r', '不可被响应且无视防具')}`,
     /*咕咕*/
-    'lit_gugu_info': `${Styled('r', '受伤')}濒死前可回至1血并获${X}“咕”，依次用牌堆顶前${X}张牌（${X}为恢复的血量）<li>锁；回合结束移去所有咕，-(咕数-1)点血</li>`,
+    'lit_gugu_info': `${Styled('r', '受伤')}濒死前可回至1血并获${X}"咕"，依次用牌堆顶前${X}张牌（${X}为恢复的血量）<li>锁；每人回合结束时，若有咕，移去所有咕，+1血，并失去等量体力</li>`,
 
     /*升级·Qb*/
     'lit_shengjiqb_info': `${get.poptip('lit_tiannaV2')} 获得“天呐”并于末尾增加：>1血受伤时若此伤害会使血<1，免伤且血掉至1`,
@@ -413,21 +425,21 @@ export const simpleTranslate = {
     /*升级·自高*/
     'lit_shengjizg_info': `${get.poptip('lit_zhanshiV2')} 获得并修改“展示”：你也拥有后半段技能`,
     /*升级·曾品嘉*/
-    'lit_shengjizpj_info': `${get.poptip('lit_saohuaV2')} +1体力上限，+3护甲，获得并修改“骚话”：此技能中，点数<7的牌计算时的点数+7`,
+    'lit_shengjizpj_info': `${get.poptip('lit_saohuaV2')} +1体力上限，获得并修改“骚话”：此技能中，点数<7的牌计算时的点数+7`,
     /*升级·菠树*/
     'lit_shengjibs_info': `${get.poptip('lit_yisuiV2')} 获得并修改“易碎”：闺蜜死亡时，你不再失去体力`,
     /*升级·刘晨沐*/
-    'lit_shengjilcm_info': `${get.poptip('lit_jijinV2')} 获得并修改“受激”：伤害越高，受激叠层越多`,
+    'lit_shengjilcm_info': `${get.poptip('lit_jijinV2')} 获得并修改"受激"：伤害越高，受激叠层越多，对受激者的杀不计入次数`,
     /*升级·郑墨翰*/
     'lit_shengjizmh_info': `${get.poptip('lit_jianrenV2')} 获得“坚韧”并于末尾增加：横置时属性伤+1`,
     /*升级·Rita*/
-    'lit_shengjirita_info': `${get.poptip('lit_dafang')}${get.poptip('lit_hengshuitiV2')}若已拥有“大方”，则获得“衡水体”并于其中增加：+1血；否则，获得“大方”`,
+    'lit_shengjirita_info': `${get.poptip('lit_dafang')}${get.poptip('lit_hengshuiti')}若已拥有"大方"，则获得"衡水体V2"并于其中增加：恢复1点体力；否则，获得"大方"`,
     /*升级·胡畔*/
-    'lit_shengjihp_info': `-1体力上限，获得：${get.poptip('lit_yinren')}${get.poptip('lit_fumeng')}`,
+    'lit_shengjihp_info': `-1体力上限，获得：${get.poptip('lit_yigou')}`,
     /*升级·兰柏勋*/
     'lit_shengjilbx_info': "+1体力上限，回满血",
     /*升级·胡馨予*/
-    'lit_shengjihxy_info': `${get.poptip('lit_shihuaiV2')} 获得并修改“释怀”选项②：交给你1张装备牌`,
+    'lit_shengjihxy_info': `${get.poptip('lit_mimangV2')} 获得并于“迷茫”前增加：闪和装备牌点数视为K`,
     /*升级·胡峻玮*/
     'lit_shengjihjw_info': `${get.poptip('lit_wutongV2')} 获得并修改“梧桐”条件：还可弃置全部手牌触发`,
     /*升级·王荣*/
@@ -435,7 +447,7 @@ export const simpleTranslate = {
     /*升级·蒋海旭*/
     'lit_shengjijhx_info': `${get.poptip('lit_shanliangV2')} 获得并于“善良”末尾增加：若恢复量溢出，增加等溢出量的上限后回满血`,
     /*升级·钱保灿*/
-    'lit_shengjiqbc_info': `${get.poptip('lit_chushouV2')} 获得并修改“出手”：不再跳过摸牌阶段`,
+    'lit_shengjiqbc_info': `${get.poptip('lit_chushouV2')} 获得并在“出手”中增加：杀的目标数+1`,
     /*升级·张驰*/
     'lit_shengjizc_info': `${get.poptip('lit_shuxinV2')} 获得并修改“竖心”：不再为锁定技`,
     /*升级·杨湘铃*/
@@ -445,9 +457,9 @@ export const simpleTranslate = {
     /*33*/
     'lit_33_info': "主；其余“叁”势力每回合可发动1次，其受来自你的1伤，然后你：<li>血>3时-1血</li><li>血<=3时+1血</li>",
     /*天呐*/
-    'lit_tianna_info': "锁；造伤后，回合外+2牌，回合内-1手牌+1血",
+    'lit_tianna_info': "锁；造伤后，回合外+1牌，回合内+1血-1手牌",
     /*天呐V2*/
-    'lit_tiannaV2_info': "V2 锁；造伤后，回合外+2牌，回合内-1手牌+1血；>1血时，受伤若会使血<1则免伤且血掉至1",
+    'lit_tiannaV2_info': "V2 锁；造伤后，回合外+1牌，回合内+1血-1手牌；>1血时，受伤若会使血<1则免伤且血掉至1",
     /*遣退*/
     'lit_qiantui_info': `血由3以上掉到3及以下时，可令不带有${get.poptip('lit_kuanshu')}的1人获得${get.poptip('lit_qianfan')}`,
     /*负面效果*/ /*遣返*/
@@ -459,9 +471,9 @@ export const simpleTranslate = {
     /*无头*/
     'lit_wutou_info': "锁；回合开始前，你跳过准备阶段和判定阶段；你的延时锦囊牌可以指定自己为目标",
     /*游侠*/
-    'lit_youxia_info': "①出牌阶段前，可移动场上1牌，移动前获得目的地原来的牌<br>②锁；判定区每失去1张牌，+1牌",
+    'lit_youxia_info': "①出牌阶段前，可移动场上1牌，移动前获得目的地原来的牌<br>②锁；判定区每失去1张实体牌，判定：按花色置入对应延时锦囊（♠️闪电♥️乐♣️兵粮♦️遣返），若已有则弃置",
     /*心毅*/
-    'lit_xinyi_info': `觉；出牌阶段，若判定区内有或有过≥2种延时锦囊牌，则-1上限，获得${get.poptip('lit_xinhen')}`,
+    'lit_xinyi_info': `觉；出牌阶段，若判定区内有或有过≥3种延时锦囊牌，则-1上限，获得${get.poptip('lit_xinhen')}`,
     /*心痕*/
     'lit_xinhen_info': "出牌阶段限1次，可将判定区中所有牌当杀，依次对攻击范围内的1人使用。若这些牌中有牌在判定区中视为：" +
         "<li>【闪电】，这些杀视为雷杀</li><li>【乐不思蜀】，技能目标被指定后，弃置“与你判定区等量”的牌；</li><li>【兵粮寸断】，每张杀所需的闪+1；</li><li>【遣返牌】，杀基础伤害+1</li>",
@@ -502,9 +514,9 @@ export const simpleTranslate = {
     /*信任*/
     'lit_xinren_info': "主；出牌限1次，交给某“叁”势力角色1牌，其可立即使用，你摸与该牌造成的总伤害相等的牌",
     /*展示*/
-    'lit_zhanshi_info': `出牌限1次，令他人展示所有手牌并给你，你给其${X}牌其摸${X}牌，直到其回合结束，其使用牌点数为${Y}的：<li>倍数，无次数限制；</li><li>约数，+1牌</li><br>（${X}为手牌溢出量且摸牌数至多为3，${Y}为其使用的上一牌的点数）`,
+    'lit_zhanshi_info': `出牌限1次，令他人展示所有手牌并给你，你给其${X}牌其摸${X}牌，直到其回合结束，其使用牌点数为${Y}的：<li>倍数，无次数限制；</li><li>约数，+1牌</li>（${X}为手牌溢出量且摸牌数至多为3，${Y}为其使用的上一牌的点数）`,
     /*展示*/
-    'lit_zhanshiV2_info': `V2 出牌限1次，令他人展示所有手牌并给你，你给其${X}牌其摸${X}牌，直到你/其回合结束，你/其使用牌点数为${Y}的：<li>倍数，无次数限制；</li><li>约数，+1牌</li><br>（${X}为手牌溢出量且摸牌数至多为3，${Y}为使用的上一牌的点数）`,
+    'lit_zhanshiV2_info': `V2 出牌限1次，令他人展示所有手牌并给你，你给其${X}牌其摸${X}牌，直到你/其回合结束，你/其使用牌点数为${Y}的：<li>倍数，无次数限制；</li><li>约数，+1牌</li>（${X}为手牌溢出量且摸牌数至多为3，${Y}为使用的上一牌的点数）`,
     /*铲踏儿*/
     'lit_chantaer_info': "锁；手牌上限基准为体力上限<li>准备阶段手牌数≤上限+1血</li><li>结束阶段本回合无人受过伤摸2牌并-1血</li>",
 
@@ -518,11 +530,11 @@ export const simpleTranslate = {
 
     // 菠树
     /*闺蜜*/
-    'lit_guimi_info': "锁；摸初始牌前选一“闺蜜”，其雷伤+1，每间隔1轮的轮次中每回合首次受伤后+1血；<br>濒死时闺蜜可用♥️♦️牌当桃救你（场上无闺蜜时重选）",
+    'lit_guimi_info': "锁；摸初始牌前选一“闺蜜”，其手牌上限+2，每间隔1轮的轮次中每回合首次受伤后+1血；<br>濒死时闺蜜可用♥️♦️牌当桃救你（场上无闺蜜时重选）",
     /*易碎*/
-    'lit_yisui_info': "锁；闺蜜在时手牌数恒为2；<br>闺蜜满血时你免伤，并令不为你的伤害源失去等量体力；<br>闺蜜死，你失去所有体力",
+    'lit_yisui_info': "锁；闺蜜在时手牌数恒为3；<br>闺蜜满血时你免疫伤害；<br>闺蜜死，你失去所有体力",
     /*易碎V2*/
-    'lit_yisuiV2_info': "V2 锁；闺蜜在时手牌数恒为2；<br>闺蜜满血时你免伤，并令不为你的伤害源失去等量体力",
+    'lit_yisuiV2_info': "V2 锁；闺蜜在时手牌数恒为3；<br>闺蜜满血时你免伤，并令不为你的伤害源失去等量体力",
 
     // 刘晨沐
     /*古风*/
@@ -530,7 +542,7 @@ export const simpleTranslate = {
     /*激进*/
     'lit_jijin_info': `锁；杀造成伤害后令受伤者获得${get.poptip('lit_shouji')}`,
     /*激进V2*/
-    'lit_jijinV2_info': `V2 锁；杀造成伤害后令受伤者获得${get.poptip('lit_shouji')}，伤害越高叠层越多`,
+    'lit_jijinV2_info': `V2 锁；杀造成伤害后令受伤者获得${get.poptip('lit_shouji')}，伤害越高叠层越多，对受激者的杀不计入次数`,
     /*负面效果*/ /*受激*/
     'lit_shouji_info': "负面；下个用杀者强制选择你为目标（无视距离）",
 
@@ -546,25 +558,30 @@ export const simpleTranslate = {
 
     // Rita
     /*大方*/
-    'lit_dafang_info': "主；装备区每失去1张牌后，可令一“叁”势力角色将手牌补至全场最多（至多至其体力上限）",
+    'lit_dafang_info': "主；装备区每失去1张牌后，可令一“叁”势力角色将手牌补至其体力上限（至多补至9），若其手牌数已达上限，恢复1体力",
     /*懦弱*/
-    'lit_nuoruo_info': "他人出牌阶段其置入弃牌堆的装备牌你可获得之",
+    'lit_nuoruo_info': "他人出牌阶段，你可获得其置入弃牌堆的装备牌",
     /*衡水体*/
     'lit_hengshuiti_info': "锁；使用装备牌后可视为对1人使用冰杀",
-    /*衡水体V2*/
-    'lit_hengshuitiV2_info': "V2 锁；使用装备牌后+1血，可视为对1人使用冰杀",
 
     // 胡畔
     /*脆弱*/
     'lit_cuiruo_info': `回合结束若不为满血可+${X}牌并将体力调至${X}（${X}为已失去的体力）`,
     /*誓仇*/
     'lit_shichou_info': `锁；受伤后伤害源获得“誓”，血=1时对所有带“誓”者造成${Y}点伤害，并移除所有“誓”（${Y}为其血+护甲-1）`,
+    /*异构*/
+    'lit_yigou': "异构",
+    'lit_yigou_info': `限；令他人+1体力上限，你获得${get.poptip("lit_fenhua")}`,
+    /*分化*/
+    'lit_fenhua': "分化",
+    'lit_fenhua_info': `转；-1血，<li>阳：视为使用或打出无距离和次数限制的杀，若造成伤害则+1血；</li><li>阴：令体力上限>1的1人${get.poptip("lit_mengying")}层数+Z（Z为其已损失体力且至少为1）</li>`,
+
+    /*负面效果*/ /*梦萦*/
+    'lit_mengying_info': "负面；每层临时-1体力上限，每+1血-1层",
     /*殷刃*/
     'lit_yinren_info': "每回合限1次，需使用或打出杀时可-1血视为使用无距离和次数限制的杀，若造成伤害+1血",
     /*浮梦*/
     'lit_fumeng_info': `出牌限1次，选择体力上限>1的1人令其${get.poptip('lit_mengying')}层数+${Z}（${Z}为其已损失的血量且至少为1）`,
-    /*负面效果*/ /*梦萦*/
-    'lit_mengying_info': "负面；每层-1体力上限，每+1血-1层",
 
     // 兰柏勋
     /*欲求*/
@@ -574,19 +591,21 @@ export const simpleTranslate = {
 
     // 胡馨予
     /*迷茫*/
-    'lit_mimang_info': "每造成或受1伤获得1“茫”，结束阶段可移去若干“茫”重铸等量牌弃置他人等量牌",
+    'lit_mimang_info': "锁；闪和装备牌在决斗中视为杀",
+    /*迷茫V2*/
+    'lit_mimangV2_info': "锁；闪和装备牌点数视为K，在决斗中视为K杀",
+    /*虚空*/
+    'lit_xukong_info': `①出牌限1次，与1人拼点：赢/没赢→视为{你对其}/{其对你}决斗。<br>②你的任意决斗造成伤害后，重置技能①次数，但拼点目标不能为本回合的同一人`,
     /*释怀*/
-    'lit_shihuai_info': "出牌限1次，装备牌可作决斗使用；<br>无手牌时可令他人选择：<br>①受到1点伤害；<br>②交给你1张牌",
-    /*释怀V2*/
-    'lit_shihuaiV2_info': "V2 出牌限1次，装备牌可作决斗使用；<br>无手牌时可令他人选择：<br>①受到1点伤害；<br>②交给你1张装备牌",
+    'lit_shihuai_info': "当你没有手牌时，你可令有牌的1人给你1张牌，若其拒绝，你摸2张牌，本回合此技能失效",
 
     // 胡峻玮
     /*表现*/
     'lit_biaoxian_info': "用杀指定目标后可判定，为♦️则基础伤害+1且不可被其响应",
     /*梧桐*/
-    'lit_wutong_info': "场上判定生效前可-1体力将判定结果固定为任意花色",
+    'lit_wutong_info': "场上判定生效前可-1体力+1护甲，将判定结果修改为任意花色",
     /*梧桐V2*/
-    'lit_wutongV2_info': "V2 场上判定生效前可-1体力或弃全部手牌判定结果固定为任意花色",
+    'lit_wutongV2_info': "V2 场上判定生效前可-1体力或弃全部手牌，+1护甲并将判定结果修改为任意花色",
 
     // 王荣
     /*慢慢来*/
@@ -614,21 +633,21 @@ export const simpleTranslate = {
 
     // 钱保灿
     /*出手*/
-    'lit_chushou_info': "锁；回合开始前跳过摸牌阶段视为使用1张你声明的锦囊牌，不可无懈",
+    'lit_chushou_info': "锁；回合开始前跳过摸牌阶段，视为使用1张你声明的锦囊牌，不可无懈",
     /*出手V2*/
-    'lit_chushouV2_info': "V2 锁；回合开始前视为使用1张你声明的锦囊牌，不可无懈",
+    'lit_chushouV2_info': "V2 锁；杀的目标数+1。回合开始前跳过摸牌阶段，视为使用1张你声明的锦囊牌，不可无懈",
     /*质询*/
     'lit_zhixun_info': "牌的目标不为1时可取消其中1个目标，视为对1人再次使用此牌",
     /*麻了*/
-    'lit_male_info': `造成伤害前若此牌与上次${get.poptip("lit_sameName")}可判定，若为：<br>①♥️♦️${Styled('r', '本回合杀、决斗目标数+1')}；<br>②♠️♣️本回合非红色️部分失效，取消本次伤害，+1牌`,
+    'lit_male_info': `造成伤害后，若伤害牌与上次造成伤害的牌为同一张，+1牌`,
 
     // 张驰
     /*诡辩*/
     'lit_guibian_info': `出牌限1次，令1人展示所有牌你选择其中1张令其对你使用（无视距离），若其不使用或无法使用则交付所有${get.poptip("lit_sameName")}牌`,
     /*竖心*/
-    'lit_shuxin_info': "锁；成为他人基本牌或普通锦囊牌的目标后令使用者对他自己使用此牌",
+    'lit_shuxin_info': `锁；成为他人${get.poptip("lit_basicTrickCard")}的目标后令使用者对他自己使用此牌`,
     /*竖心V2*/
-    'lit_shuxinV2_info': "V2 成为他人基本牌或普通锦囊牌的目标后可令使用者对他自己使用此牌",
+    'lit_shuxinV2_info': `V2 成为他人${get.poptip("lit_basicTrickCard")}的目标后可令使用者对他自己使用此牌`,
 
     // 杨湘铃
     /*冷漠*/
@@ -639,14 +658,24 @@ export const simpleTranslate = {
     'lit_xiaosa_info': "每回合每种情况限1次<li>场上有人受伤濒死时，可令1人翻面并获得其装备区的牌</li><li>场上有人失去体力濒死时，可将1张装备牌作无次数限制的杀使用，不可被响应</li>",
     /*狙击*/
     'lit_juji_info': "锁；回合内，他人与你的距离视作无限，你与他人的距离视作1",
+
+    // 孙楠
+    /*浇水*/
+    'lit_jiaoshui_info': "他人弃牌阶段或使用酒后，其可令你+1牌；否则你观看并获得其1张牌",
+    /*拱火*/
+    'lit_gonghuo_info': `回合内有人受伤后，若伤害源不为你，则可令其获得1层${get.poptip('lit_langen')}`,
+    /*烂根*/
+    'lit_langen_info': "负面；生效后失去1层。受到大于1的伤害时，令此伤害+1",
+    /*枝疏*/
+    'lit_zhishu_info': "锁；回合外获得的牌置为“枝”<br>①出牌限1次，选3张“枝”：第1张作酒，后2张作杀，令1人选择是否酒杀攻击范围内的1人；不杀，你获得这些牌<br>②你或攻击范围内的人使用杀后，你可使用1张“枝”或将其置入手牌区",
 };
 
 export const dynamicTranslate = {
     // 国战势力与机制改动
     lit_shengjirita(player) {
         let group = lib.lit.isGuozhanKeyEnabled() ? '叁/键' : '叁';
-        if (player.hasSkill('lit_dafang')) return `${get.poptip('lit_hengshuitiV2')} 于“衡水体”中增加：+1血`;
-        return `获得${get.poptip('lit_dafang')}：主；装备区失去牌后，可令1“${group}”势力角色将手牌补至全场最多（至多至其体力上限）`;
+        if (player.hasSkill('lit_dafang')) return `获得${get.poptip('lit_hengshuiti')}：锁；使用装备牌后可视为对1人使用冰杀`;
+        return `获得${get.poptip('lit_dafang')}：主；装备区失去牌后，可令1“${group}”势力角色将手牌补至其体力上限（至多补至9）`;
     },
     lit_33(player) {
         let group = lib.lit.isGuozhanKeyEnabled() ? '叁/键' : '叁';
@@ -658,11 +687,11 @@ export const dynamicTranslate = {
     },
     lit_dafang(player) {
         let group = lib.lit.isGuozhanKeyEnabled() ? '叁/键' : '叁';
-        return `主；装备区每失去1张牌后，可令一“${group}”势力角色将手牌补至全场最多（至多至其体力上限）`;
+        return `主；装备区每失去1张牌后，可令一“${group}”势力角色将手牌补至其体力上限（至多补至9）`;
     },
     lit_guimi(player) {
-        if (get.mode() === 'guozhan') return "锁；明置此技能后，若你无“闺蜜”，选一“闺蜜”，其雷伤+1，每间隔1轮的轮次中每回合首次受伤后+1血；<br>濒死时闺蜜可用♥️♦️牌当桃救你（场上无闺蜜时重选）";
-        return "锁；摸初始牌前选一“闺蜜”，其雷伤+1，每间隔1轮的轮次中每回合首次受伤后+1血；<br>濒死时闺蜜可用♥️♦️牌当桃救你（场上无闺蜜时重选）";
+        if (get.mode() === 'guozhan') return "锁；明置此技能后，若你无“闺蜜”，选一“闺蜜”，其手牌上限+2，每间隔1轮的轮次中每回合首次受伤后+1血；<br>濒死时闺蜜可用♥️♦️牌当桃救你（场上无闺蜜时重选）";
+        return "锁；摸初始牌前选一“闺蜜”，其手牌上限+2，每间隔1轮的轮次中每回合首次受伤后+1血；<br>濒死时闺蜜可用♥️♦️牌当桃救你（场上无闺蜜时重选）";
     },
     lit_mianju(player) {
         if (get.mode() === 'guozhan') return `锁；明置此技能后，获得4“面”，每次濒死后回满血并移除等量“面”，“面”耗尽时失去此技能并获得${get.poptip('lit_xiaochou')}`;
@@ -687,12 +716,6 @@ export const dynamicTranslate = {
     lit_qixu(player) {
         if (player.hasSkill('lit_qixuV2')) return `V2 出牌阶段可令1人判定让其猜测花色：猜错则按实际花色令其进行♠️闪电、♥️乐、♣️兵、♦️遣返牌的判定；猜中则你获得${get.poptip('lit_zhijian')}`;
         return `出牌阶段可令1人判定让其猜测花色：猜错则按实际花色令其进行♠️闪电、♥️乐、♣️兵、♦️遣返牌的判定；猜中则你失去此技能并获得${get.poptip('lit_zhijian')}`;
-    },
-    lit_male(player) {
-        if (player.isTempBanned('lit_male_judge')) return `${Styled('O', '造成伤害前若此牌与上次${get.poptip("lit_sameName")}可判定，若为：')}<br>`
-            + `①♥️♦️${Styled('r', '本回合杀、决斗目标数+1')}；<br>`
-            + `${Styled('O', '②♠️♣️本回合非红色部分失效，取消本次伤害，+1牌')}`;
-        return `造成伤害前若此牌与上次${get.poptip("lit_sameName")}可判定，若为：<br>①♥️♦️${Styled('r', '本回合杀、决斗目标数+1')}；<br>②♠️♣️本回合非红色️部分失效，取消本次伤害，+1牌`;
     },
     lit_xiaosa(player) {
         let str1 = "<li>场上有人受伤濒死时，可令1人翻面并获得其装备区的牌</li>",
