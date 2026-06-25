@@ -3026,7 +3026,7 @@ export const skill = {
                             let cardToUse = state[0],
                                 skiller = state[1];
                             let att = get.attitude(player, skiller);
-                            if (card.cards[0] === cardToUse && get.tag(cardToUse, "damage")) {
+                            if (card === cardToUse && get.tag(cardToUse, "damage")) {
                                 return [1, att / 10];
                             }
                         },
@@ -3301,7 +3301,7 @@ export const skill = {
         },
         async cost(event, trigger, player) {
             const targets = trigger.targets;
-            const { bool, cards: [card], targets: [target] } = await player.chooseCardTarget({
+            const result = await player.chooseCardTarget({
                 position: 'hes',
                 prompt: get.prompt("lit_kuaihuo"),
                 prompt2: `选择1张牌同牌堆顶置换，并指定1人对杀的目标（${get.translation(targets)}）再使用1张无实体的杀`,
@@ -3319,6 +3319,7 @@ export const skill = {
                 },
             }).forResult();
 
+            const { bool, cards: [card], targets: [target] } = result;
             if (!bool) return;
             event.result = {
                 bool: true,
