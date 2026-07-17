@@ -189,82 +189,42 @@ export const skill = {
             }
         },
     },
-    lit_shengjiqb: {
-        inherit: 'lit_sj',
-        derivation: 'lit_tiannaV2',
-    },
-    lit_shengjizsj: {
-        inherit: 'lit_sj',
-    },
-    lit_shengjizqy: {
-        inherit: 'lit_sj',
-        derivation: 'lit_zishaV2',
-    },
-    lit_shengjipjl: {
-        inherit: 'lit_sj',
-        derivation: 'lit_duilianV2',
-    },
-    lit_shengjiwxq: {
-        inherit: 'lit_sj',
-        derivation: ['lit_mianjuV2', 'lit_xiaochouV2'],
-    },
-    lit_shengjizg: {
-        inherit: 'lit_sj',
-        derivation: 'lit_zhanshiV2',
-    },
-    lit_shengjizpj: {
-        inherit: 'lit_sj',
-        derivation: 'lit_saohuaV2',
-    },
-    lit_shengjibs: {
-        inherit: 'lit_sj',
-        derivation: 'lit_yisuiV2',
-    },
-    lit_shengjilcm: {
-        inherit: 'lit_sj',
-        derivation: 'lit_jijinV2',
-    },
-    lit_shengjizmh: {
-        inherit: 'lit_sj',
-        derivation: 'lit_jianrenV2',
-    },
-    lit_shengjirita: {
-        inherit: 'lit_sj',
-        derivation: ['lit_dafang', 'lit_hengshuiti'],
-    },
-    lit_shengjihp: {
-        inherit: 'lit_sj',
-        derivation: ['lit_yinren', 'lit_fumeng', 'lit_mengying'],
-    },
-    lit_shengjilbx: {
-        inherit: 'lit_sj',
-    },
-    lit_shengjihxy: {
-        inherit: 'lit_sj',
-        derivation: 'lit_shihuaiV2',
-    },
-    lit_shengjihjw: {
-        inherit: 'lit_sj',
-        derivation: 'lit_wutongV2',
-    },
-    lit_shengjirs: {
-        inherit: 'lit_sj',
-        derivation: 'lit_qixuV2',
-    },
-    lit_shengjijhx: {
-        inherit: 'lit_sj',
-        derivation: 'lit_shanliangV2',
-    },
-    lit_shengjiqbc: {
-        inherit: 'lit_sj',
-        derivation: 'lit_chushouV2',
-    },
-    lit_shengjizc: {
-        inherit: 'lit_sj',
-        derivation: 'lit_shuxinV2',
-    },
-    lit_shengjiyxl: {
-        inherit: 'lit_sj',
-        derivation: 'lit_juji',
-    },
 };
+
+// ════════════════════════════════════════════════════════════
+//  数据驱动：升级技能映射表
+//  key = 角色缩写, value = derivation 技能（string | string[] | null）
+// ════════════════════════════════════════════════════════════
+const SHENGJI_MAP = {
+    qb:  'lit_tiannaV2',
+    zsj: null,
+    zqy: 'lit_zishaV2',
+    pjl: 'lit_duilianV2',
+    wxq: ['lit_mianjuV2', 'lit_xiaochouV2'],
+    zg:  'lit_zhanshiV2',
+    zpj: 'lit_saohuaV2',
+    bs:  'lit_yisuiV2',
+    lcm: 'lit_jijinV2',
+    zmh: 'lit_jianrenV2',
+    rita:['lit_dafang', 'lit_hengshuiti'],
+    hp:  ['lit_yinren', 'lit_fumeng', 'lit_mengying'],
+    lbx: null,
+    hxy: 'lit_shihuaiV2',
+    hjw: 'lit_wutongV2',
+    rs:  'lit_qixuV2',
+    jhx: 'lit_shanliangV2',
+    qbc: 'lit_chushouV2',
+    zc:  'lit_shuxinV2',
+    yxl: 'lit_juji',
+};
+
+// 由映射表自动生成 { lit_shengjiX: { inherit, derivation } } 技能定义
+const shengjiSkills = {};
+for (const [key, derivation] of Object.entries(SHENGJI_MAP)) {
+    const def = { inherit: 'lit_sj' };
+    if (derivation) def.derivation = derivation;
+    shengjiSkills[`lit_shengji${key}`] = def;
+}
+Object.assign(skill, shengjiSkills);
+
+export { shengjiSkills };

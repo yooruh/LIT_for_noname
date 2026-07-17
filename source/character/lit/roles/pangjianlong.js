@@ -1,6 +1,4 @@
-import { lib, game, ui, get, ai, _status } from '../../../../../../noname.js';
-import { Styled } from '../../../tool/basic.js';
-const X = Styled('b', 'X'), Y = Styled('p', 'Y'), Z = Styled('y', 'Z');
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
 
 export const character = {
     'lit_pangjianlong庞建龙': {

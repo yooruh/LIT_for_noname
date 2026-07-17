@@ -1,4 +1,4 @@
-import { lib, game, ui, get, ai, _status } from '../../../../../../noname.js';
+﻿import { lib, game, ui, get, ai, _status } from '../shared.js';
 
 export const character = {
     'lit_zhengmohan9郑墨翰': {

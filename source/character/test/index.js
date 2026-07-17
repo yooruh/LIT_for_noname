@@ -1,6 +1,6 @@
 import { lib, game, ui, get, ai, _status } from '../../../../../noname.js';
 
-const ROLE_FILES = ["9hupan", "9zengpinjia", "9zhengmohan", "9zhongyutong", "pengliying", "wangsiyuan"];
+const ROLE_FILES = ["9hupan","9zengpinjia","9zhengmohan","9zhongyutong","pengliying","wangsiyuan"];
 
 const _modules = await Promise.all(ROLE_FILES.map(name =>
     import(`./roles/${name}.js`)

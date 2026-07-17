@@ -5,7 +5,7 @@ import { lib, game, ui, get, ai, _status } from '../../../../../noname.js';
 // ════════════════════════════════════════════════════════════
 
 // Auto-populated by rebuild.mjs — regenerated on every build
-const ROLE_FILES = ["9liyang", "9wangcan", "9zhangchi", "9zhangshengjie", "boshu", "chenke", "hujunwei", "hupan", "huxinyu", "jianghaixu", "lanboxun", "linmiao", "liuchenmu", "pangjianlong", "qb", "qianbaocan", "rita", "sunnan", "wangrong", "wuxiaoqi", "yangxiangling", "zengpinjia", "zhangchi", "zhangqinyi", "zhangshengjie", "zhengmohan", "zigao"];
+const ROLE_FILES = ["9liyang","9wangcan","9zhangchi","9zhangshengjie","boshu","chenke","hujunwei","hupan","huxinyu","jianghaixu","lanboxun","linmiao","liuchenmu","pangjianlong","qb","qianbaocan","rita","sunnan","wangrong","wuxiaoqi","yangxiangling","zengpinjia","zhangchi","zhangqinyi","zhangshengjie","zhengmohan","zigao"];
 
 const _modules = await Promise.all(ROLE_FILES.map(name =>
     import(`./roles/${name}.js`)
@@ -36,4 +36,8 @@ export { dynamicTranslate, pinyins };
 export const character       = _merge('character');
 export const skill           = { ..._negClear, ..._shengji, ..._merge('skill') };
 export const fullTranslate   = { ..._ft, ..._merge('translate') };
-export const simpleTranslate = { ..._st, ..._merge('simpleTranslate') };
+export const simpleTranslate = {
+    ..._ft,  // full 作为回退：simple 中缺失的 key 自动使用完整版
+    ..._st,
+    ..._merge('simpleTranslate'),
+};
