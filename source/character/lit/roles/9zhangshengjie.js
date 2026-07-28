@@ -266,7 +266,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_zhangshengjie9张盛杰': "9张盛杰",
+    'lit_zhangshengjie9张盛杰': "9张盛杰",
     'lit_zhangshengjie9张盛杰_prefix': "9",
     'lit_lizhi': "励志",
     'lit_lizhi_info': `锁定技，摸牌阶段，你多摸${X}张牌（${X}为你已失去的体力值）`,

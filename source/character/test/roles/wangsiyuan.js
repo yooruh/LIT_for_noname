@@ -138,7 +138,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_wangsiyuan王思媛': "王思媛",
+    'lit_wangsiyuan王思媛': "王思媛",
     "lit_daha": "大哈",
     "lit_daha_info": "锁定技；你即将造成的伤害视作失去体力，<span class='redtext' style='color:Red'>除非</span>你弃置所有手牌。",
     "lit_fushu": "腹书",

@@ -177,29 +177,24 @@ export const skill = {
 };
 
 export const translate = {
-'lit_qianbaocan钱保灿': "钱保灿",
+    'lit_qianbaocan钱保灿': "钱保灿",
     'lit_chushou': "出手",
     'lit_chushou_info': "锁定技，回合开始前，你跳过摸牌阶段，视为使用一张你声明的普通锦囊牌，此牌不可被【无懈可击】响应",
+    'lit_chushouV2': "出手V2",
+    'lit_chushouV2_info': "锁定技，你的【杀】目标数+1。回合开始前，你跳过摸牌阶段，你视为使用一张你声明的普通锦囊牌，此牌不可被【无懈可击】响应",
     'lit_zhixun': "质询",
     'lit_zhixun_info': "当牌的目标数大于1时，你可以取消其中一个目标，视为对一名角色再次使用此牌",
     'lit_male': "麻了",
     'lit_male_info': "锁定技，当你造成伤害后，若伤害牌与你上次造成伤害的牌为同一张牌，你摸一张牌。",
     'lit_male_tag': "同名",
+    'lit_shengjiqbc': "升级·钱保灿",
+    'lit_shengjiqbc_info': `${get.poptip('lit_chushouV2')} 获得并在〖出手〗中增加：你的【杀】目标数+1`,
 };
 
 export const simpleTranslate = {
     'lit_chushou_info': "锁；回合开始前跳过摸牌阶段，视为使用1张你声明的锦囊牌，不可无懈",
+    'lit_chushouV2_info': "V2 锁；杀的目标数+1。回合开始前跳过摸牌阶段，视为使用1张你声明的锦囊牌，不可无懈",
     'lit_zhixun_info': "牌的目标不为1时可取消其中1个目标，视为对1人再次使用此牌",
     'lit_male_info': `造成伤害后，若伤害牌与上次造成伤害的牌为同一张，+1牌`,
-};
-
-// 拆分后补回的旧集中数据
-Object.assign(translate, {
-    'lit_shengjiqbc': "升级·钱保灿",
-    'lit_shengjiqbc_info': `${get.poptip('lit_chushouV2')} 获得并在〖出手〗中增加：你的【杀】目标数+1`,
-});
-
-Object.assign(simpleTranslate, {
     'lit_shengjiqbc_info': `${get.poptip('lit_chushouV2')} 获得并在“出手”中增加：杀的目标数+1`,
-
-});
+};

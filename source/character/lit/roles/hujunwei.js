@@ -246,26 +246,23 @@ export const skill = {
 };
 
 export const translate = {
-'lit_hujunwei胡峻玮': "胡峻玮",
+    'lit_hujunwei胡峻玮': "胡峻玮",
     'lit_biaoxian': "表现",
     'lit_biaoxian_info': "当你使用【杀】指定目标后，你可以判定，若结果为♦️，则此【杀】基础伤害+1且不能被此目标响应",
     'lit_wutong': "梧桐",
     'lit_wutong_info': "场上判定生效前，你可以失去1点体力，获得1点护甲，并将此判定结果修改为任意花色（直接修改结果）",
     'lit_wutong_faq': "关于修改判定结果",
+    'lit_wutong_faq_info': "直接修改结果，覆盖了判定牌的名字、花色、数字等属性，导致相关结果与判定牌上原有的数据无关。因此「针对判定牌」的修改来间接影响判定结果的技能无法改变判定结果，除非还有其他技能也对「判定结果」进行了直接修改<br>" +
+        "如【鬼才】和【鬼道】都不能影响本技能发动后的判定结果，而【天妒】和【反馈】则不受影响",
+    'lit_wutongV2': "梧桐V2",
+    'lit_wutongV2_info': "场上判定生效前，你可以失去1点体力或弃置全部手牌，获得1点护甲，并将此判定结果固定为任意花色（与判定牌无关）",
+    'lit_shengjihjw': "升级·胡峻玮",
+    'lit_shengjihjw_info': `${get.poptip('lit_wutongV2')} 获得并修改〖梧桐〗条件：你有手牌时，还可以弃置全部手牌发动`,
 };
 
 export const simpleTranslate = {
     'lit_biaoxian_info': "用杀指定目标后可判定，为♦️则基础伤害+1且不可被其响应",
     'lit_wutong_info': "场上判定生效前可-1体力+1护甲，将判定结果修改为任意花色",
-};
-
-// 拆分后补回的旧集中数据
-Object.assign(translate, {
-    'lit_shengjihjw': "升级·胡峻玮",
-    'lit_shengjihjw_info': `${get.poptip('lit_wutongV2')} 获得并修改〖梧桐〗条件：你有手牌时，还可以弃置全部手牌发动`,
-});
-
-Object.assign(simpleTranslate, {
+    'lit_wutongV2_info': "V2 场上判定生效前可-1体力或弃全部手牌，+1护甲并将判定结果修改为任意花色",
     'lit_shengjihjw_info': `${get.poptip('lit_wutongV2')} 获得并修改“梧桐”条件：还可弃置全部手牌触发`,
-
-});
+};

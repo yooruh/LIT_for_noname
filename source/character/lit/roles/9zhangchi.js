@@ -584,13 +584,15 @@ export const skill = {
 };
 
 export const translate = {
-'lit_zhangchi9张驰': "9张驰",
+    'lit_zhangchi9张驰': "9张驰",
     'lit_zhangchi9张驰_prefix': "9",
     'lit_bolun': "悖论",
     'lit_bolun_info': `你可以扣置一张手牌并声明一种${get.poptip("lit_basicTrickCard")}，视为你使用或打出之，其他角色可同时质疑：<li>若有人质疑且声明的牌与扣置之牌不相符，` +
         `则此牌无效且本回合内无法再次被声明，质疑者各摸一张牌；</li><li>否则此牌生效，质疑者选择一项：1.随机失去1~2点体力；2.获得${get.poptip('lit_jiqing')}</li>`,
     'lit_bolun_ally': "信任",
     'lit_bolun_betray': "质疑",
+    'lit_bolun_ally_bg': "真",
+    'lit_bolun_betray_bg': "假",
     'lit_jiqing': "基情",
     'lit_jiqing_info': `锁定技，你不能质疑${get.poptip('lit_bolun')}；当你体力值为1时，${Styled('r', '你的其他技能无效')}；当你体力值小于1时，${Styled('r', '你的非锁定技无效')}`,
     'lit_jiqingsishe': "激情四射",
@@ -603,7 +605,6 @@ export const simpleTranslate = {
     'lit_jiqingsishe_info': `锁；死前选拥有${get.poptip('lit_jiqing')}的1人令其判定：${Styled('r', '不为桃或桃园结义则其死亡')}`,
 };
 
-// 拆分后补回的旧集中数据
 export const pinyins = {
     '悖论': ['bó', 'lùn'],
 };

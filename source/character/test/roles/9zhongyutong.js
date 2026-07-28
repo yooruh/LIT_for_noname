@@ -321,7 +321,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_zhongyutong9钟雨桐': "9钟雨桐",
+    'lit_zhongyutong9钟雨桐': "9钟雨桐",
     'lit_zhongyutong9钟雨桐_prefix': "9",
     "lit_jinshan": "尽善",
     "lit_jinshan_info": "若你在出牌阶段没有使用过“杀”，则你可以跳过弃牌阶段；锁定技；死亡时<span class='redtext' style='color:Red'>所有人</span>-1点体力。",

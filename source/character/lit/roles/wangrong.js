@@ -456,7 +456,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_wangrong王荣': "王荣",
+    'lit_wangrong王荣': "王荣",
     'lit_wangrong_pale': "青衣",
     'lit_manmanlai': "慢慢来",
     'lit_manmanlai_info': "主公技，未持有〖吊诡〗的“叁”势力角色，可于准备阶段弃置判定区的一张牌，然后你恢复1点体力",
@@ -466,8 +466,12 @@ export const translate = {
     'lit_kushi_info': "锁定技，你或你攻击范围内的角色每进行一次判定，你摸一张牌",
     'lit_qixu': "期许",
     'lit_qixu_info': `出牌阶段，你可以令一名角色判定，让其猜测判定的花色：若猜错，你按实际花色，令其进行♠️️【闪电】、♥️️【乐不思蜀】、♣️️【兵粮寸断】、♦️【遣返牌】的判定；若猜中，你失去此技能并获得${get.poptip('lit_zhijian')}`,
+    'lit_qixuV2': "期许V2",
+    'lit_qixuV2_info': `V2 出牌阶段，你可以令一名角色判定，让其猜测判定的花色：若猜错，你按实际花色，令其进行♠️️【闪电】、♥️️【乐不思蜀】、♣️️【兵粮寸断】、♦️️【遣返牌】的判定；若猜中，你获得${get.poptip('lit_zhijian')}`,
     'lit_zhijian': "执剑",
     'lit_zhijian_info': `当你使用【杀】指定目标后，你可以判定：若为♥️♦️，你可以扣置目标角色至多${X}张牌于其武将牌上，其于此【杀】结算后获得之；若为♠️♣️，此【杀】对该目标角色造成的伤害+1（${X}为其体力值）`,
+    'lit_shengjirs': "升级·王荣",
+    'lit_shengjirs_info': `${get.poptip('lit_qixuV2')} 获得并修改〖期许〗：猜中时不再失去此技能`,
 };
 
 export const simpleTranslate = {
@@ -475,19 +479,10 @@ export const simpleTranslate = {
     'lit_diaogui_info': "负面；兵乐必中，一轮开始时（含游戏开始时）可-1血转移给其他人",
     'lit_kushi_info': "锁；你或攻击范围内的角色每进行一次判定你摸1张牌",
     'lit_qixu_info': `出牌阶段可令1人判定让其猜测花色：猜错则按实际花色令其进行♠️闪电、♥️乐、♣️兵、♦️遣返牌的判定；猜中则你失去此技能并获得${get.poptip('lit_zhijian')}`,
+    'lit_qixuV2_info': `V2 出牌阶段可令1人判定让其猜测花色：猜错则按实际花色令其进行♠️闪电、♥️乐、♣️兵、♦️遣返牌的判定；猜中则你获得${get.poptip('lit_zhijian')}`,
     'lit_zhijian_info': `使用杀指定目标后可判定：♥️♦️可扣置目标至多${X}张牌于武将牌上，其于杀结算后获得之；♠️♣️对此目标的此杀伤害+1（${X}为其体力值）`,
-};
-
-// 拆分后补回的旧集中数据
-Object.assign(translate, {
-    'lit_shengjirs': "升级·王荣",
-    'lit_shengjirs_info': `${get.poptip('lit_qixuV2')} 获得并修改〖期许〗：猜中时不再失去此技能`,
-});
-
-Object.assign(simpleTranslate, {
     'lit_shengjirs_info': `${get.poptip('lit_qixuV2')} 获得并修改“期许”：猜中时不再失去此技能`,
-
-});
+};
 
 export const dynamicTranslate = {
     lit_qixu(player) {

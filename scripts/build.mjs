@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 叁岛世界 统一发版脚本
+ * 叁岛世界 统一分发版本脚本
  *
  * 以 release/releases.json 为唯一发布源，统一生成：
  *   1. package.json       — 项目版本号
@@ -41,7 +41,7 @@ const positionalArgs = args.filter(arg => !arg.startsWith('-'));
 function printBanner() {
   console.log(`
 \x1b[35m╔══════════════════════════════════╗
-║   叁岛世界 统一发版脚本 v2.0   ║
+║   叁岛世界 统一分发版本脚本 v2.0   ║
 ╚══════════════════════════════════╝\x1b[0m
 `);
 }
@@ -123,7 +123,7 @@ try {
     console.log('\x1b[90m提示: 去掉 --dry-run 参数以实际生成发布产物\x1b[0m');
   } else {
     console.log('');
-    log.ok('发版产物已全部同步完成。');
+    log.ok('分发版本产物已全部同步完成。');
     console.log('\x1b[90m提示: 可继续使用 git diff 检查更改\x1b[0m');
   }
 } catch (error) {

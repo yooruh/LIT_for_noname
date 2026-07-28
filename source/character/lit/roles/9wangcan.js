@@ -139,7 +139,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_wangcan9王灿': "9王灿",
+    'lit_wangcan9王灿': "9王灿",
     'lit_wangcan9王灿_prefix': "9",
     'lit_xiaoqiao': "小巧",
     'lit_xiaoqiao_info': "锁定技，你的♠️牌均视为♥️牌",

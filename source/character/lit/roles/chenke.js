@@ -168,7 +168,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_chenke陈可': "陈可",
+    'lit_chenke陈可': "陈可",
     'lit_nitian': "逆天",
     'lit_nitian_info': `当判定牌生效前，你可以打出一张牌代替之，并${Styled('g', '获得原判定牌')}，若你以此法打出的牌为♥️/♠️，你摸一张牌`,
     'lit_yizhu': "遗嘱",

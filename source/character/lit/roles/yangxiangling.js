@@ -282,7 +282,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_yangxiangling杨湘铃': "杨湘铃",
+    'lit_yangxiangling杨湘铃': "杨湘铃",
     'lit_lenmo': "冷漠",
     'lit_lenmo_info': `锁定技，当你造成伤害前，若受伤角色不为你且其攻击范围内不包括你，则你令其获得1层${get.poptip('lit_dongjie')}，若此时其“冻结”层数大于其体力值，其翻面`,
     /*负面效果*/'lit_dongjie': "冻结",
@@ -291,6 +291,8 @@ export const translate = {
     'lit_xiaosa_info': "每回合每种情况限一次：<li>场上有人因受到伤害而进入濒死状态时，你可以令一名角色翻面，然后你获得其装备区的牌；</li><li>场上有人因失去体力而进入濒死状态时，你可以将一张装备牌当无次数限制的【杀】使用，此【杀】不可被响应</li>",
     'lit_juji': "狙击",
     'lit_juji_info': "锁定技，你的回合内，其他角色与你的距离视为无限，你与其他角色的距离视为1",
+    'lit_shengjiyxl': "升级·杨湘铃",
+    'lit_shengjiyxl_info': `获得：${get.poptip('lit_juji')}`,
 };
 
 export const simpleTranslate = {
@@ -298,17 +300,8 @@ export const simpleTranslate = {
     'lit_dongjie_info': "负面；翻面后失去所有“冻结”和等量体力",
     'lit_xiaosa_info': "每回合每种情况限1次<li>场上有人受伤濒死时，可令1人翻面并获得其装备区的牌</li><li>场上有人失去体力濒死时，可将1张装备牌作无次数限制的杀使用，不可被响应</li>",
     'lit_juji_info': "锁；回合内，他人与你的距离视作无限，你与他人的距离视作1",
+    'lit_shengjiyxl_info': `获得：${get.poptip('lit_juji')}`,
 };
-
-// 拆分后补回的旧集中数据
-Object.assign(translate, {
-    'lit_shengjiyxl': "升级·杨湘铃",
-    'lit_shengjiyxl_info': `获得：${get.poptip('lit_juji')}`,
-});
-
-Object.assign(simpleTranslate, {
-    'lit_shengjiyxl_info': `获得：${get.poptip('lit_juji')}`,
-});
 
 export const dynamicTranslate = {
     lit_xiaosa(player) {

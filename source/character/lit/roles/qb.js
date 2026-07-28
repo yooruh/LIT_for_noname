@@ -245,37 +245,35 @@ export const skill = {
 };
 
 export const translate = {
-'lit_qbQb': "Qb",
+    'lit_qbQb': "Qb",
+    'lit_33': "33",
+    'lit_33_info': "主公技，其他“叁”势力角色可在出牌阶段发动一次，其受到来自你的1点伤害，然后若你：<li>体力值>3，失去1点体力；</li><li>体力值≤3，恢复1点体力</li>",
+    'lit_33_2': "33",
+    'lit_33_3': "33",
     'lit_tianna': "天呐",
     'lit_tianna_info': "锁定技，当你造成伤害后，若于回合外，你摸一张牌；若于回合内，你恢复1点体力，然后弃置一张手牌",
+    'lit_tiannaV2': "天呐V2",
+    'lit_tiannaV2_info': "锁定技，当你造成伤害后，若于回合外，你摸一张牌；若于回合内，你恢复1点体力，然后弃置一张手牌；当你体力值大于1点且受到伤害时，若此伤害会使你体力值小于1，则防止此伤害并将体力值减至1",
     'lit_qiantui': "遣退",
     'lit_qiantui_info': `当你的体力值由3以上减至3或以下时，你可以令一名不带有${get.poptip('lit_kuanshu')}的角色获得${get.poptip('lit_qianfan')}`,
 	/*负面效果*/'lit_qianfan': "遣返",
     'lit_qianfan_info': `负面效果，你跳过下回合，并获得${get.poptip('lit_kuanshu')}，〖宽恕〗在下回合开始前失效`,
     'lit_kuanshu': "宽恕",
     'lit_kuanshu_info': "锁定技，你不会被遣返",
-    'lit_shichou': "誓仇",
-    'lit_shichou_info': `锁定技，当你受到伤害后，伤害来源获得“誓”标记；当你体力值为1时，你对所有带“誓”标记的角色造成${Y}点伤害，然后移除所有“誓”标记（${Y}为其体力值与护甲值之和-1）`,
+
+    'lit_shengjiqb': "升级·Qb",
+    'lit_shengjiqb_info': `${get.poptip('lit_tiannaV2')} 获得〖天呐〗并于末尾增加：当你体力值大于1且受到伤害时，若此伤害会使你体力值小于1，则防止此伤害并将体力值减至1`,
 };
 
 export const simpleTranslate = {
+    'lit_33_info': "主；其余“叁”势力每回合可发动1次，其受来自你的1伤，然后你：<li>血>3时-1血</li><li>血<=3时+1血</li>",
     'lit_tianna_info': "锁；造伤后，回合外+1牌，回合内+1血-1手牌",
+    'lit_tiannaV2_info': "V2 锁；造伤后，回合外+1牌，回合内+1血-1手牌；>1血时，受伤若会使血<1则免伤且血掉至1",
     'lit_qiantui_info': `血由3以上掉到3及以下时，可令不带有${get.poptip('lit_kuanshu')}的1人获得${get.poptip('lit_qianfan')}`,
     'lit_qianfan_info': `负面；跳过下回合并获得${get.poptip('lit_kuanshu')}，宽恕在下回合开始前失效`,
     'lit_kuanshu_info': "锁；本次不会被遣返",
-    'lit_shichou_info': `锁；受伤后伤害源获得“誓”，血=1时对所有带“誓”者造成${Y}点伤害，并移除所有“誓”（${Y}为其血+护甲-1）`,
-};
-
-// 拆分后补回的旧集中数据
-Object.assign(translate, {
-    'lit_shengjiqb': "升级·Qb",
-    'lit_shengjiqb_info': `${get.poptip('lit_tiannaV2')} 获得〖天呐〗并于末尾增加：当你体力值大于1且受到伤害时，若此伤害会使你体力值小于1，则防止此伤害并将体力值减至1`,
-});
-
-Object.assign(simpleTranslate, {
     'lit_shengjiqb_info': `${get.poptip('lit_tiannaV2')} 获得“天呐”并于末尾增加：>1血受伤时若此伤害会使血<1，免伤且血掉至1`,
-
-});
+};
 
 export const dynamicTranslate = {
     lit_tiannaV2(player) {

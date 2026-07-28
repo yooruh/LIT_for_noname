@@ -181,25 +181,20 @@ export const skill = {
 };
 
 export const translate = {
-'lit_pangjianlong庞建龙': "庞建龙",
+    'lit_pangjianlong庞建龙': "庞建龙",
     'lit_qiangjian': "强健",
     'lit_qiangjian_info': "锁定技，当其他角色使用【杀】、【决斗】、【万箭齐发】或【南蛮入侵】时，其需要额外打出一张【杀】或【闪】来响应",
     'lit_duilian': "对练",
     'lit_duilian_info': "出牌阶段限一次，你可以弃置一张牌，选择任意名角色，令这些角色依次选择是否对你选择的另一名角色使用【决斗】，此【决斗】不可被【无懈可击】响应",
+    'lit_duilianV2': "对练V2",
+    'lit_duilianV2_info': "出牌阶段限一次，你可以选择任意名角色，令这些角色依次选择是否对你选择的另一名角色使用【决斗】，此【决斗】不可被【无懈可击】响应",
+    'lit_shengjipjl': "升级·庞建龙",
+    'lit_shengjipjl_info': `${get.poptip('lit_duilianV2')} 获得并修改〖对练〗：出牌阶段限一次，你可以选择任意名角色，令这些角色依次选择是否对你选择的另一名角色使用【决斗】，此【决斗】不可被【无懈可击】响应`,
 };
 
 export const simpleTranslate = {
     'lit_qiangjian_info': "锁；杀、决斗、万箭、南蛮，他人响应需杀/闪+1",
     'lit_duilian_info': "出牌限1次，弃1牌选择任意对人使其相互决斗，不可无懈",
-};
-
-// 拆分后补回的旧集中数据
-Object.assign(translate, {
-    'lit_shengjipjl': "升级·庞建龙",
-    'lit_shengjipjl_info': `${get.poptip('lit_duilianV2')} 获得并修改〖对练〗：出牌阶段限一次，你可以选择任意名角色，令这些角色依次选择是否对你选择的另一名角色使用【决斗】，此【决斗】不可被【无懈可击】响应`,
-});
-
-Object.assign(simpleTranslate, {
+    'lit_duilianV2_info': "V2 出牌限1次，选择任意对人使其相互决斗，不可无懈",
     'lit_shengjipjl_info': `${get.poptip('lit_duilianV2')} 获得并修改“对练”：不需要弃牌了`,
-
-});
+};

@@ -282,33 +282,26 @@ export const skill = {
 };
 
 export const translate = {
-'lit_jianghaixu蒋海旭': "蒋海旭",
+    'lit_jianghaixu蒋海旭': "蒋海旭",
     'lit_jianghaixu_azure': "蔚蓝色",
     'lit_yuanzhu': "援助",
     'lit_yuanzhu_info': "其他角色回合开始前，若其没有“援”，你可以弃置1~2张牌，令其获得等量枚“援”；锁定技，有“援”的角色弃牌时，取消弃牌并移去1枚“援”（仅限手牌和装备区的弃牌）",
     'lit_chenshui': "沉睡",
     'lit_chenshui_info': "每回合限一次，当其他角色扣血瞬间，你可以翻面并令其摸两张牌",
     'lit_chenshui_faq': "关于扣血瞬间的具体时机",
+    'lit_chenshui_faq_info': "此时机在伤害结算/失去体力结算中或满血失去体力上限后，在进入濒死时机之前",
     'lit_shanliang': "善良",
     'lit_shanliang_info': "锁定技，当你进入濒死状态时，全场角色展示手牌并弃置其中的【桃】和字面意义上的桃，你恢复等量的体力",
-    /*负面效果*/'lit_dongjie': "冻结",
-    'lit_dongjie_info': "负面效果，翻面后失去所有“冻结”和等量体力",
+    'lit_shanliangV2': "善良V2",
+    'lit_shanliangV2_info': "锁定技，当你进入濒死状态时，全场角色展示手牌并弃置其中的【桃】和字面意义上的桃，你恢复等量的体力；若恢复的体力值溢出，则增加等溢出量的体力上限后恢复体力至上限",
+    'lit_shengjijhx': "升级·蒋海旭",
+    'lit_shengjijhx_info': `${get.poptip('lit_shanliangV2')} 获得并于〖善良〗末尾增加：若恢复的体力值溢出，则增加等溢出量的体力上限后恢复体力至上限`,
 };
 
 export const simpleTranslate = {
     'lit_yuanzhu_info': "他人回合开始前，若其没有“援”，你可弃置1~2牌，其+等量“援”。锁；有“援”者弃牌时取消弃牌并-1“援”（仅限手牌和装备区的弃牌）",
     'lit_chenshui_info': "每回合限1次，有人扣血瞬间你可翻面并令其+2牌",
     'lit_shanliang_info': "锁；濒死时全场展示手牌并弃置其中的桃和字面意义上的桃，你+等弃置量的血",
-    'lit_dongjie_info': "负面；翻面后失去所有“冻结”和等量体力",
-};
-
-// 拆分后补回的旧集中数据
-Object.assign(translate, {
-    'lit_shengjijhx': "升级·蒋海旭",
-    'lit_shengjijhx_info': `${get.poptip('lit_shanliangV2')} 获得并于〖善良〗末尾增加：若恢复的体力值溢出，则增加等溢出量的体力上限后恢复体力至上限`,
-});
-
-Object.assign(simpleTranslate, {
+    'lit_shanliangV2_info': "V2 锁；濒死时全场展示手牌并弃置其中的桃和字面意义上的桃，你+等弃置量的血；若恢复量溢出则加等溢出量上限后回满血",
     'lit_shengjijhx_info': `${get.poptip('lit_shanliangV2')} 获得并于“善良”末尾增加：若恢复量溢出，增加等溢出量的上限后回满血`,
-
-});
+};

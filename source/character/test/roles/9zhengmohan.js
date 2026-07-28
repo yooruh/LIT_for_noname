@@ -205,7 +205,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_zhengmohan9郑墨翰': "9郑墨翰",
+    'lit_zhengmohan9郑墨翰': "9郑墨翰",
     'lit_zhengmohan9郑墨翰_prefix': "9",
     "lit_maitou": "埋头",
     "lit_maitou_info": "锁定技；你计算与别人的距离-1；你的体力小于等于3时，别人计算与你的距离+1。",

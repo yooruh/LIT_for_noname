@@ -297,7 +297,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_sunnan孙楠': "孙楠",
+    'lit_sunnan孙楠': "孙楠",
     'lit_sunnan_dark': "暗面",
     'lit_jiaoshui': "浇水",
     'lit_jiaoshui_info': "他人使用【酒】后，或其弃牌阶段开始时，其可令你摸1张牌，若其不选择或忘记了选择，你可观看并获得其1张牌",

@@ -288,7 +288,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_wuxiaoqi伍小戚': "伍小戚",
+    'lit_wuxiaoqi伍小戚': "伍小戚",
     'lit_shencaocao': "神曹操",
     'lit_shencaocao_info': "出牌阶段限一次，令其他角色各摸一张牌，然后你翻面并移去1枚“面”，若成功移去1枚“面”，你恢复1点体力",
     'lit_jiwa': "鸡娃",
@@ -296,27 +296,26 @@ export const translate = {
     'lit_mianju': "面具",
     'lit_mianju_info': `锁定技，游戏开始或复活时，你获得4枚“面”；你每次濒死后，恢复体力至上限并移除等量的“面”；“面”耗尽时，你失去此技能并获得${get.poptip('lit_xiaochou')}`,
     'lit_mianju_faq': '关于“面具”数量：',
+    'lit_mianju_faq_info': '“面”上限一般为4，通过本技能获得的“面”，不会使其数量超过4',
+    'lit_mianjuV2': "面具V2",
+    'lit_mianjuV2_info': `锁定技，游戏开始或复活时，你获得4枚“面”；你每次濒死后，恢复体力至上限并移除等量的“面”；“面”耗尽时，你失去此技能并获得${get.poptip('lit_xiaochouV2')}`,
     'lit_xiaochou': "小丑",
     'lit_xiaochou_info': "锁定技，当你死亡后，伤害来源弃置所有手牌",
+    'lit_xiaochouV2': "小丑V2",
+    'lit_xiaochouV2_info': "锁定技，当你死亡后，伤害来源弃置所有牌",
+    'lit_shengjiwxq': "升级·伍小戚",
+    'lit_shengjiwxq_info': `${get.poptip('lit_mianjuV2')}${get.poptip('lit_xiaochouV2')} 获得〖面具〗和〖小丑〗，并修改其中的〖小丑〗：锁定技，当你死亡后，伤害来源弃置所有牌`,
 };
 
 export const simpleTranslate = {
     'lit_shencaocao_info': "出牌限1次，其他人各摸1牌，你翻面并-1“面”，若成功-1“面”则+1血，",
     'lit_jiwa_info': "翻面后可交换2人手牌",
     'lit_mianju_info': `锁；起始获4“面”，每次濒死后回满血并移除等量“面”，“面”耗尽时失去此技能并获得${get.poptip('lit_xiaochou')}`,
+    'lit_mianjuV2_info': `V2 锁；起始获4“面”，每次濒死后回满血并移除等量“面”，“面”耗尽时失去此技能并获得${get.poptip('lit_xiaochouV2')}`,
     'lit_xiaochou_info': "锁；死后令伤害来源失去所有手牌",
-};
-
-// 拆分后补回的旧集中数据
-Object.assign(translate, {
-    'lit_shengjiwxq': "升级·伍小戚",
-    'lit_shengjiwxq_info': `${get.poptip('lit_mianjuV2')}${get.poptip('lit_xiaochouV2')} 获得〖面具〗和〖小丑〗，并修改其中的〖小丑〗：锁定技，当你死亡后，伤害来源弃置所有牌`,
-});
-
-Object.assign(simpleTranslate, {
+    'lit_xiaochouV2_info': "V2 锁；死后令伤害来源失去所有牌",
     'lit_shengjiwxq_info': `${get.poptip('lit_mianjuV2')}${get.poptip('lit_xiaochouV2')} 获得“面具”/“小丑”，并修改其中的“小丑”：使其弃全部牌`,
-
-});
+};
 
 export const dynamicTranslate = {
     lit_mianju(player) {

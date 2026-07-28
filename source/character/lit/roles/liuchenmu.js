@@ -200,28 +200,23 @@ export const skill = {
 };
 
 export const translate = {
-'lit_liuchenmu刘晨沐': "刘晨沐",
+    'lit_liuchenmu刘晨沐': "刘晨沐",
     'lit_gufeng': "古风",
     'lit_gufeng_info': `每回合限一次，当其他角色使用${get.poptip("lit_exDelayEquipCard")}指定目标后，你可以为此牌增加一个目标`,
     'lit_jijin': "激进",
     'lit_jijin_info': `锁定技，当你使用【杀】造成伤害后，你令受伤者获得${get.poptip('lit_shouji')}`,
+    'lit_jijinV2': "激进V2",
+    'lit_jijinV2_info': `锁定技，当你使用【杀】造成伤害后，你令受伤者获得${get.poptip('lit_shouji')}，造成的伤害越高，受激叠层越多，你对受激者使用的杀不计入出杀次数`,
 	/*负面效果*/'lit_shouji': "受激",
     'lit_shouji_info': "负面效果，下一名使用【杀】的角色强制选择你为目标（无视距离）",
+    'lit_shengjilcm': "升级·刘晨沐",
+    'lit_shengjilcm_info': `${get.poptip('lit_jijinV2')} 获得并修改〖激进〗：你造成的伤害越高，受激叠层越多，你对受激者使用的杀不计入出杀次数。`,
 };
 
 export const simpleTranslate = {
     'lit_gufeng_info': "每回合限1次，有人用牌指定目标后可添加1个目标",
     'lit_jijin_info': `锁；杀造成伤害后令受伤者获得${get.poptip('lit_shouji')}`,
+    'lit_jijinV2_info': `V2 锁；杀造成伤害后令受伤者获得${get.poptip('lit_shouji')}，伤害越高叠层越多，对受激者的杀不计入次数`,
     'lit_shouji_info': "负面；下个用杀者强制选择你为目标（无视距离）",
-};
-
-// 拆分后补回的旧集中数据
-Object.assign(translate, {
-    'lit_shengjilcm': "升级·刘晨沐",
-    'lit_shengjilcm_info': `${get.poptip('lit_jijinV2')} 获得并修改〖激进〗：你造成的伤害越高，受激叠层越多，你对受激者使用的杀不计入出杀次数。`,
-});
-
-Object.assign(simpleTranslate, {
     'lit_shengjilcm_info': `${get.poptip('lit_jijinV2')} 获得并修改"受激"：伤害越高，受激叠层越多，对受激者的杀不计入次数`,
-
-});
+};

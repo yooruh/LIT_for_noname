@@ -273,7 +273,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_zengpinjia9曾品嘉': "9曾品嘉",
+    'lit_zengpinjia9曾品嘉': "9曾品嘉",
     'lit_zengpinjia9曾品嘉_prefix': "9",
     "lit_yingjun": "英俊",
     "lit_yingjun_info": "你准备/结束阶段开始时可以摸1张牌。",

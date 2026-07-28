@@ -261,7 +261,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_pengliying彭丽颖': "彭丽颖",
+    'lit_pengliying彭丽颖': "彭丽颖",
     "lit_wuma": "无马",
     "lit_wuma_info": "你可以选择你的1张坐骑牌并指定1人，视为其使用了这张坐骑牌，然后你+1点体力并摸1张牌。",
     "lit_qingxiu": "清秀",

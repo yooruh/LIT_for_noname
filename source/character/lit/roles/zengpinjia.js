@@ -364,34 +364,23 @@ export const skill = {
 };
 
 export const translate = {
-'lit_zengpinjia曾品嘉': "曾品嘉",
+    'lit_zengpinjia曾品嘉': "曾品嘉",
     'lit_kuaihuo': "快活",
     'lit_kuaihuo_info': "每回合限一次，当你使用【杀】后，你可以将一张牌与牌堆顶的牌置换，然后询问其他角色是否对该目标使用一张无实体牌的【杀】",
     'lit_saohua': "骚话",
     'lit_saohua_info': `你使用或打出的${get.poptip("lit_exDelayEquipCard")}可置于角色上；出牌阶段，你可以：<li>将两张点数和大于等于13的牌当【闪电】使用；</li><li>弃置三张点数和为33的牌，对一名角色造成3点雷属性伤害（此项每回合限一次）</li>`,
-    'lit_guimi': "闺蜜",
-    'lit_guimi_info': "锁定技，摸初始牌前，你选择一名“闺蜜”，其手牌上限+2，且每间隔1轮的轮次中每回合首次受到伤害后恢复1点体力；你进入濒死状态时，闺蜜可以将一张♥️♦️牌当【桃】使用（场上无你的闺蜜时重选）",
-    'lit_yisui': "易碎",
-    'lit_yisui_info': "锁定技，闺蜜在场时，你的手牌数恒为3；闺蜜满血时，你免疫伤害；闺蜜死亡时，你失去所有体力",
+    'lit_saohuaV2': "骚话V2",
+    'lit_saohuaV2_info': `你使用或打出的${get.poptip("lit_exDelayEquipCard")}可置于角色上，技能期间，点数小于7的牌点数+7；出牌阶段，你可以：<li>将两张点数和大于等于13的牌当【闪电】使用；</li><li>弃置三张点数和为33的牌，对一名角色造成3点雷属性伤害（此项每回合限一次）</li>`,
+    'lit_shengjizpj': "升级·曾品嘉",
+    'lit_shengjizpj_info': `${get.poptip('lit_saohuaV2')} 增加1点体力上限，获得并修改〖骚话〗：此技能中，点数小于7的牌计算时的点数+7`,
 };
 
 export const simpleTranslate = {
     'lit_kuaihuo_info': "每回合限1次，使用杀后可于牌堆顶置换1牌并询问他人是否也对其使用杀",
     'lit_saohua_info': `已用和打出${get.poptip("lit_exDelayEquipCard")}可置于角色上。出牌可：<li>将2张点数和≥13的牌当闪电</li><li>弃3张点数和=33的牌造成3点雷伤（此项每回合限1次）</li>`,
-    'lit_guimi_info': "锁；摸初始牌前选一“闺蜜”，其手牌上限+2，每间隔1轮的轮次中每回合首次受伤后+1血；<br>濒死时闺蜜可用♥️♦️牌当桃救你（场上无闺蜜时重选）",
-    'lit_yisui_info': "锁；闺蜜在时手牌数恒为3；<br>闺蜜满血时你免疫伤害；<br>闺蜜死，你失去所有体力",
-};
-
-// 拆分后补回的旧集中数据
-Object.assign(translate, {
-    'lit_shengjizpj': "升级·曾品嘉",
-    'lit_shengjizpj_info': `${get.poptip('lit_saohuaV2')} 增加1点体力上限，获得并修改〖骚话〗：此技能中，点数小于7的牌计算时的点数+7`,
-});
-
-Object.assign(simpleTranslate, {
+    'lit_saohuaV2_info': `V2 已用和打出${get.poptip("lit_exDelayEquipCard")}可置于角色上，技能期间点数<7的牌点数+7。出牌阶段可：<li>将2张点数和≥13的牌当闪电</li><li>弃3张点数和=33的牌造成3点雷伤（此项每回合限1次）</li>`,
     'lit_shengjizpj_info': `${get.poptip('lit_saohuaV2')} +1体力上限，获得并修改“骚话”：此技能中，点数<7的牌计算时的点数+7`,
-
-});
+};
 
 export const dynamicTranslate = {
     lit_saohua(player) {

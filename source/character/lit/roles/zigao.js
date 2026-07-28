@@ -380,32 +380,30 @@ export const skill = {
 };
 
 export const translate = {
-'lit_zigao自高': "自高",
+    'lit_zigao自高': "自高",
     'lit_xinren': "信任",
     'lit_xinren_info': "主公技，出牌阶段限一次，你可以交给一名“叁”势力角色一张牌，其可立即使用之，然后你摸X张牌（X为此牌造成的伤害值）",
     'lit_zhanshi': "展示",
     'lit_zhanshi_info': `出牌阶段限一次，你可以令一名其他角色展示所有手牌并交给你，然后你交给其${X}张牌，其摸${X}张牌，直到其回合结束，其使用点数为${Y}的牌：<li>倍数，无次数限制；</li><li>约数，其摸一张牌</li>（${X}为其手牌溢出量且摸牌数至多为3，${Y}为其使用的上一张牌的点数）`,
+    'lit_zhanshiV2': "展示",
+    'lit_zhanshiV2_info': `出牌阶段限一次，你可以令一名其他角色展示所有手牌并交给你，然后你交给其${X}张牌，其摸${X}张牌，直到你或其回合结束，你或其使用点数为${Y}的牌：<li>倍数，无次数限制；</li><li>约数，摸一张牌</li>（${X}为其手牌溢出量且摸牌数至多为3，${Y}为其使用的上一张牌的点数）`,
     'lit_zhanshi_sub': `<span class='bluetext'>【展示】</span>`,
+    'lit_zhanshi_math1': "倍数",
+    'lit_zhanshi_math2': "约数",
+    'lit_zhanshi_sub_info': `<span class='bluetext'>直到下回合结束，使用点数为${Y}的牌：<li>倍数，无次数限制；</li><li>约数，摸一张牌</li>（${Y}为使用的上一张牌的点数）</span>`,
     'lit_chantaer': "铲踏儿",
     'lit_chantaer_info': "锁定技，你的手牌上限基数为你的体力上限；准备阶段，若你的手牌数不大于手牌上限，你恢复1点体力；结束阶段，若本回合没有角色受到过伤害，你摸两张牌并失去1点体力",
+    'lit_shengjizg': "升级·自高",
+    'lit_shengjizg_info': `${get.poptip('lit_zhanshiV2')} 获得并修改〖展示〗：你也拥有后半段技能效果`,
 };
 
 export const simpleTranslate = {
     'lit_xinren_info': "主；出牌限1次，交给某“叁”势力角色1牌，其可立即使用，你摸与该牌造成的总伤害相等的牌",
     'lit_zhanshi_info': `出牌限1次，令他人展示所有手牌并给你，你给其${X}牌其摸${X}牌，直到其回合结束，其使用牌点数为${Y}的：<li>倍数，无次数限制；</li><li>约数，+1牌</li>（${X}为手牌溢出量且摸牌数至多为3，${Y}为其使用的上一牌的点数）`,
+    'lit_zhanshiV2_info': `V2 出牌限1次，令他人展示所有手牌并给你，你给其${X}牌其摸${X}牌，直到你/其回合结束，你/其使用牌点数为${Y}的：<li>倍数，无次数限制；</li><li>约数，+1牌</li>（${X}为手牌溢出量且摸牌数至多为3，${Y}为使用的上一牌的点数）`,
     'lit_chantaer_info': "锁；手牌上限基准为体力上限<li>准备阶段手牌数≤上限+1血</li><li>结束阶段本回合无人受过伤摸2牌并-1血</li>",
-};
-
-// 拆分后补回的旧集中数据
-Object.assign(translate, {
-    'lit_shengjizg': "升级·自高",
-    'lit_shengjizg_info': `${get.poptip('lit_zhanshiV2')} 获得并修改〖展示〗：你也拥有后半段技能效果`,
-});
-
-Object.assign(simpleTranslate, {
     'lit_shengjizg_info': `${get.poptip('lit_zhanshiV2')} 获得并修改“展示”：你也拥有后半段技能`,
-
-});
+};
 
 export const dynamicTranslate = {
     lit_xinren(player) {

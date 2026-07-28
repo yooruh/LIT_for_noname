@@ -199,7 +199,7 @@ export const skill = {
 };
 
 export const translate = {
-'lit_hupan9胡畔': "9胡畔",
+    'lit_hupan9胡畔': "9胡畔",
     'lit_hupan9胡畔_prefix': "9",
     "lit_beiai": "悲哀",
     "lit_beiai_info": "锁定技；防具区没牌时视作装备<span class='redtext' style='color:Green'>“先天八卦阵”</span>；回合结束时，你选择：<br><li>①增加1点体力上限并失去1点体力;<br><li>②恢复1点体力并失去x点体力上限，<span class='redtext' style='color:Red'>x=上限/（存活人数+1）</span>",
