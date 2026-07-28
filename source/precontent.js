@@ -184,8 +184,8 @@ export async function precontent(config, pack) {
 		const useJs = [
 			'content', 'function', 'modeset', 'player', 'video',
 		];
-		suiSet.addImport(`${basic.path}/script/precontent.js`, () => {
-			useJs.forEach(m => suiSet.addImport(`${basic.path}/script/${m}.js`))
+		suiSet.addImport(`${basic.path}/source/onlineFix/precontent.js`, () => {
+			useJs.forEach(m => suiSet.addImport(`${basic.path}/source/onlineFix/${m}.js`))
 			lib.init.css(`${basic.path}/style/css`, 'cards')
 		});
 		suiSet.config = this.config;

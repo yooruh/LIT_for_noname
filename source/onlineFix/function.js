@@ -1,8 +1,8 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js';
 //这个文件是写给主机执行的代码
 
-import { config } from '../source/config.js'
-import { suiSet } from "../source/tool/suiSet.js";
+import { config } from '../config.js'
+import { suiSet } from "../tool/suiSet.js";
 const functions = {
 	audio() {
 		const playerAudio = () => {

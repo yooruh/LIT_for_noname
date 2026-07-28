@@ -137,25 +137,25 @@
   "release/releases.json": {
     "size": 10970
   },
-  "script/content.js": {
+  "source/onlineFix/content.js": {
     "size": 4697
   },
-  "script/function.js": {
+  "source/onlineFix/function.js": {
     "size": 13995
   },
-  "script/modeset.js": {
+  "source/onlineFix/modeset.js": {
     "size": 10551
   },
-  "script/player.js": {
+  "source/onlineFix/player.js": {
     "size": 1740
   },
-  "script/precontent.js": {
+  "source/onlineFix/precontent.js": {
     "size": 1478
   },
-  "script/useFunction.js": {
+  "source/onlineFix/useFunction.js": {
     "size": 154
   },
-  "script/video.js": {
+  "source/onlineFix/video.js": {
     "size": 4985
   },
   "source/card/lit_card.js": {
