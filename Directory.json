@@ -135,28 +135,7 @@
     "size": 35475
   },
   "release/releases.json": {
-    "size": 10970
-  },
-  "source/onlineFix/content.js": {
-    "size": 4697
-  },
-  "source/onlineFix/function.js": {
-    "size": 13995
-  },
-  "source/onlineFix/modeset.js": {
-    "size": 10551
-  },
-  "source/onlineFix/player.js": {
-    "size": 1740
-  },
-  "source/onlineFix/precontent.js": {
-    "size": 1478
-  },
-  "source/onlineFix/useFunction.js": {
-    "size": 154
-  },
-  "source/onlineFix/video.js": {
-    "size": 4985
+    "size": 11918
   },
   "source/card/lit_card.js": {
     "size": 556
@@ -333,7 +312,7 @@
     "size": 7874
   },
   "source/content.js": {
-    "size": 4444
+    "size": 4368
   },
   "source/help.js": {
     "size": 3614
@@ -344,8 +323,29 @@
   "source/mode/sandaohuanhua_brawl.js": {
     "size": 74169
   },
+  "source/onlineFix/content.js": {
+    "size": 4697
+  },
+  "source/onlineFix/function.js": {
+    "size": 13981
+  },
+  "source/onlineFix/modeset.js": {
+    "size": 10544
+  },
+  "source/onlineFix/player.js": {
+    "size": 1740
+  },
+  "source/onlineFix/precontent.js": {
+    "size": 1471
+  },
+  "source/onlineFix/useFunction.js": {
+    "size": 147
+  },
+  "source/onlineFix/video.js": {
+    "size": 4978
+  },
   "source/precontent.js": {
-    "size": 7003
+    "size": 7023
   },
   "source/tool/basic.js": {
     "size": 2487
@@ -381,7 +381,7 @@
     "size": 9323
   },
   "style/html/update.html": {
-    "size": 12923
+    "size": 13643
   },
   "style/nncfg/android_wide11.0.nncfg": {
     "size": 3956
