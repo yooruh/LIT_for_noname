@@ -4,7 +4,7 @@
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve, dirname, relative } from 'node:path';
+import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -12,6 +12,8 @@ const ROOT = resolve(__dirname, '..', '..');
 
 /** 项目根目录下的关键文件路径 */
 export const PATHS = {
+  root: ROOT,
+  packageJson: resolve(ROOT, 'package.json'),
   extensionJs: resolve(ROOT, 'extension.js'),
   versionJson: resolve(ROOT, 'version.json'),
   infoJson: resolve(ROOT, 'info.json'),
@@ -66,6 +68,20 @@ export function getCurrentVersion() {
 }
 
 /**
+ * HTML 转义
+ * @param {string} value
+ * @returns {string}
+ */
+export function htmlEscape(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
  * 彩色日志输出
  */
 export const log = {
@@ -108,7 +124,7 @@ export function isValidVersion(version) {
  * @returns {string}
  */
 export function stripV(version) {
-  return version.replace(/^v/, '');
+  return String(version).replace(/^v/, '');
 }
 
 /**

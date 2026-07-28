@@ -11,147 +11,166 @@
  *   node scripts/rebuild.mjs --check   仅检查，不写入（CI 模式）
  */
 
-import { readdirSync, readFileSync, writeFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve, dirname, relative, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { writeFile, readFile } from './lib/shared.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
+const SELF_PATH = fileURLToPath(import.meta.url);
 
-const log = {
-    info(msg) { console.log(`\x1b[36m[INFO]\x1b[0m ${msg}`); },
-    ok(msg) { console.log(`\x1b[32m[OK]\x1b[0m ${msg}`); },
-    warn(msg) { console.log(`\x1b[33m[WARN]\x1b[0m ${msg}`); },
-    error(msg) { console.error(`\x1b[31m[ERROR]\x1b[0m ${msg}`); },
+export const log = {
+  info(msg) { console.log(`\x1b[36m[INFO]\x1b[0m ${msg}`); },
+  ok(msg) { console.log(`\x1b[32m[OK]\x1b[0m ${msg}`); },
+  warn(msg) { console.log(`\x1b[33m[WARN]\x1b[0m ${msg}`); },
+  error(msg) { console.error(`\x1b[31m[ERROR]\x1b[0m ${msg}`); },
 };
 
-const args = process.argv.slice(2);
-const checkOnly = args.includes('--check');
+const EXCLUDES = [
+  '.git',
+  'node_modules',
+  '.gitignore',
+  '.vscode',
+  'Directory.json',
+  'version.json',
+  'package.json',
+  'package-lock.json',
+  '.update_state.json',
+  'scripts',
+];
 
-// ════════════════════════════════════════════════════════════
-//  1. 扫描角色文件并更新 index.js
-// ════════════════════════════════════════════════════════════
-
-function scanRoles(dirPath) {
-    try {
-        return readdirSync(dirPath)
-            .filter(f => f.endsWith('.js'))
-            .map(f => basename(f, '.js'))
-            .sort();
-    } catch (e) {
-        return [];
-    }
+export function scanRoles(dirPath) {
+  try {
+    return readdirSync(dirPath)
+      .filter(file => file.endsWith('.js'))
+      .map(file => basename(file, '.js'))
+      .sort();
+  } catch {
+    return [];
+  }
 }
 
-function updateIndexFile(indexPath, roleNames) {
-    let content = readFileSync(indexPath, 'utf-8');
+export function updateIndexFile(indexPath, roleNames, checkOnly = false) {
+  const oldContent = readFileSync(indexPath, 'utf-8');
+  const arrayStr = JSON.stringify(roleNames);
+  const pattern = /(const ROLE_FILES\s*=\s*)\[[^\]]*\]/;
+  const replacement = `$1${arrayStr}`;
+  const newContent = pattern.test(oldContent)
+    ? oldContent.replace(pattern, replacement)
+    : oldContent;
 
-    const arrayStr = JSON.stringify(roleNames);
-    const pattern = /(const ROLE_FILES\s*=\s*)\[[^\]]*\]/;
-    const replacement = `$1${arrayStr}`;
+  if (!pattern.test(oldContent)) {
+    log.warn(`${relative(ROOT, indexPath)} 中未找到 ROLE_FILES 数组，跳过`);
+    return { file: relative(ROOT, indexPath), changed: false, skipped: true };
+  }
 
-    if (pattern.test(content)) {
-        content = content.replace(pattern, replacement);
-    } else {
-        log.warn(`${relative(ROOT, indexPath)} 中未找到 ROLE_FILES 数组，跳过`);
-        return false;
-    }
-
-    if (!checkOnly) {
-        writeFileSync(indexPath, content, 'utf-8');
-    }
-    return true;
+  const changed = newContent !== oldContent;
+  if (!checkOnly && changed) {
+    writeFile(indexPath, newContent);
+  }
+  return { file: relative(ROOT, indexPath), changed, count: roleNames.length };
 }
 
-// ════════════════════════════════════════════════════════════
-//  2. 生成 Directory.json 文件清单
-// ════════════════════════════════════════════════════════════
+export function walkDir(dir, baseDir) {
+  const result = {};
+  try {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name.startsWith('.') && entry.name !== '.gitignore') continue;
+      if (EXCLUDES.includes(entry.name)) continue;
 
-const EXCLUDES = ['.git', 'node_modules', '.gitignore', '.vscode',
-    'Directory.json', 'version.json', 'package.json', 'package-lock.json',
-    '.update_state.json', 'scripts'];
+      const fullPath = join(dir, entry.name);
+      const relPath = relative(baseDir, fullPath).replace(/\\/g, '/');
 
-function walkDir(dir, baseDir) {
-    const result = {};
-    try {
-        const entries = readdirSync(dir, { withFileTypes: true });
-        for (const entry of entries) {
-            if (entry.name.startsWith('.') && entry.name !== '.gitignore') continue;
-            if (EXCLUDES.includes(entry.name)) continue;
-
-            const fullPath = join(dir, entry.name);
-            const relPath = relative(baseDir, fullPath).replace(/\\/g, '/');
-
-            if (entry.isDirectory()) {
-                Object.assign(result, walkDir(fullPath, baseDir));
-            } else if (entry.isFile()) {
-                try {
-                    const stat = statSync(fullPath);
-                    result[relPath] = { size: stat.size };
-                } catch (e) {
-                    result[relPath] = { size: 0 };
-                }
-            }
+      if (entry.isDirectory()) {
+        Object.assign(result, walkDir(fullPath, baseDir));
+      } else if (entry.isFile()) {
+        try {
+          const stat = statSync(fullPath);
+          result[relPath] = { size: stat.size };
+        } catch {
+          result[relPath] = { size: 0 };
         }
-    } catch (e) {
-        // Directory doesn't exist or can't be read
+      }
     }
-    return result;
+  } catch {
+    // Directory doesn't exist or can't be read
+  }
+  return result;
 }
 
-function updateDirectoryJson() {
-    const manifest = walkDir(ROOT, ROOT);
-    const fileCount = Object.keys(manifest).length;
-    const totalSize = Object.values(manifest).reduce((s, f) => s + (f.size || 0), 0);
+export function updateDirectoryJson(checkOnly = false) {
+  const manifest = walkDir(ROOT, ROOT);
+  const newContent = JSON.stringify(manifest, null, 2) + '\n';
+  const filePath = resolve(ROOT, 'Directory.json');
+  const oldContent = readFile(filePath);
+  const changed = oldContent !== newContent;
 
-    if (!checkOnly) {
-        writeFileSync(
-            resolve(ROOT, 'Directory.json'),
-            JSON.stringify(manifest, null, 2),
-            'utf-8'
-        );
-    }
-    return { fileCount, totalSize };
+  if (!checkOnly && changed) {
+    writeFile(filePath, newContent);
+  }
+
+  const fileCount = Object.keys(manifest).length;
+  const totalSize = Object.values(manifest).reduce((sum, file) => sum + (file.size || 0), 0);
+  return { file: 'Directory.json', changed, fileCount, totalSize };
 }
 
-// ════════════════════════════════════════════════════════════
-//  主流程
-// ════════════════════════════════════════════════════════════
+export function rebuildProject(options = {}) {
+  const { checkOnly = false, silent = false } = options;
 
-console.log(`\n\x1b[35m叁岛世界 重建脚本\x1b[0m`);
-if (checkOnly) console.log('  (仅检查模式)\n');
+  if (!silent) {
+    console.log(`\n\x1b[35m叁岛世界 重建脚本\x1b[0m`);
+    if (checkOnly) console.log('  (仅检查模式)\n');
+  }
 
-// Lit pack
-const litRolesDir = resolve(ROOT, 'source', 'character', 'lit', 'roles');
-const litIndexPath = resolve(ROOT, 'source', 'character', 'lit', 'index.js');
-const litRoles = scanRoles(litRolesDir);
+  const results = [];
 
-if (litRoles.length > 0) {
-    if (updateIndexFile(litIndexPath, litRoles)) {
-        log.ok(`lit/index.js — ${litRoles.length} 个角色: ${litRoles.join(', ')}`);
+  const litRolesDir = resolve(ROOT, 'source', 'character', 'lit', 'roles');
+  const litIndexPath = resolve(ROOT, 'source', 'character', 'lit', 'index.js');
+  const litRoles = scanRoles(litRolesDir);
+  if (litRoles.length > 0) {
+    const result = updateIndexFile(litIndexPath, litRoles, checkOnly);
+    results.push(result);
+    if (!silent) {
+      log.ok(`lit/index.js — ${litRoles.length} 个角色${result.changed ? '（需同步）' : ''}`);
     }
-} else {
+  } else if (!silent) {
     log.warn('未找到 lit 角色文件');
-}
+  }
 
-// Test pack
-const testRolesDir = resolve(ROOT, 'source', 'character', 'test', 'roles');
-const testIndexPath = resolve(ROOT, 'source', 'character', 'test', 'index.js');
-const testRoles = scanRoles(testRolesDir);
-
-if (testRoles.length > 0) {
-    if (updateIndexFile(testIndexPath, testRoles)) {
-        log.ok(`test/index.js — ${testRoles.length} 个角色: ${testRoles.join(', ')}`);
+  const testRolesDir = resolve(ROOT, 'source', 'character', 'test', 'roles');
+  const testIndexPath = resolve(ROOT, 'source', 'character', 'test', 'index.js');
+  const testRoles = scanRoles(testRolesDir);
+  if (testRoles.length > 0) {
+    const result = updateIndexFile(testIndexPath, testRoles, checkOnly);
+    results.push(result);
+    if (!silent) {
+      log.ok(`test/index.js — ${testRoles.length} 个角色${result.changed ? '（需同步）' : ''}`);
     }
-} else {
+  } else if (!silent) {
     log.warn('未找到 test 角色文件');
+  }
+
+  const directoryResult = updateDirectoryJson(checkOnly);
+  results.push(directoryResult);
+  if (!silent) {
+    const sizeMB = (directoryResult.totalSize / (1024 * 1024)).toFixed(2);
+    log.ok(`Directory.json — ${directoryResult.fileCount} 个文件, ${sizeMB} MB${directoryResult.changed ? '（需同步）' : ''}`);
+    console.log(checkOnly
+      ? '\n\x1b[33m检查模式：未写入任何文件。去掉 --check 以应用更改。\x1b[0m\n'
+      : '\n\x1b[32m重建完成！\x1b[0m\n');
+  }
+
+  return results;
 }
 
-// Directory.json
-const { fileCount, totalSize } = updateDirectoryJson();
-const sizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-log.ok(`Directory.json — ${fileCount} 个文件, ${sizeMB} MB`);
+function main() {
+  const args = process.argv.slice(2);
+  const checkOnly = args.includes('--check');
+  rebuildProject({ checkOnly, silent: false });
+}
 
-console.log(checkOnly
-    ? '\n\x1b[33m检查模式：未写入任何文件。去掉 --check 以应用更改。\x1b[0m\n'
-    : '\n\x1b[32m重建完成！\x1b[0m\n');
+if (process.argv[1] && resolve(process.argv[1]) === SELF_PATH) {
+  main();
+}

@@ -7,10 +7,12 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "build:dry": "node scripts/build.mjs --dry-run",
-    "changelog": "node scripts/changelog.mjs",
-    "changelog:show": "node scripts/changelog.mjs show",
+    "changelog": "node scripts/changelog.mjs show",
+    "changelog:path": "node scripts/changelog.mjs path",
+    "changelog:scaffold": "node scripts/changelog.mjs scaffold",
     "version": "node scripts/build.mjs --current",
     "release": "node scripts/build.mjs",
+    "release:dry": "node scripts/build.mjs --dry-run",
     "rebuild": "node scripts/rebuild.mjs",
     "rebuild:check": "node scripts/rebuild.mjs --check"
   },
