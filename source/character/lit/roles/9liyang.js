@@ -110,8 +110,6 @@ export const translate = {
     'lit_xiuer_faq': "关于非转化",
     'lit_huangse': "黄色",
     'lit_huangse_info': `锁定技，你对异性角色造成的伤害+1；当你对同性角色造成伤害后，你摸一张牌`,
-    'lit_xiuer_info': `每用1非转锦囊可摸1牌，体为1则+1；锁；${Styled('g', '使用锦囊无距离限制')}`,
-    'lit_huangse_info': `锁；对${Styled('r', '异性')}伤害+1，伤害${Styled('g', '同性')}后摸1牌`,
 };
 
 export const simpleTranslate = {

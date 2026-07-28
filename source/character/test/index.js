@@ -10,9 +10,9 @@ const _roles = {};
 ROLE_FILES.forEach((name, i) => { _roles[name] = _modules[i]; });
 
 const _merge = (prop) => {
-    const r = {};
-    for (const name of ROLE_FILES) if (_roles[name][prop]) Object.assign(r, _roles[name][prop]);
-    return r;
+    const result = {};
+    for (const name of ROLE_FILES) if (_roles[name][prop]) Object.assign(result, _roles[name][prop]);
+    return result;
 };
 
 export {
@@ -21,10 +21,10 @@ export {
     characterSubstitute, perfectPair
 } from './test_characters.js';
 
-export { dynamicTranslate, pinyins } from './test_translate.js';
-
-import { translate as _tt } from './test_translate.js';
+import { translate as _metaTranslate, dynamicTranslate as _metaDynamicTranslate, pinyins as _metaPinyins } from './_meta.js';
 
 export const character = _merge('character');
-export const skill     = _merge('skill');
-export const translate = { ..._tt, ..._merge('translate') };
+export const skill = _merge('skill');
+export const translate = { ..._metaTranslate, ..._merge('translate') };
+export const dynamicTranslate = { ..._metaDynamicTranslate, ..._merge('dynamicTranslate') };
+export const pinyins = { ..._metaPinyins, ..._merge('pinyins') };

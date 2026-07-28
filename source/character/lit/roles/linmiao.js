@@ -152,10 +152,6 @@ export const translate = {
     'lit_shenge_faq': "关于神鸽的两种效果",
     'lit_gugu': "咕咕",
     'lit_gugu_info': `当你${Styled('r', '因受到伤害')}进入濒死状态时，你可以将体力值恢复至1点，获得${X}枚"咕"，然后依次使用牌堆顶的${X}张牌（${X}为你以此法恢复的体力值）。<li>锁定技，每人的回合结束时，若你有“咕”，移去所有"咕"，恢复1点体力，然后失去等量体力。</li>`,// 一班杀与叁岛篇部分
-    'lit_shenge_info': `用杀可选距离${Styled('g', '≤')}点数者为目标。杀指定目标后可发动：` +
-        `<br>①血${Styled('g', '≤')}目标，对此目标${Styled('r', '伤害+1')}；` +
-        `<br>②手牌数${Styled('g', '≤')}目标${get.poptip("lit_hejCard")}数，${Styled('r', '不可被响应且无视防具')}`,
-    'lit_gugu_info': `${Styled('r', '受伤')}濒死前可回至1血并获${X}"咕"，依次用牌堆顶前${X}张牌（${X}为恢复的血量）<li>锁；每人回合结束时，若有咕，移去所有咕，+1血，并失去等量体力</li>`,
 };
 
 export const simpleTranslate = {

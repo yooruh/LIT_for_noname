@@ -15,13 +15,14 @@ const _roles = {};
 ROLE_FILES.forEach((name, i) => { _roles[name] = _modules[i]; });
 
 const _merge = (prop) => {
-    const r = {};
-    for (const name of ROLE_FILES) if (_roles[name][prop]) Object.assign(r, _roles[name][prop]);
-    return r;
+    const result = {};
+    for (const name of ROLE_FILES) if (_roles[name][prop]) Object.assign(result, _roles[name][prop]);
+    return result;
 };
 
-import { skill as _negClear } from './_negClear.js';
-import { skill as _shengji }  from './_shengji.js';
+import { skill as _negClear, translate as _negClearTranslate } from './_negClear.js';
+import { skill as _shengji, translate as _shengjiTranslate } from './_shengji.js';
+import { translate as _metaTranslate } from './_meta.js';
 
 export {
     connectBanned, characterSort, characterTitle,
@@ -29,15 +30,17 @@ export {
     characterSubstitute, perfectPair
 } from './lit_characters.js';
 
-import { fullTranslate as _ft, simpleTranslate as _st,
-         dynamicTranslate, pinyins } from './lit_translate.js';
-export { dynamicTranslate, pinyins };
-
-export const character       = _merge('character');
-export const skill           = { ..._negClear, ..._shengji, ..._merge('skill') };
-export const fullTranslate   = { ..._ft, ..._merge('translate') };
+export const character = _merge('character');
+export const skill = { ..._negClear, ..._shengji, ..._merge('skill') };
+export const fullTranslate = {
+    ..._metaTranslate,
+    ..._negClearTranslate,
+    ..._shengjiTranslate,
+    ..._merge('translate'),
+};
 export const simpleTranslate = {
-    ..._ft,  // full 作为回退：simple 中缺失的 key 自动使用完整版
-    ..._st,
+    ...fullTranslate,
     ..._merge('simpleTranslate'),
 };
+export const dynamicTranslate = _merge('dynamicTranslate');
+export const pinyins = _merge('pinyins');

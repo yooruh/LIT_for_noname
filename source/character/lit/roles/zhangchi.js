@@ -229,11 +229,20 @@ export const translate = {
     'lit_guibian_info': `出牌阶段限一次，你可以令一名其他角色展示所有手牌，你选择其中一张令其对你使用（无视距离），若其不使用或无法使用，则其交给你所有与之${get.poptip("lit_sameName")}的牌`,
     'lit_shuxin': "竖心",
     'lit_shuxin_info': `锁定技，当你成为其他角色使用的${get.poptip("lit_basicTrickCard")}的目标后，你令使用者对其自己使用此牌`,
-    'lit_guibian_info': `出牌限1次，令1人展示所有牌你选择其中1张令其对你使用（无视距离），若其不使用或无法使用则交付所有${get.poptip("lit_sameName")}牌`,
-    'lit_shuxin_info': `锁；成为他人${get.poptip("lit_basicTrickCard")}的目标后令使用者对他自己使用此牌`,
 };
 
 export const simpleTranslate = {
     'lit_guibian_info': `出牌限1次，令1人展示所有牌你选择其中1张令其对你使用（无视距离），若其不使用或无法使用则交付所有${get.poptip("lit_sameName")}牌`,
     'lit_shuxin_info': `锁；成为他人${get.poptip("lit_basicTrickCard")}的目标后令使用者对他自己使用此牌`,
 };
+
+// 拆分后补回的旧集中数据
+Object.assign(translate, {
+    'lit_shengjizc': "升级·张驰",
+    'lit_shengjizc_info': `${get.poptip('lit_shuxinV2')} 获得并修改〖竖心〗：不再为锁定技`,
+});
+
+Object.assign(simpleTranslate, {
+    'lit_shengjizc_info': `${get.poptip('lit_shuxinV2')} 获得并修改“竖心”：不再为锁定技`,
+
+});

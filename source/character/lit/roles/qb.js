@@ -17,6 +17,7 @@ export const skill = {
         // audioname: ["lit_Qb"],
         unique: true,
         zhuSkill: true,
+        preHidden: true,
         ai: {
             combo: "lit_qiantui",
         },
@@ -255,11 +256,6 @@ export const translate = {
     'lit_kuanshu_info': "锁定技，你不会被遣返",
     'lit_shichou': "誓仇",
     'lit_shichou_info': `锁定技，当你受到伤害后，伤害来源获得“誓”标记；当你体力值为1时，你对所有带“誓”标记的角色造成${Y}点伤害，然后移除所有“誓”标记（${Y}为其体力值与护甲值之和-1）`,
-    'lit_tianna_info': "锁；造伤后，回合外+1牌，回合内+1血-1手牌",
-    'lit_qiantui_info': `血由3以上掉到3及以下时，可令不带有${get.poptip('lit_kuanshu')}的1人获得${get.poptip('lit_qianfan')}`,
-    'lit_qianfan_info': `负面；跳过下回合并获得${get.poptip('lit_kuanshu')}，宽恕在下回合开始前失效`,
-    'lit_kuanshu_info': "锁；本次不会被遣返",
-    'lit_shichou_info': `锁；受伤后伤害源获得“誓”，血=1时对所有带“誓”者造成${Y}点伤害，并移除所有“誓”（${Y}为其血+护甲-1）`,
 };
 
 export const simpleTranslate = {
@@ -268,4 +264,30 @@ export const simpleTranslate = {
     'lit_qianfan_info': `负面；跳过下回合并获得${get.poptip('lit_kuanshu')}，宽恕在下回合开始前失效`,
     'lit_kuanshu_info': "锁；本次不会被遣返",
     'lit_shichou_info': `锁；受伤后伤害源获得“誓”，血=1时对所有带“誓”者造成${Y}点伤害，并移除所有“誓”（${Y}为其血+护甲-1）`,
+};
+
+// 拆分后补回的旧集中数据
+Object.assign(translate, {
+    'lit_shengjiqb': "升级·Qb",
+    'lit_shengjiqb_info': `${get.poptip('lit_tiannaV2')} 获得〖天呐〗并于末尾增加：当你体力值大于1且受到伤害时，若此伤害会使你体力值小于1，则防止此伤害并将体力值减至1`,
+});
+
+Object.assign(simpleTranslate, {
+    'lit_shengjiqb_info': `${get.poptip('lit_tiannaV2')} 获得“天呐”并于末尾增加：>1血受伤时若此伤害会使血<1，免伤且血掉至1`,
+
+});
+
+export const dynamicTranslate = {
+    lit_tiannaV2(player) {
+        return `锁；造伤后，回合外+1牌，回合内+1血-1手牌`;
+    },
+    lit_33(player) {
+        let group = lib.lit.isGuozhanKeyEnabled() ? '叁/键' : '叁';
+        return `主；其余“${group}”势力每回合可发动1次，其受来自你的1伤，然后你：<li>血>3时-1血</li><li>血<=3时+1血</li>`;
+    },
+};
+
+export const pinyins = {
+'Qb': ['3', '3'],
+    '升级·Qb': ['shēng', 'jí', '·', '3', '3'],
 };

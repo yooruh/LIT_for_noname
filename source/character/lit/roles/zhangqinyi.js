@@ -173,9 +173,6 @@ export const translate = {
     'lit_zisha_info': "锁定技，当你体力值为2时，你使用的牌不能被响应",
     'lit_lantong': "蓝酮",
     'lit_lantong_info': "锁定技，当同性角色对你使用【桃】时，你恢复的体力值+1",
-    'lit_danke_info': `锁；准备阶段令他人-${X}血，回合结束后其+${X}血，溢出量转为护甲（${X}为其血量-1）`,
-    'lit_zisha_info': "锁；血=2时，所有牌不能被响应",
-    'lit_lantong_info': "锁；同性对你的桃治疗量+1",
 };
 
 export const simpleTranslate = {
@@ -183,3 +180,14 @@ export const simpleTranslate = {
     'lit_zisha_info': "锁；血=2时，所有牌不能被响应",
     'lit_lantong_info': "锁；同性对你的桃治疗量+1",
 };
+
+// 拆分后补回的旧集中数据
+Object.assign(translate, {
+    'lit_shengjizqy': "升级·张钦奕",
+    'lit_shengjizqy_info': `${get.poptip('lit_zishaV2')} 获得〖紫砂〗并于开头增加：准备阶段，你可以失去${Y}点体力，然后摸2${Y}张牌（${Y}不超过体力值）`,
+});
+
+Object.assign(simpleTranslate, {
+    'lit_shengjizqy_info': `${get.poptip('lit_zishaV2')} 获得“紫砂”并于开头增加：准备阶段可-${Y}血+2${Y}牌（${Y}不超过体力值`,
+
+});

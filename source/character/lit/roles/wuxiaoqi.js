@@ -298,10 +298,6 @@ export const translate = {
     'lit_mianju_faq': '关于“面具”数量：',
     'lit_xiaochou': "小丑",
     'lit_xiaochou_info': "锁定技，当你死亡后，伤害来源弃置所有手牌",
-    'lit_shencaocao_info': "出牌限1次，其他人各摸1牌，你翻面并-1“面”，若成功-1“面”则+1血，",
-    'lit_jiwa_info': "翻面后可交换2人手牌",
-    'lit_mianju_info': `锁；起始获4“面”，每次濒死后回满血并移除等量“面”，“面”耗尽时失去此技能并获得${get.poptip('lit_xiaochou')}`,
-    'lit_xiaochou_info': "锁；死后令伤害来源失去所有手牌",
 };
 
 export const simpleTranslate = {
@@ -309,4 +305,27 @@ export const simpleTranslate = {
     'lit_jiwa_info': "翻面后可交换2人手牌",
     'lit_mianju_info': `锁；起始获4“面”，每次濒死后回满血并移除等量“面”，“面”耗尽时失去此技能并获得${get.poptip('lit_xiaochou')}`,
     'lit_xiaochou_info': "锁；死后令伤害来源失去所有手牌",
+};
+
+// 拆分后补回的旧集中数据
+Object.assign(translate, {
+    'lit_shengjiwxq': "升级·伍小戚",
+    'lit_shengjiwxq_info': `${get.poptip('lit_mianjuV2')}${get.poptip('lit_xiaochouV2')} 获得〖面具〗和〖小丑〗，并修改其中的〖小丑〗：锁定技，当你死亡后，伤害来源弃置所有牌`,
+});
+
+Object.assign(simpleTranslate, {
+    'lit_shengjiwxq_info': `${get.poptip('lit_mianjuV2')}${get.poptip('lit_xiaochouV2')} 获得“面具”/“小丑”，并修改其中的“小丑”：使其弃全部牌`,
+
+});
+
+export const dynamicTranslate = {
+    lit_mianju(player) {
+        if (get.mode() === 'guozhan') return `锁；明置此技能后，获得4“面”，每次濒死后回满血并移除等量“面”，“面”耗尽时失去此技能并获得${get.poptip('lit_xiaochou')}`;
+        return `锁；起始获4“面”，每次濒死后回满血并移除等量“面”，“面”耗尽时失去此技能并获得${get.poptip('lit_xiaochou')}`;
+    },
+    lit_mianjuV2(player) {
+        if (get.mode() === 'guozhan') return `V2 锁；明置此技能后，获得4“面”，每次濒死后回满血并移除等量“面”，“面”耗尽时失去此技能并获得${get.poptip('lit_xiaochouV2')}`;
+        return `V2 锁；起始获4“面”，每次濒死后回满血并移除等量“面”，“面”耗尽时失去此技能并获得${get.poptip('lit_xiaochouV2')}`;
+    },
+
 };

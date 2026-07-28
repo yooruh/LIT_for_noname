@@ -556,7 +556,10 @@ const DialogManager = (() => {
                     },
 
                     complete: (message, autoCloseDelay = 0) => {
-                        this.setIndeterminate(false);
+                        isIndeterminate = false;
+                        progressFill.style.display = 'block';
+                        indeterminateBar.style.display = 'none';
+                        percentEl.style.display = 'block';
                         currentProgress = 100;
                         progressFill.style.width = '100%';
                         percentEl.textContent = '100%';

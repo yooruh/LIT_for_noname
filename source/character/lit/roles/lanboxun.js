@@ -112,11 +112,25 @@ export const translate = {
     'lit_yuqiu_info': `当${get.poptip("lit_damageCard")}对目标未造成伤害时：若此牌点数为质数，可以拿目标一张牌；若不为质数，可以弃置目标至多两张牌`,
     'lit_shouwang': "守望",
     'lit_shouwang_info': "锁定技，当你的手牌数或体力值为全场最多（之一）时，造成的伤害+1",
-    'lit_yuqiu_info': `${get.poptip("lit_damageCard")}对目标未造成伤害：<li>质数牌可拿目标1牌</li><li>非质数牌可弃目标至多2牌</li>`,
-    'lit_shouwang_info': "锁；手牌数/体力为全场最多（之一）时伤害+1",
 };
 
 export const simpleTranslate = {
     'lit_yuqiu_info': `${get.poptip("lit_damageCard")}对目标未造成伤害：<li>质数牌可拿目标1牌</li><li>非质数牌可弃目标至多2牌</li>`,
     'lit_shouwang_info': "锁；手牌数/体力为全场最多（之一）时伤害+1",
+};
+
+// 拆分后补回的旧集中数据
+Object.assign(translate, {
+    'lit_shengjilbx': "升级·兰柏勋",
+    'lit_shengjilbx_info': "增加1点体力上限，恢复体力至上限",
+});
+
+Object.assign(simpleTranslate, {
+    'lit_shengjilbx_info': "+1体力上限，回满血",
+
+});
+
+export const pinyins = {
+    '兰柏勋': ['lán', 'bó', 'xūn'],
+    '升级·兰柏勋': ['shēng', 'jí', '·', 'lán', 'bó', 'xūn'],
 };

@@ -54,6 +54,7 @@ export const skill = {
     },
     lit_wutong: {
         derivation: "lit_wutong_faq",
+        preHidden: true,
         trigger: {
             global: "judge",
         },
@@ -251,11 +252,20 @@ export const translate = {
     'lit_wutong': "梧桐",
     'lit_wutong_info': "场上判定生效前，你可以失去1点体力，获得1点护甲，并将此判定结果修改为任意花色（直接修改结果）",
     'lit_wutong_faq': "关于修改判定结果",
-    'lit_biaoxian_info': "用杀指定目标后可判定，为♦️则基础伤害+1且不可被其响应",
-    'lit_wutong_info': "场上判定生效前可-1体力+1护甲，将判定结果修改为任意花色",
 };
 
 export const simpleTranslate = {
     'lit_biaoxian_info': "用杀指定目标后可判定，为♦️则基础伤害+1且不可被其响应",
     'lit_wutong_info': "场上判定生效前可-1体力+1护甲，将判定结果修改为任意花色",
 };
+
+// 拆分后补回的旧集中数据
+Object.assign(translate, {
+    'lit_shengjihjw': "升级·胡峻玮",
+    'lit_shengjihjw_info': `${get.poptip('lit_wutongV2')} 获得并修改〖梧桐〗条件：你有手牌时，还可以弃置全部手牌发动`,
+});
+
+Object.assign(simpleTranslate, {
+    'lit_shengjihjw_info': `${get.poptip('lit_wutongV2')} 获得并修改“梧桐”条件：还可弃置全部手牌触发`,
+
+});

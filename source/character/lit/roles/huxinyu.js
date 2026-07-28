@@ -200,9 +200,6 @@ export const translate = {
     'lit_xukong_info': `①出牌阶段限1次，与1人拼点：赢→视为对其使用【决斗】；没赢→视为其对你使用【决斗】。<br>②你的任意决斗造成伤害后，重置技能①次数，但拼点目标不能为本回合的同一人`,
     'lit_shihuai': "释怀",
     'lit_shihuai_info': "当你没有手牌时，你可令有牌的1人给你1张牌，若其拒绝，你摸2张牌，本回合此技能失效",
-    'lit_mimang_info': "锁；闪和装备牌在决斗中视为杀",
-    'lit_xukong_info': `①出牌限1次，与1人拼点：赢/没赢→视为{你对其}/{其对你}决斗。<br>②你的任意决斗造成伤害后，重置技能①次数，但拼点目标不能为本回合的同一人`,
-    'lit_shihuai_info': "当你没有手牌时，你可令有牌的1人给你1张牌，若其拒绝，你摸2张牌，本回合此技能失效",
 };
 
 export const simpleTranslate = {
@@ -210,3 +207,14 @@ export const simpleTranslate = {
     'lit_xukong_info': `①出牌限1次，与1人拼点：赢/没赢→视为{你对其}/{其对你}决斗。<br>②你的任意决斗造成伤害后，重置技能①次数，但拼点目标不能为本回合的同一人`,
     'lit_shihuai_info': "当你没有手牌时，你可令有牌的1人给你1张牌，若其拒绝，你摸2张牌，本回合此技能失效",
 };
+
+// 拆分后补回的旧集中数据
+Object.assign(translate, {
+    'lit_shengjihxy': "升级·胡馨予",
+    'lit_shengjihxy_info': `${get.poptip('lit_mimangV2')} 获得并于〖迷茫〗前增加：【闪】和装备牌点数视为K`,
+});
+
+Object.assign(simpleTranslate, {
+    'lit_shengjihxy_info': `${get.poptip('lit_mimangV2')} 获得并于“迷茫”前增加：闪和装备牌点数视为K`,
+
+});

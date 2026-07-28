@@ -15,6 +15,6 @@ export { Styled } from '../../tool/basic.js';
 
 // 预计算的样式常量（角色技能描述中广泛使用）
 import { Styled } from '../../tool/basic.js';
-export const X = Styled('b', 'X');   // 粗体 X  (靛蓝)
-export const Y = Styled('p', 'Y');   // 粉色 Y  (难)
-export const Z = Styled('y', 'Z');   // 黄色 Z  (中)
+export const X = Styled('b', 'X');   // 靛蓝 X
+export const Y = Styled('p', 'Y');   // 粉色 Y
+export const Z = Styled('y', 'Z');   // 黄色 Z

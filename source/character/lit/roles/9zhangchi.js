@@ -595,13 +595,15 @@ export const translate = {
     'lit_jiqing_info': `锁定技，你不能质疑${get.poptip('lit_bolun')}；当你体力值为1时，${Styled('r', '你的其他技能无效')}；当你体力值小于1时，${Styled('r', '你的非锁定技无效')}`,
     'lit_jiqingsishe': "激情四射",
     'lit_jiqingsishe_info': `锁定技，当你死亡前，你选择一名拥有${get.poptip('lit_jiqing')}的角色，令其判定，若结果不为【桃】或【桃园结义】，则其死亡`,
-    'lit_bolun_info': `扣1手牌视为用出任意${get.poptip("lit_basicTrickCard")}，可被质疑：<br>①成功：此牌无效且本回合不可再声明它，质疑者+1牌<br>②失败：此牌生效，质疑者选择随机失1~2血或获得${get.poptip('lit_jiqing')}`,
-    'lit_jiqing_info': `锁；无法质疑${get.poptip("lit_bolun")}。体为1时${Styled('r', '其他技能失效')}，<1时${Styled('r', '主动技能失效')}`,
-    'lit_jiqingsishe_info': `锁；死前选拥有${get.poptip('lit_jiqing')}的1人令其判定：${Styled('r', '不为桃或桃园结义则其死亡')}`,
 };
 
 export const simpleTranslate = {
     'lit_bolun_info': `扣1手牌视为用出任意${get.poptip("lit_basicTrickCard")}，可被质疑：<br>①成功：此牌无效且本回合不可再声明它，质疑者+1牌<br>②失败：此牌生效，质疑者选择随机失1~2血或获得${get.poptip('lit_jiqing')}`,
     'lit_jiqing_info': `锁；无法质疑${get.poptip("lit_bolun")}。体为1时${Styled('r', '其他技能失效')}，<1时${Styled('r', '主动技能失效')}`,
     'lit_jiqingsishe_info': `锁；死前选拥有${get.poptip('lit_jiqing')}的1人令其判定：${Styled('r', '不为桃或桃园结义则其死亡')}`,
+};
+
+// 拆分后补回的旧集中数据
+export const pinyins = {
+    '悖论': ['bó', 'lùn'],
 };

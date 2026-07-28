@@ -14,6 +14,7 @@ export const skill = {
     // Rita
     lit_dafang: {
         zhuSkill: true,
+        preHidden: true,
         trigger: {
             player: "loseAfter",
             global: ["equipAfter", "addJudgeAfter", "gainAfter", "loseAsyncAfter", "addToExpansionAfter"],
@@ -157,13 +158,36 @@ export const translate = {
     'lit_nuoruo_info': "其他角色的出牌阶段，当装备牌置入弃牌堆时，你可以获得之",
     'lit_hengshuiti': "衡水体",
     'lit_hengshuiti_info': "锁定技，当你使用装备牌后，你可以视为对一名角色使用冰【杀】",
-    'lit_dafang_info': "主；装备区每失去1张牌后，可令一“叁”势力角色将手牌补至其体力上限（至多补至9），若其手牌数已达上限，恢复1体力",
-    'lit_nuoruo_info': "他人出牌阶段，你可获得其置入弃牌堆的装备牌",
-    'lit_hengshuiti_info': "锁；使用装备牌后可视为对1人使用冰杀",
 };
 
 export const simpleTranslate = {
     'lit_dafang_info': "主；装备区每失去1张牌后，可令一“叁”势力角色将手牌补至其体力上限（至多补至9），若其手牌数已达上限，恢复1体力",
     'lit_nuoruo_info': "他人出牌阶段，你可获得其置入弃牌堆的装备牌",
     'lit_hengshuiti_info': "锁；使用装备牌后可视为对1人使用冰杀",
+};
+
+// 拆分后补回的旧集中数据
+Object.assign(translate, {
+    'lit_shengjirita': "升级·Rita",
+    'lit_shengjirita_info': `${get.poptip('lit_dafang')}${get.poptip('lit_hengshuiti')}若你已拥有〖大方〗，则获得〖衡水体〗；否则，获得〖大方〗`,
+});
+
+Object.assign(simpleTranslate, {
+    'lit_shengjirita_info': `${get.poptip('lit_dafang')}${get.poptip('lit_hengshuiti')}若已拥有"大方"，则获得"衡水体V2"并于其中增加：恢复1点体力；否则，获得"大方"`,
+
+});
+
+export const dynamicTranslate = {
+    lit_shengjirita(player) {
+        let group = lib.lit.isGuozhanKeyEnabled() ? '叁/键' : '叁';
+        if (player.hasSkill('lit_dafang')) return `获得${get.poptip('lit_hengshuiti')}：锁；使用装备牌后可视为对1人使用冰杀`;
+        return `获得${get.poptip('lit_dafang')}：主；装备区失去牌后，可令1“${group}”势力角色将手牌补至其体力上限（至多补至9）`;
+    },
+    lit_dafang(player) {
+        let group = lib.lit.isGuozhanKeyEnabled() ? '叁/键' : '叁';
+        return `主；装备区每失去1张牌后，可令一“${group}”势力角色将手牌补至其体力上限（至多补至9）`;
+    },
+    lit_hengshuitiV2(player) {
+        return "锁；使用装备牌后+1血，可视为对1人使用冰杀";
+    },
 };

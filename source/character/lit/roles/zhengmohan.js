@@ -257,9 +257,6 @@ export const translate = {
     'lit_jianren_info': "锁定技，当你对体力值大于你的角色造成伤害时，此伤害+1；当你对手牌数大于你的角色造成伤害后，你摸一张牌",
     'lit_rennai': "忍耐",
     'lit_rennai_info': "当你受到横置传导的伤害后，你可以横置任意名角色",
-    'lit_mensao_info': "出牌限1次，将任意张牌作铁索连环使用或弃置，然后摸等量牌并令场上横置者+1血",
-    'lit_jianren_info': "锁；对血更多者伤害+1，伤害手牌更多者后摸1牌",
-    'lit_rennai_info': "受横置传导伤害后可横置任意数量角色",
 };
 
 export const simpleTranslate = {
@@ -267,3 +264,14 @@ export const simpleTranslate = {
     'lit_jianren_info': "锁；对血更多者伤害+1，伤害手牌更多者后摸1牌",
     'lit_rennai_info': "受横置传导伤害后可横置任意数量角色",
 };
+
+// 拆分后补回的旧集中数据
+Object.assign(translate, {
+    'lit_shengjizmh': "升级·郑墨翰",
+    'lit_shengjizmh_info': `${get.poptip('lit_jianrenV2')} 获得〖坚韧〗并于末尾增加：当你横置时，属性伤害+1`,
+});
+
+Object.assign(simpleTranslate, {
+    'lit_shengjizmh_info': `${get.poptip('lit_jianrenV2')} 获得“坚韧”并于末尾增加：横置时属性伤+1`,
+
+});

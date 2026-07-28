@@ -16,6 +16,7 @@ export const skill = {
         usable: 1,
         enable: 'phaseUse',
         zhuSkill: true,
+        preHidden: true,
         locked: false,
         filter: (event, player) => {
             if (player.countCards('hes') === 0) return false;
@@ -387,13 +388,28 @@ export const translate = {
     'lit_zhanshi_sub': `<span class='bluetext'>【展示】</span>`,
     'lit_chantaer': "铲踏儿",
     'lit_chantaer_info': "锁定技，你的手牌上限基数为你的体力上限；准备阶段，若你的手牌数不大于手牌上限，你恢复1点体力；结束阶段，若本回合没有角色受到过伤害，你摸两张牌并失去1点体力",
-    'lit_xinren_info': "主；出牌限1次，交给某“叁”势力角色1牌，其可立即使用，你摸与该牌造成的总伤害相等的牌",
-    'lit_zhanshi_info': `出牌限1次，令他人展示所有手牌并给你，你给其${X}牌其摸${X}牌，直到其回合结束，其使用牌点数为${Y}的：<li>倍数，无次数限制；</li><li>约数，+1牌</li>（${X}为手牌溢出量且摸牌数至多为3，${Y}为其使用的上一牌的点数）`,
-    'lit_chantaer_info': "锁；手牌上限基准为体力上限<li>准备阶段手牌数≤上限+1血</li><li>结束阶段本回合无人受过伤摸2牌并-1血</li>",
 };
 
 export const simpleTranslate = {
     'lit_xinren_info': "主；出牌限1次，交给某“叁”势力角色1牌，其可立即使用，你摸与该牌造成的总伤害相等的牌",
     'lit_zhanshi_info': `出牌限1次，令他人展示所有手牌并给你，你给其${X}牌其摸${X}牌，直到其回合结束，其使用牌点数为${Y}的：<li>倍数，无次数限制；</li><li>约数，+1牌</li>（${X}为手牌溢出量且摸牌数至多为3，${Y}为其使用的上一牌的点数）`,
     'lit_chantaer_info': "锁；手牌上限基准为体力上限<li>准备阶段手牌数≤上限+1血</li><li>结束阶段本回合无人受过伤摸2牌并-1血</li>",
+};
+
+// 拆分后补回的旧集中数据
+Object.assign(translate, {
+    'lit_shengjizg': "升级·自高",
+    'lit_shengjizg_info': `${get.poptip('lit_zhanshiV2')} 获得并修改〖展示〗：你也拥有后半段技能效果`,
+});
+
+Object.assign(simpleTranslate, {
+    'lit_shengjizg_info': `${get.poptip('lit_zhanshiV2')} 获得并修改“展示”：你也拥有后半段技能`,
+
+});
+
+export const dynamicTranslate = {
+    lit_xinren(player) {
+        let group = lib.lit.isGuozhanKeyEnabled() ? '叁/键' : '叁';
+        return `主；出牌限1次，交给某“${group}”势力角色1牌，其可立即使用，你摸与该牌造成的总伤害相等的牌"`;
+    },
 };

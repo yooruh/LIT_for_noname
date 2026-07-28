@@ -1,74 +1,102 @@
 import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
 
-let lit_pack = { ...(await import(`./lit.js`)).info };
-// 处理 translate characterTitle characterSubstitute（字符串、数组）
-for (let name of ['translate', 'characterTitle', 'characterSubstitute']) {
-    lit_pack[name] = Object.keys(lit_pack[name]).reduce((acc, key) => {
-        acc[`gz_${key}`] = lit_pack[name][key];
-        if (lit_pack[name][`${key}_prefix`]) {
-            acc[`gz_${key}_prefix`] = lit_pack[name][`${key}_prefix`];
-        }
+const { info: baseInfo } = await import(`./lit.js`);
+const lit_pack = { ...baseInfo };
+const gzModule = await import(`./lit_gz/index.js`);
+const gzOverrides = gzModule.overrides || {};
+const characterIds = Object.keys(lit_pack.character || {});
+const characterIdSet = new Set(characterIds);
+
+function gzId(id) {
+    return `gz_${id}`;
+}
+
+function mapCharacterKeyedObject(source, mapValue) {
+    return Object.keys(source || {}).reduce((acc, key) => {
+        acc[gzId(key)] = mapValue ? mapValue(source[key], key) : source[key];
         return acc;
     }, {});
 }
-// 处理 character（对象）
-lit_pack['character'] = Object.keys(lit_pack['character']).reduce((acc, key) => {
-    // 使用展开运算符浅拷贝对象
-    let value = { ...lit_pack['character'][key] };
-    acc[`gz_${key}`] = value;
-    // 设置国战势力为key
-    acc[`gz_${key}`].groupInGuozhan = 'key';
-    return acc;
-}, {});
-// lit_pack['character'] = Object.entries(lit_pack['character']).reduce((acc, [key, character]) => {
-//     const characterArray = [
-//         character.sex,
-//         "key" || character.group,
-//         character.maxHp != character.hp ? `${character.hp}/${character.maxHp}` : character.hp,
-//         character.skills || [],
-//         []
-//     ];
-//     // 处理图片和死亡音频
-//     if (character.img) {
-//         characterArray[4].push(`img:${character.img}`);
-//     }
-//     if (character.dieAudios && Array.isArray(character.dieAudios)) {
-//         character.dieAudios.forEach(die => characterArray[4].push(`die:${die}`));
-//     }
-//     // 处理主公标记
-//     if (character.isZhugong) {
-//         characterArray[4].push('zhu');
-//     }
-//     acc[`gz_${key}`] = characterArray;
-//     return acc;
-// }, {});
+
+function mapCharacterListObject(source) {
+    return mapCharacterKeyedObject(source, value => value.map(id => gzId(id)));
+}
+
+function mapTranslate(source) {
+    return Object.keys(source || {}).reduce((acc, key) => {
+        if (characterIdSet.has(key)) {
+            acc[gzId(key)] = source[key];
+            return acc;
+        }
+        if (key.endsWith('_prefix')) {
+            const baseKey = key.slice(0, -7);
+            if (characterIdSet.has(baseKey)) {
+                acc[`${gzId(baseKey)}_prefix`] = source[key];
+                return acc;
+            }
+        }
+        acc[key] = source[key];
+        return acc;
+    }, {});
+}
+
+function mapCharacters(source) {
+    return Object.keys(source || {}).reduce((acc, key) => {
+        acc[gzId(key)] = {
+            ...source[key],
+            groupInGuozhan: 'key',
+        };
+        return acc;
+    }, {});
+}
+
+function mergeMappedSection(baseSection, overrideSection) {
+    return {
+        ...(baseSection || {}),
+        ...(overrideSection || {}),
+    };
+}
+
+const mappedCharacter = mapCharacters(lit_pack.character);
+const mappedCharacterTitle = mapCharacterKeyedObject(lit_pack.characterTitle);
+const mappedCharacterIntro = mapCharacterKeyedObject(lit_pack.characterIntro);
+const mappedCharacterReplace = mapCharacterListObject(lit_pack.characterReplace);
+const mappedCharacterFilter = mapCharacterKeyedObject(lit_pack.characterFilter);
+const mappedCharacterSubstitute = mapCharacterKeyedObject(lit_pack.characterSubstitute);
+const mappedPerfectPair = mapCharacterListObject(lit_pack.perfectPair);
+const mappedTranslate = mapTranslate(lit_pack.translate);
 
 export let info = {
     name: 'lit_gz',
     mode: 'guozhan',
     connect: true,
-    connectBanned: lit_pack['connectBanned'],
-    characterSort: {
-        'lit_gz': Object.keys(lit_pack.characterSort['lit']).reduce((acc, key) => {
-            let value = lit_pack.characterSort['lit'][key];
-            acc[key] = value.map(e => `gz_${e}`);
+    connectBanned: gzModule.connectBanned || lit_pack.connectBanned,
+    characterSort: gzModule.characterSort || {
+        lit_gz: Object.keys(lit_pack.characterSort?.lit || {}).reduce((acc, key) => {
+            acc[key] = lit_pack.characterSort.lit[key].map(id => gzId(id));
             return acc;
         }, {}),
     },
-    character: lit_pack['character'],
-    characterTitle: lit_pack['characterTitle'],
-    characterIntro: {},
-    characterFilter: {},
-    characterSubstitute: lit_pack['characterSubstitute'],
-    perfectPair: Object.keys(lit_pack.perfectPair).reduce((acc, key) => {
-        let value = lit_pack.perfectPair[key];
-        acc[`gz_${key}`] = value.map(e => `gz_${e}`);
-        return acc;
-    }, {}),
-    skill: lit_pack['skill'],
-    translate: lit_pack['translate'],
-    dynamicTranslate: {},
-    pinyins: lit_pack['pinyins'],
+    character: mergeMappedSection(mappedCharacter, gzOverrides.character),
+    characterTitle: mergeMappedSection(mappedCharacterTitle, gzOverrides.characterTitle),
+    characterIntro: mergeMappedSection(mappedCharacterIntro, gzOverrides.characterIntro),
+    characterReplace: mergeMappedSection(mappedCharacterReplace, gzOverrides.characterReplace),
+    characterFilter: mergeMappedSection(mappedCharacterFilter, gzOverrides.characterFilter),
+    characterSubstitute: mergeMappedSection(mappedCharacterSubstitute, gzOverrides.characterSubstitute),
+    perfectPair: mergeMappedSection(mappedPerfectPair, gzOverrides.perfectPair),
+    skill: {
+        ...lit_pack.skill,
+        ...gzOverrides.skill,
+    },
+    translate: mergeMappedSection(mappedTranslate, gzOverrides.translate),
+    dynamicTranslate: {
+        ...lit_pack.dynamicTranslate,
+        ...gzOverrides.dynamicTranslate,
+    },
+    pinyins: {
+        ...lit_pack.pinyins,
+        ...gzOverrides.pinyins,
+    },
 };
 
 // var guozhanRank={
