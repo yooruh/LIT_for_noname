@@ -7,6 +7,59 @@ export const suiSet = {
 	igextension: [
 		'全能搜索', '应用配置', '拖拽读取', '在线更新', '一劳永逸', 'SJ Settings', '武将修改', 'AI优化', 'OL设置', 'OLset', '叁岛世界'
 	],
+	getEnabledExtensionsCopy() {
+		return lib.config.extensions.filter(e => {
+			return !suiSet.igextension.includes(e) && lib.config[`extension_${e}_enable`]
+		})
+	},
+	canIn(config) {
+		if (lib.config['extension_叁岛世界_play_mima']) {
+			const { mima, nickname } = config
+			const player = lib.config.mimaList.find(c => c.name == config.nickname && c.mima == lib.config['叁岛世界mima'])
+			if ((mima != lib.config['叁岛世界mima']) && !player) {
+				this.send((mima, tip) => {
+					let popupContainer;
+					game.prompt('本房设置了入场密码，请输入密码', str => {
+						if (str) {
+							if (str === mima) game.send('init', lib.versionOL, {
+								id: game.onlineID,
+								avatar: lib.config.connect_avatar,
+								nickname: get.connectNickname(),
+								mima: str
+							}, lib.config.banned_info)
+							else {
+								game.prompt('密码错误<br>请点击确定取消重启<br>提示：<br>' + tip, game.reload)
+							}
+						} else {
+							game.reload()
+						}
+						popupContainer.style.zIndex = ''
+					})
+					popupContainer = document.querySelector('.popup-container')
+					popupContainer.style.zIndex = '99999999'
+				}, lib.config['叁岛世界mima'], lib.config['叁岛世界_tip'])
+				return false
+			} else if (mima == lib.config['叁岛世界mima']) {
+				lib.config.mimaList.push({
+					id: this.id,
+					name: nickname,
+					mima,
+				})
+				game.saveConfig('mimaList', lib.config.mimaList)
+			}
+		}
+		return true
+	},
+	getPlayer(id) {
+		let player;
+		if (lib.playerOL[id]) {
+			player = lib.playerOL[id];
+		}
+		else if (game.connectPlayers) {
+			player = game.connectPlayers.find(p => p.playerid === id)
+		}
+		return player
+	},
 	addImport(url, end = () => { }) {
 		const script = document.createElement('script')
 		script.type = 'module'
@@ -177,15 +230,31 @@ export const suiSet = {
 		}
 	},
 	replaceHandcardsnum: 1,
+	replaceHandcardsOver: false,
 	replaceHandcards(...args) {
+		suiSet.replaceHandcardsnum = 1
+		suiSet.replaceHandcardsOver = false
 		if (suiSet.replaceHandcardsnum > lib.config['extension_叁岛世界_fun_replaceHandCards']) return;
 		const next = game.createEvent('replaceHandcards');
 		if (Array.isArray(args[0])) next.players = args[0];
 		else next.players = args.filter(a => get.itemtype(a) == 'player')
 		next.setContent(_status.connectMode ? 'replaceHandcardsOL' : 'replaceHandcards')
 		suiSet.replaceHandcardsOver = true
+		return next
 	},
-	replaceHandcardEvent() {
+	replaceHandcardEvent(event, trigger, player, originalReplaceHandcardsOL) {
+		if (!lib.config['extension_叁岛世界_fun_handCardsFix']) {
+			return typeof originalReplaceHandcardsOL === 'function'
+				? originalReplaceHandcardsOL.call(this, event, trigger, player)
+				: undefined
+		}
+		const replaceLimit = parseInt(lib.config['extension_叁岛世界_fun_replaceHandCards']) || 0
+		const allowPartialReplace = false
+		if (replaceLimit <= 0) {
+			return typeof originalReplaceHandcardsOL === 'function'
+				? originalReplaceHandcardsOL.call(this, event, trigger, player)
+				: undefined
+		}
 		'step 0'
 		event.players = event.players.filter(p => {
 			return p === game.me || (p.ws && p.isOnline2())//人机就不给刷牌了
@@ -238,18 +307,18 @@ export const suiSet = {
 		event.players.forEach(async p => {
 			if (p.isOnline()) {
 				event.withol = true;
-				p.send(send, lib.config['extension_叁岛世界_fun_replaceHandCards'], lib.config['extension_叁岛世界_edit_noAllReplace']);
+				p.send(send, lib.config['extension_叁岛世界_fun_replaceHandCards'], allowPartialReplace);
 				p.wait(sendback);
 			} else if (p == game.me) {
 				event.withme = true;
 				const num = lib.config['extension_叁岛世界_fun_replaceHandCards'] - game.me.replaceHandcardsnum
 				if (_status.weChat) {
 					game.addVideo('replaceHandCards', game.me, {
-						bool: lib.config['extension_叁岛世界_edit_noAllReplace'],
+						bool: allowPartialReplace,
 						num
 					})
 				}
-				if (lib.config['extension_叁岛世界_edit_noAllReplace']) {
+				if (allowPartialReplace) {
 					game.me.chooseCard('h', `你可以选择一些手牌置换<br>（还剩${num}次置换的机会）`, false, [1, Infinity])
 				} else {
 					game.me.chooseBool(`是否置换手牌？（还剩${num}次）`);
@@ -271,7 +340,9 @@ export const suiSet = {
 			event.goto(1)
 			suiSet.replaceHandcardsnum++
 			delete event.resultOL
+			return
 		}
+		suiSet.replaceHandcardsOver = true
 	},
 	executeConnect({ player, version, config, banned_info }) {
 		const playerFunction = {
@@ -657,23 +728,24 @@ export const suiSet = {
 		next._args = Array.from(arguments);
 		return next;
 	},
-	gameDraw(player, num = 4) {
-		const fnum = lib.config['extension_叁岛世界_fun_beginDraw']??num;
+	gameDraw(player = game.me, num = 4, targets = game.players, originalGameDraw) {
+		const fnum = lib.config['extension_叁岛世界_fun_beginDraw'] ?? num;
 		if (typeof fnum === 'function') {
-			const result = num
 			num = function (player) {
-				const n = result.call(this, player)
-				const more = (n - 4);
-				return more + resolveDraw
+				return fnum.call(this, player)
 			}
 		} else {
 			num = parseInt(fnum)
 		}
+		const useCustomDraw = false
+		if (!useCustomDraw && typeof originalGameDraw === 'function') {
+			return originalGameDraw(player, num, targets)
+		}
 		const next = game.createEvent('gameDraw');
 		next.player = player || game.me;
 		next.num = num;
-		const begeinDraw = lib.config['extension_叁岛世界_edit_selectGameDraw']
-		next.setContent(begeinDraw ? 'gameSelect' : 'gameDraw');
+		next.targets = targets || game.players;
+		next.setContent(useCustomDraw ? 'gameSelect' : 'gameDraw');
 		return next;
 	},
 

@@ -116,15 +116,9 @@ const functions = {
 				this.say(str);
 				game.broadcast(
 					function (id, str) {
-						if (lib.playerOL[id]) {
-							lib.playerOL[id].say(str);
-						} else if (game.connectPlayers) {
-							for (let i = 0; i < game.connectPlayers.length; i++) {
-								if (game.connectPlayers[i].playerid == id) {
-									game.connectPlayers[i].say(str);
-									return;
-								}
-							}
+						const player = suiSet.getPlayer(id)
+						if (player) {
+							player.say(str);
 						}
 					},
 					this.playerid,
