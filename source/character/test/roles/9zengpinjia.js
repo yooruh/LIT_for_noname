@@ -121,10 +121,11 @@ export const skill = {
                     true,
                     lib.filter.notMe
                 ).set("ai", (target) => {
+                    const damageValue = get.damageEffect(target, player, player);
                     if (player.hp > 2 && player.hp + Math.floor(times / 3) > player.maxHp) {
-                        return get.attitude(player, target) <= 0;
+                        return Math.max(0, damageValue);
                     }
-                    return 0;
+                    return Math.max(0, damageValue - get.recoverEffect(player, player, player));
                 }).forResult();
 
                 if (result.targets && result.targets[0]) {
@@ -141,6 +142,9 @@ export const skill = {
             order: (skill, player) => {
                 if (player.hp < player.maxHp && player.countCards('he') > 2) {
                     return 10;
+                }
+                if (game.hasPlayer(target => get.attitude(player, target) <= 0 && !target.hasSkillTag('nogain'))) {
+                    return 3;
                 }
                 return 1;
             },
@@ -264,6 +268,11 @@ export const skill = {
             result: {
                 player: (player) => {
                     return player.hasFriend() ? 1 : -1;
+                },
+                target: (player, target) => {
+                    if (get.attitude(player, target) <= 0) return 0;
+                    let recover = get.recoverEffect(target, player, player);
+                    return recover + 0.8;
                 },
             },
         },

@@ -132,7 +132,7 @@ export const skill = {
             threaten: 1.5,
             result: {
                 target: (player, target) => {
-                    return -target.countCards('h');
+                    return -target.countCards('h') - target.countCards('h', card => get.suit(card) === 'heart') * 0.3;
                 },
                 player: (player) => {
                     return player.countCards('h') < 3 ? 1 : 0.5;
@@ -144,6 +144,9 @@ export const skill = {
                 target: (card, player, target) => {
                     if (target.countCards('h', card => get.suit(card) === 'heart') > 0) {
                         return [1, -0.3];
+                    }
+                    if (target.countCards('h') > 0 && get.tag(card, 'loseCard')) {
+                        return [1, 0.2];
                     }
                 },
             },

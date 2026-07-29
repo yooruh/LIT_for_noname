@@ -29,15 +29,16 @@ export const log = {
 
 const EXCLUDES = [
   '.git',
-  'node_modules',
   '.gitignore',
   '.vscode',
-  'Directory.json',
-  'version.json',
+  'node_modules',
+  'scripts',
+  'release',
   'package.json',
   'package-lock.json',
   '.update_state.json',
-  'scripts',
+  'Directory.json',
+  'version.json',
 ];
 
 export function scanRoles(dirPath) {

@@ -100,6 +100,22 @@ export const skill = {
         },
     },
     lit_duilian: {
+        utils: {
+            pairScore(first, second) {
+                if (!first || !second || !second.canUse({ name: "juedou", isCard: true }, first)) return -Infinity;
+                return get.effect(first, { name: "juedou", isCard: true }, second, second);
+            },
+            futurePressure(first, second) {
+                const direct = lib.skill.lit_duilian.utils.pairScore(first, second);
+                if (!Number.isFinite(direct)) return -Infinity;
+                let hostileRipple = 0;
+                game.countPlayer(current => {
+                    if (current !== first && current !== second && get.attitude(current, first) < 0) hostileRipple += 0.05;
+                    if (current !== first && current !== second && get.attitude(current, second) > 0) hostileRipple -= 0.03;
+                });
+                return direct + hostileRipple;
+            },
+        },
         enable: "phaseUse",
         usable: 1,
         filter: (event, player) => {
@@ -144,12 +160,18 @@ export const skill = {
                 target: (player, target) => {
                     let i = ui.selected.targets.length;
                     if (i % 2 === 0) {
-                        return -3;
+                        const candidates = game.filterPlayer(current => {
+                            return current !== target && !ui.selected.targets.includes(current) && current.canUse({ name: "juedou", isCard: true }, target);
+                        }, false);
+                        if (!candidates.length) return -3;
+                        return Math.max(...candidates.map(current => lib.skill.lit_duilian.utils.futurePressure(target, current)));
                     } else {
-                        return get.effect(ui.selected.targets[i - 1], { name: "juedou" }, target, target);
+                        return lib.skill.lit_duilian.utils.futurePressure(ui.selected.targets[i - 1], target);
                     }
                 },
-                player: -1,
+                player: (player) => {
+                    return player.countCards('hes') > 2 ? -0.5 : -1;
+                },
             },
             expose: 0.4,
             threaten: 3,
@@ -168,10 +190,17 @@ export const skill = {
                 target: (player, target) => {
                     let i = ui.selected.targets.length;
                     if (i % 2 === 0) {
-                        return -3;
+                        const candidates = game.filterPlayer(current => {
+                            return current !== target && !ui.selected.targets.includes(current) && current.canUse({ name: "juedou", isCard: true }, target);
+                        }, false);
+                        if (!candidates.length) return -3;
+                        return Math.max(...candidates.map(current => lib.skill.lit_duilian.utils.futurePressure(target, current)));
                     } else {
-                        return get.effect(ui.selected.targets[i - 1], { name: "juedou" }, target, target);
+                        return lib.skill.lit_duilian.utils.futurePressure(ui.selected.targets[i - 1], target);
                     }
+                },
+                player: (player) => {
+                    return 0;
                 },
             },
             expose: 0.4,

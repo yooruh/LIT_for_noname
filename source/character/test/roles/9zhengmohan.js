@@ -124,7 +124,8 @@ export const skill = {
             result: {
                 player: (player, target) => {
                     const shaCount = player.countCards('h', card => get.name(card, player) === 'sha');
-                    return shaCount - player.countCards('h');
+                    const nonSha = player.countCards('h') - shaCount;
+                    return shaCount - nonSha * 0.8;
                 },
                 target: (player, target) => {
                     if (!player.hasSha()) {
@@ -133,13 +134,13 @@ export const skill = {
                     }
                     if (get.mode() === 'versus') return -1;
                     if (player.hasUnknown()) return 0;
-                    return get.effect(target, { name: 'sha' }, player, target);
+                    return get.effect(target, { name: 'sha' }, player, target) + target.countCards('hej') * 0.2;
                 },
             },
             effect: {
                 target: (card, player, target) => {
                     if (player.hasSha() && get.attitude(player, target) < 0) {
-                        return [1, 0.5];
+                        return [1, 0.5 + Math.min(0.5, target.countCards('hej') * 0.1)];
                     }
                 },
             },

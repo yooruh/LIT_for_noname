@@ -68,6 +68,12 @@ export const skill = {
                         if (target.countCards('h') > 3) {
                             return [1, 0.3];
                         }
+                        // 若目标队友多，改成失去体力的全局压制价值更高
+                        let ally = 0;
+                        game.countPlayer(current => {
+                            if (current !== target && get.attitude(current, target) > 0) ally += 1;
+                        });
+                        if (ally > 1) return [1, 0.2 + ally * 0.05];
                     }
                 },
                 player: (card, player) => {

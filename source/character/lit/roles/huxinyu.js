@@ -47,6 +47,23 @@ export const skill = {
         },
     },
     lit_xukong: {
+        utils: {
+            evaluate(player, target) {
+                if (!player || !target || target === player || !player.canCompare(target)) {
+                    return -Infinity;
+                }
+                const duelCard = { name: "juedou", isCard: true };
+                const winScore = player.canUse(duelCard, target, false) ? get.effect(target, duelCard, player, player) : 0;
+                const loseScore = target.canUse(duelCard, player, false) ? get.effect(player, duelCard, target, player) : 0;
+                let compareOffset = Math.min(1.2, (player.countCards("h") - target.countCards("h")) * 0.2);
+                if (player.hasSkill("lit_xukong_equipK") && player.countCards("h", card => get.type(card) === "equip")) compareOffset += 0.8;
+                if (target.hasSkill("lit_xukong_equipK") && target.countCards("h", card => get.type(card) === "equip")) compareOffset -= 0.8;
+                return winScore + loseScore * 0.85 + compareOffset;
+            },
+            shouldUse(player) {
+                return game.hasPlayer(target => lib.skill.lit_xukong.utils.evaluate(player, target) > 0 && !player.getStorage("lit_xukong_mark", []).includes(target));
+            },
+        },
         usable: 1,
         enable: "phaseUse",
         filter(event, player) {
@@ -78,9 +95,14 @@ export const skill = {
             }
         },
         ai: {
-            order: 7,
+            order: (item, player) => {
+                if (!lib.skill.lit_xukong.utils.shouldUse(player)) return -1;
+                return 7;
+            },
             result: {
-                target: -2,
+                target: (player, target) => {
+                    return lib.skill.lit_xukong.utils.evaluate(player, target);
+                },
             },
         },
         group: "lit_xukong_reset",

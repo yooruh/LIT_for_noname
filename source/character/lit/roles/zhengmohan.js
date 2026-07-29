@@ -12,6 +12,24 @@ export const character = {
 export const skill = {
     // 郑墨翰
     lit_mensao: {
+        utils: {
+            evaluate(player) {
+                let linkedRecover = 0, linkedBad = 0, linkedGood = 0;
+                game.countPlayer(current => {
+                    if (!current.isLinked()) return;
+                    const eff = get.recoverEffect(current, player, player);
+                    linkedRecover += eff;
+                    if (eff < 0) linkedBad++;
+                    else if (eff > 0) linkedGood++;
+                });
+                return { linkedRecover, linkedBad, linkedGood };
+            },
+            shouldUse(player) {
+                const { linkedRecover, linkedBad, linkedGood } = lib.skill.lit_mensao.utils.evaluate(player);
+                if (linkedBad > 0 && linkedGood === 0) return false;
+                return linkedRecover >= 0 || linkedGood > 0 || player.countCards('h') > player.hp;
+            },
+        },
         usable: 1,
         hiddenCard(player, name) {
             return name === "tiesuo" && player.countCards("hes") > 0;
@@ -117,10 +135,18 @@ export const skill = {
         },
         group: 'lit_mensao_after',
         ai: {
-            order: 7.5,
+            order: (item, player) => {
+                if (!lib.skill.lit_mensao.utils.shouldUse(player)) return -1;
+                return 7.5;
+            },
             expose: 0.3,
             threaten: 0.8,
             result: {
+                player: (player) => {
+                    const { linkedRecover, linkedBad, linkedGood } = lib.skill.lit_mensao.utils.evaluate(player);
+                    if (linkedBad > 0 && linkedGood === 0) return -1;
+                    return linkedRecover + (player.countCards('h') > player.hp ? 0.8 : 0);
+                },
                 target: (player, target) => {
                     if (!target) return;
                     let res = get.recoverEffect(target, player, target);

@@ -12,6 +12,21 @@ export const character = {
 
 export const skill = {
     lit_33: {
+        utils: {
+            targetValue(player, target) {
+                if (!player || !target) return 0;
+                if (get.attitude(player, target) > 0) {
+                    if (player.hasSkill('lit_shichou')) return -4;
+                    if (player.hp === 1 && !player.canSave(player)) return -3;
+                }
+                let divAtt = Math.abs(get.attitude(target, target)) ?? 5;
+                let selfLoss = get.damageEffect(player, target, player) / (Math.abs(get.attitude(player, player)) ?? 5);
+                let targetChange = target.hp > 3 ? get.effect(target, { name: "losehp" }, target, target) / divAtt : 1;
+                let qiantuiFollow = 0;
+                if (target.hasSkill('lit_qiantui') || target.hasSkill('lit_tianna')) qiantuiFollow += 0.5;
+                return targetChange - selfLoss + qiantuiFollow;
+            },
+        },
         derivation: ['lit_qianfan', 'lit_kuanshu'],
         // audio: "lit_33_use",
         // audioname: ["lit_Qb"],
@@ -20,6 +35,13 @@ export const skill = {
         preHidden: true,
         ai: {
             combo: "lit_qiantui",
+            effect: {
+                target(card, player, target) {
+                    if (!target.hasZhuSkill || !target.hasZhuSkill("lit_33", player)) return;
+                    if (!get.tag(card, "damage") && !get.tag(card, "loseHp")) return;
+                    if (target.hasSkill('lit_qiantui') && target.hp > 3) return [1, 0.8];
+                },
+            },
         },
         global: "lit_33_use",
         subSkill: {
@@ -59,18 +81,18 @@ export const skill = {
                 ai: {
                     order: 10,
                     result: {
-                        target: (player, target) => {// 专门为胡畔写一笔
-                            if (get.attitude(player, target) > 0) {
-                                if (player.hasSkill('lit_shichou')) return -4;
-                                if (player.hp === 1 && !player.canSave(player)) return -3;
-                            }
-                            let divAtt = Math.abs(get.attitude(target, target)) ?? 5;
-                            if (target.hp > 3) return get.effect(target, { name: "losehp" }, target, target) / divAtt;
-                            return 1;
+                        target: (player, target) => {
+                            return lib.skill.lit_33.utils.targetValue(player, target);
                         },
                         player: (player, target) => {
                             let divAtt = Math.abs(get.attitude(player, player)) ?? 5;
                             return get.damageEffect(player, target, player) / divAtt;
+                        },
+                    },
+                    effect: {
+                        target(card, player, target) {
+                            if (!get.tag(card, "damage") && !get.tag(card, "loseHp")) return;
+                            if (target.hp > 3 && target.hasSkill('lit_qiantui')) return [1, 0.8];
                         },
                     },
                 },
@@ -157,7 +179,10 @@ export const skill = {
                 return !target.hasSkill("lit_kuanshu", null, false, true) && !target.hasSkill("lit_qianfan");
             }).set("ai", (target) => {
                 let att = get.attitude(get.event().player, target);
-                if (att) return att < 0;
+                if (att >= 0) return 0;
+                let base = get.result({ name: 'lit_qianfanpai' }).target(get.event().player, target);
+                if (target.hasSkill('lit_kuanshu', null, false, true) || target.hasSkill('lit_qianfan')) return 0;
+                return Math.max(0, -att + base);
             }).forResult();
         },
         async content(event, trigger, player) {

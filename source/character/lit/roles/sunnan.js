@@ -139,6 +139,8 @@ export const skill = {
                     return !player.hasSkill("lit_zhishu_used") && player.getExpansions("lit_zhishu").length >= 3;
                 },
                 async content(event, trigger, player) {
+                    const assessment = lib.skill.lit_zhishu.subSkill.use.evaluate(player);
+                    if (!assessment.shouldUse) return;
                     const huos = player.getExpansions("lit_zhishu");
                     const jiuResult = await player.chooseCardButton(1, huos, "枝疏：选择1张“枝”作为【酒】").set("ai", card => {
                         if (get.name(card, player) === "sha") return -1;
@@ -158,7 +160,18 @@ export const skill = {
                     const targetResult = await player.chooseTarget(`选择一名角色，询问其是否对其攻击范围内的1人使用酒【杀】，若其拒绝，你获得${get.translation(cards)}`, (card, player, target) => {
                         return ui.selected.targets.length < 1;
                     }).set("ai", target => {
-                        return get.attitude(player, target);
+                        const canUseJiu = target.canUse(jiuCard, target, true, false);
+                        const canUseSha = target.hasUseTarget(shaCard, true, false);
+                        let attackScore = -Infinity;
+                        if (canUseSha) {
+                            game.countPlayer(current => {
+                                if (target.canUse(shaCard, current, true, false)) {
+                                    attackScore = Math.max(attackScore, get.effect(current, shaCard, target, target));
+                                }
+                            });
+                        }
+                        const gainBack = get.attitude(player, target) > 0 ? 0.6 : 1.2;
+                        return Math.max(canUseSha ? attackScore + (canUseJiu ? 0.4 : 0) : -Infinity, gainBack);
                     }).set("selectTarget", () => {
                         if (ui.selected.targets.length < 1) return [1, 1];
                         return [1, Infinity];
@@ -239,12 +252,43 @@ export const skill = {
                     await player.gain(cards, player, "gain2");
                 },
                 ai: {
-                    order: 7,
+                    order: (item, player) => {
+                        const assessment = lib.skill.lit_zhishu.subSkill.use.evaluate(player);
+                        if (!assessment.shouldUse) return -1;
+                        return 7 + Math.min(assessment.score, 2);
+                    },
                     result: {
                         player(player) {
-                            return player.getExpansions("lit_zhishu").length >= 3 ? 1 : 0;
+                            return lib.skill.lit_zhishu.subSkill.use.evaluate(player).score;
                         },
                     },
+                },
+                evaluate(player) {
+                    const huos = player.getExpansions("lit_zhishu");
+                    if (huos.length < 3 || player.hasSkill("lit_zhishu_used")) {
+                        return { shouldUse: false, score: -1 };
+                    }
+                    let best = -Infinity;
+                    game.countPlayer(user => {
+                        const canUseJiu = user.canUse({ name: "jiu", isCard: true }, user, true, false);
+                        const canUseSha = user.hasUseTarget({ name: "sha", isCard: true }, true, false);
+                        let attackScore = -Infinity;
+                        if (canUseSha) {
+                            game.countPlayer(target => {
+                                if (user.canUse({ name: "sha", isCard: true }, target, true, false)) {
+                                    attackScore = Math.max(attackScore, get.effect(target, { name: "sha", isCard: true }, user, user));
+                                }
+                            });
+                        }
+                        const gainBack = get.attitude(player, user) > 0 ? 0.6 : 1.2;
+                        const score = Math.max(canUseSha ? attackScore + (canUseJiu ? 0.4 : 0) : -Infinity, gainBack);
+                        best = Math.max(best, score);
+                    });
+                    if (!Number.isFinite(best)) best = -1;
+                    return {
+                        shouldUse: best > 0,
+                        score: best > 0 ? best : -1,
+                    };
                 },
                 sub: true,
                 sourceSkill: "lit_zhishu",

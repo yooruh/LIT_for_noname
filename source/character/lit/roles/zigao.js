@@ -67,12 +67,16 @@ export const skill = {
             threaten: 1.1,
             result: {
                 player: (player, target, card) => {
-                    if (get.tag(card, "damage")) {
+                    if (get.tag(card, "damage") && target) {
                         let res = 0;
-                        if (target.hasSkillTag("directHit_ai", true, { card: card }, true)) res += 2;
-                        if (target.hasSkillTag("damageBonus", true, { card: card }, true)) res += 1;
-                        return get.threaten(target) / 2 + res;
+                        const user = target;
+                        if (user.hasSkillTag("directHit_ai", true, { card: card }, true)) res += 2;
+                        if (user.hasSkillTag("damageBonus", true, { card: card }, true)) res += 1;
+
+                        const canActuallyUse = user.hasUseTarget(card, true, true);
+                        return (canActuallyUse ? 0.5 : -0.5) + get.threaten(target) / 2 + res;
                     }
+                    if (target?.hasUseTarget?.(card, true, true)) return 0.6;
                     return -0.5;
                 },
                 target: 1.2,
@@ -171,14 +175,17 @@ export const skill = {
             },
             result: {
                 player: (player, target) => {
-                    return Math.min(-player.needsToDiscard(0, null, true), target.countCards('h'));
+                    const shown = target.countCards('h');
+                    const discardNeed = Math.max(0, player.needsToDiscard(shown, null, true));
+                    const drawBack = Math.min(discardNeed, 3);
+                    return shown - discardNeed + drawBack * 0.8;
                 },
                 target: (player, target) => {
                     if (target.hasSkillTag('noh')) return 1;
-                    let th = target.countCards('h');
-                    let q = player.needsToDiscard(th, null, true);
-                    let num = q > 0 ? -th + q + Math.min(3, q) : -th;
-                    return num + get.threaten(target);
+                    const shown = target.countCards('h');
+                    const discardNeed = Math.max(0, player.needsToDiscard(shown, null, true));
+                    const drawBack = Math.min(discardNeed, 3);
+                    return -shown + discardNeed + drawBack + get.threaten(target) * 0.5;
                 },
             },
         },

@@ -46,7 +46,11 @@ export const skill = {
                     if (player.countMark("lit_mianju") === 1 || player.countMark("lit_mianjuV2") === 1) return 0;
                     if (player.isMinCard()) return 1;
                     if (!player.hasMark("lit_mianju") && !player.hasMark("lit_mianjuV2")) return 3 - player.countCards('h');
-                    return get.recoverEffect(player, player, player) + (player.isTurnedOver() ? 2 : -1) + (player.hasMark("dongjie") && !player.isTurnedOver() ? get.effect(player, { name: "losehp" }) : 0);
+                    const recover = get.recoverEffect(player, player, player);
+                    const turnOverDelta = player.isTurnedOver() ? 2 : -1;
+                    const dongjieLoss = player.hasMark("dongjie") && !player.isTurnedOver() ? get.effect(player, { name: "losehp" }, player, player) : 0;
+                    const othersDraw = game.countPlayer(current => current !== player && get.attitude(player, current) > 0) * 0.15;
+                    return recover + turnOverDelta + dongjieLoss + othersDraw;
                 },
                 target: 1,
             },

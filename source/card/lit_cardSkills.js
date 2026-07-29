@@ -152,6 +152,7 @@ export const card = {
                     let dist = Math.sqrt(1 + get.distance(player, target, "absolute"));
                     if (dist < 1) dist = 1;
                     if (target.isTurnedOver()) dist++;
+                    if (target.hasSkill('lit_qianfan')) res -= 1.2;
                     return (Math.min(-0.1, -num) * cf) / dist + res;
                 },
             },

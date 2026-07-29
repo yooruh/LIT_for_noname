@@ -111,10 +111,17 @@ export const skill = {
             effect: {
                 target: (card, player, target) => {
                     if (!get.tag(card, 'damage')) return;
+                    if (target.hp > 1) return;
                     let gugu = target.countMark('lit_gugu');
+                    let allyFollow = 0;
+                    game.countPlayer(current => {
+                        if (current !== target && get.attitude(current, target) > 0) allyFollow += 0.1;
+                    });
+
                     if (gugu >= 4) return [1, 0.1];
                     if (gugu === 3) return [1, 0.3];
                     if (gugu === 2) return [1, 0.7];
+                    return [1, Math.max(0.9 - allyFollow, 0.2)];
                 }
             }
         },

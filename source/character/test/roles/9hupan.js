@@ -56,7 +56,8 @@ export const skill = {
                         player: (player) => {
                             if (player.hp === player.maxHp) return 2;
                             if (player.hp > 3) return -1;
-                            return 1;
+                            const teamScale = game.countPlayer(current => get.attitude(player, current) > 0) * 0.1;
+                            return 1 + teamScale;
                         },
                     },
                     threaten: 0.8,

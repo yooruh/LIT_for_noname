@@ -128,6 +128,7 @@ export const skill = {
                 target: (card, player, target) => {
                     if (player.hasSkillTag('jueqing', false, target)) return [1, -2];
                     if (target.hp > 1) return 1.5;
+                    if (target.hp <= 1 && !target.storage.lit_teshe_muhun) return [1, 0.8];
                 },
             },
             threaten: 1.2,

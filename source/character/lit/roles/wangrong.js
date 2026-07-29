@@ -88,10 +88,12 @@ export const skill = {
                             const skiller = list[0];
                             if (!skiller || get.recoverEffect(skiller, target, target) + 0.1 <= 0) return;
 
-                            // 获取如果发生回血的收益
+                            // 获取如果发生回血的收益；考虑到要先吃到延时牌，再在准备阶段主动弃判定区牌，收益不宜高估
                             let divAtt = Math.abs(get.attitude(player, skiller)) ?? 5;
-                            let eff = get.recoverEffect(skiller, target, player) / divAtt;
-                            return [1, 0, 1, eff];
+                            let futureRecover = get.recoverEffect(skiller, target, player) / divAtt;
+                            let eff = futureRecover - 0.6;
+                            if (eff <= 0) return;
+                            return [1, 0, 1, eff * 0.6];
                         },
                     },
                 },
@@ -189,6 +191,26 @@ export const skill = {
         },
     },
     lit_qixu: {
+        utils: {
+            judgeNames: ["shandian", "lebu", "bingliang", "lit_qianfanpai"],
+            evaluate(player, target) {
+                if (!player || !target) return { player: 0, target: 0, total: -Infinity };
+                let targetScore = 0;
+                for (const judgeName of lib.skill.lit_qixu.utils.judgeNames) {
+                    const divAtt = Math.abs(get.attitude(target, target)) || 5;
+                    targetScore += Math.min(get.effect(target, { name: judgeName }, player, target) / divAtt, -1);
+                }
+                const playerScore = player.hasSkill("lit_kushi") && (target === player || target.inRangeOf(player)) ? 1.5 : 0;
+                return {
+                    player: playerScore,
+                    target: (3 / 16) * targetScore,
+                    total: playerScore - (3 / 16) * targetScore,
+                };
+            },
+            shouldUse(player) {
+                return game.hasPlayer(target => lib.skill.lit_qixu.utils.evaluate(player, target).total > 0);
+            },
+        },
         log: false,
         usable: 1,
         enable: "phaseUse",
@@ -268,22 +290,13 @@ export const skill = {
             }
         },
         ai: {
-            order: 8,
+            order: (item, player) => {
+                if (!lib.skill.lit_qixu.utils.shouldUse(player)) return -1;
+                return 8;
+            },
             result: {
-                player: (player, target) => {
-                    if (player.hasSkill("lit_kushi") && (target === player || target.inRangeOf(player))) return 1.5;
-                    return 0;
-                },
-                target: (player, target) => {
-                    let effects = ["shandian", "lebu", "bingliang", "lit_qianfanpai"];
-                    let res = 0;
-                    for (let judgeName of effects) {
-                        let divAtt = Math.abs(get.attitude(target, target)) ?? 5;
-                        let eff = get.effect(target, { name: judgeName }, player, target) / divAtt;
-                        res += Math.min(eff, -1);
-                    }
-                    return 3 / 16 * res;
-                },
+                player: (player, target) => lib.skill.lit_qixu.utils.evaluate(player, target).player,
+                target: (player, target) => lib.skill.lit_qixu.utils.evaluate(player, target).target,
             },
         },
         subSkill: {

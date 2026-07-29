@@ -471,6 +471,29 @@ export const skill = {
         },
     },
     lit_fumeng: {
+        utils: {
+            shouldUse(player) {
+                return game.hasPlayer(current => current.maxHp > 1 
+                    && get.attitude(player, current) < 0 
+                    && lib.skill.lit_fumeng.utils.targetScore(player, current) > 0);
+            },
+            targetScore(player, target) {
+                if (!target || target.maxHp <= 1) return 0;
+                let loseNum = Math.max(target.maxHp - target.hp, 1);
+                let divAtt = Math.abs(get.attitude(target, target)) || 5;
+                let loseHpEffect = (target.maxHp > 1 && target.maxHp === target.hp)
+                    ? (get.effect(target, { name: "losehp" }, player, target) / divAtt)
+                    : 0;
+                let result = get.sgn(loseHpEffect) * Math.sqrt(Math.abs(loseHpEffect));
+                if (target.hasSkill('lit_mianju') || target.hasSkill('lit_mianjuV2')) {
+                    let count = target.countMark('lit_mianju') + target.countMark('lit_mianjuV2');
+                    if (count <= target.maxHp && count > target.maxHp - loseNum) {
+                        return (target.maxHp - loseNum) * 2 + result;
+                    }
+                }
+                return -loseNum + result;
+            },
+        },
         usable: 1,
         enable: "phaseUse",
         derivation: "lit_mengying",
@@ -493,27 +516,14 @@ export const skill = {
         },
         ai: {
             order: (item, player) => {
+                if (!lib.skill.lit_fumeng.utils.shouldUse(player)) return -1;
                 if (game.hasPlayer(current => get.attitude(player, current) < 0 && current.hp === current.maxHp && current.maxHp > 1)) return 10;
                 return 1;
             },
             expose: 0.3,
             result: {
                 target: (player, target) => {
-                    if (target.maxHp <= 1) return;
-                    let loseNum = Math.max(target.maxHp - target.hp, 1);
-                    let divAtt = Math.abs(get.attitude(target, target)) ?? 5;
-                    let loseHpEffect = (target.maxHp > 1 && target.maxHp === target.hp) ?
-                        (get.effect(target, { name: "losehp" }, player, target) / divAtt)
-                        : 0;
-
-                    let result = get.sgn(loseHpEffect) * Math.sqrt(Math.abs(loseHpEffect));
-                    if (target.hasSkill('lit_mianju') || target.hasSkill('lit_mianjuV2')) {
-                        let count = target.countMark('lit_mianju') + target.countMark('lit_mianjuV2');
-                        if (count <= target.maxHp && count > target.maxHp - loseNum) {
-                            return (target.maxHp - loseNum) * 2 + result;
-                        }
-                    }
-                    return -loseNum + result;
+                    return lib.skill.lit_fumeng.utils.targetScore(player, target);
                 },
             },
         },

@@ -69,6 +69,14 @@ export const skill = {
         },
         ai: {
             expose: 0.2,
+            effect: {
+                target(card, player, target) {
+                    if (!target.hasMark("lit_yuanzhu")) return;
+                    if (get.tag(card, "loseCard") || get.tag(card, "discard")) {
+                        return [1, 0.8 + Math.min(1.2, target.countMark("lit_yuanzhu") * 0.3)];
+                    }
+                },
+            },
         },
         global: "lit_yuanzhu_yuan",
         group: "lit_yuanzhu_die",
@@ -109,6 +117,38 @@ export const skill = {
         },
     },
     lit_chenshui: {
+        utils: {
+            targetBenefit(target, helper) {
+                if (!target) return 0;
+                let num = 1;
+                if (helper && get.attitude(helper, target) > 0) {
+                    num = helper.needsToDiscard() ? 0.7 : 0.5;
+                }
+                let eff = 0;
+                if (target.hasMark("lit_dongjie")) {
+                    if (!lib.lit.effLock['lit_chenshui']) {
+                        lib.lit.effLock['lit_chenshui'] = true;
+                        let divAtt = Math.abs(get.attitude(target, target)) ?? 5;
+                        eff = Math.min(get.effect(target, { name: "losehp" }, target, target) / divAtt, 0);
+                        delete lib.lit.effLock['lit_chenshui'];
+                    }
+                }
+                num += target.isTurnedOver() ? 0.33 : -0.2;
+                if (target.hp >= 4) return Math.max(num * 2 - eff, 0);
+                if (target.hp === 3) return Math.max(num * 1.5 - eff, 0);
+                if (target.hp === 2) return Math.max(num * 0.5 - eff, 0);
+                return 0;
+            },
+            supportValue(target, helper) {
+                const benefit = lib.skill.lit_chenshui.utils.targetBenefit(target, helper);
+                if (benefit <= 0) return 0;
+                let teamFactor = 0;
+                game.countPlayer(current => {
+                    if (current !== target && get.attitude(current, target) > 0) teamFactor += 0.15;
+                });
+                return benefit + teamFactor;
+            },
+        },
         derivation: "lit_chenshui_faq",
         frequent: (event, player) => {
             return player.isTurnedOver() && get.attitude(player, event.player) > 0;
@@ -128,7 +168,8 @@ export const skill = {
             return target;
         },
         check(event, player, triggername, target) {
-            return get.attitude(player, target) > 0;
+            if (get.attitude(player, target) <= 0) return false;
+            return lib.skill.lit_chenshui.utils.supportValue(target, player) + (player.isTurnedOver() ? 0.5 : -0.5) > 0.5;
         },
         async content(event, trigger, player) {
             if (!player.hasSkill('lit_chenshui_used')) player.addTempSkill("lit_chenshui_used");
@@ -142,35 +183,18 @@ export const skill = {
             expose: 0.1,
             result: {
                 player: (player, target) => {
-                    return player.isTurnedOver() ? 1 : -1;
+                    return lib.skill.lit_chenshui.utils.supportValue(target, player) + (player.isTurnedOver() ? 1 : -1);
                 },
-                target: 2,
+                target: (player, target) => {
+                    return lib.skill.lit_chenshui.utils.supportValue(target, player) + 0.8;
+                },
             },
             effect: {
                 target(card, player, target) {
                     if (get.tag(card, "damage")) {
                         if (target.hasSkill('lit_chenshui_used') || !target.hasFriend()) return;
-                        let num = 1;
-                        if (get.attitude(player, target) > 0) {
-                            if (player.needsToDiscard()) {
-                                num = 0.7;
-                            } else {
-                                num = 0.5;
-                            }
-                        }
-                        let eff = 0;
-                        if (target.hasMark("lit_dongjie")) {
-                            if (!lib.lit.effLock['lit_chenshui']) {
-                                lib.lit.effLock['lit_chenshui'] = true;
-                                let divAtt = Math.abs(get.attitude(target, target)) ?? 5;
-                                eff = Math.min(get.effect(target, { name: "losehp" }, target, target) / divAtt, 0);
-                                delete lib.lit.effLock['lit_chenshui'];
-                            }
-                        }
-                        num += target.isTurnedOver() ? 0.33 : -0.2;
-                        if (target.hp >= 4) return [1, Math.max(num * 2 - eff, 0)];
-                        if (target.hp === 3) return [1, Math.max(num * 1.5 - eff, 0)];
-                        if (target.hp === 2) return [1, Math.max(num * 0.5 - eff, 0)];
+                        const benefit = lib.skill.lit_chenshui.utils.supportValue(target, player);
+                        if (benefit > 0) return [1, benefit];
                     }
                 },
             },
@@ -194,17 +218,8 @@ export const skill = {
                             if (skillers.length > 0) {
                                 for (let i of skillers) {
                                     if (get.attitude(i, target) > 0) {
-                                        let num = 1;
-                                        if (get.attitude(player, target) > 0) {
-                                            if (player.needsToDiscard()) {
-                                                num = 0.7;
-                                            } else {
-                                                num = 0.5;
-                                            }
-                                        }
-                                        if (target.hp >= 4) return [1, num * 2];
-                                        if (target.hp === 3) return [1, num * 1.5];
-                                        if (target.hp === 2) return [1, num * 0.5];
+                                        const benefit = lib.skill.lit_chenshui.utils.supportValue(target, i);
+                                        if (benefit > 0) return [1, benefit];
                                     }
                                 }
                             }
@@ -268,6 +283,11 @@ export const skill = {
                         if (player.hasCard(card => get.name(card, player) === 'tao' || card.name === 'tao', "hs")) {
                             return 0;
                         }
+                        let taoCount = 0;
+                        game.countPlayer(current => {
+                            taoCount += current.getCards('hs', c => get.name(c, current) === 'tao' || c.name === 'tao').length;
+                        });
+                        if (taoCount > 0) return [1, Math.min(2.5, taoCount * 0.4)];
                     }
                 },
             },

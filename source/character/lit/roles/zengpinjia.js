@@ -127,19 +127,10 @@ export const skill = {
             const list = lib.skill.lit_saohua_sub.getAuto(player);
             return player.hasSkill('lit_saohua_pi') ? list[0].length > 0 : (list[0].length > 0 || list[1].length > 0);
         },
-        check: (event, player) => {
-            // 优先使用33方案，其次13方案，有标记时只能选13
-            const list = lib.skill.lit_saohua_sub.getAuto(player);
-            if (list[1].length && !player.hasSkill('lit_saohua_pi')) return 6;
-            if (list[0].length && game.hasPlayer(current => {
-                return get.effect(current, { name: "shandian" }, player, player) > 0;
-            })) return 3;
-            return 0;
-        },
         async content(event, trigger, player) {
             const skillName = player.hasSkill("lit_saohuaV2") ? "lit_saohuaV2" : "lit_saohua";
             const isPi = player.hasSkill('lit_saohua_pi');
-            const { isSubset, generateCombos, getNum } = lib.skill.lit_saohua_sub.utils;
+            const { isSubset, evaluate } = lib.skill.lit_saohua_sub.utils;
 
             // 技能效果映射表
             const actions = {
@@ -189,7 +180,9 @@ export const skill = {
 
             // 生成推荐方案
             const cards = player.getExpansions("lit_saohua");
-            const list = generateCombos(player, cards, isPi);
+            const assessment = evaluate(player);
+            const list = assessment.combos;
+            const preferredCombo = assessment.bestCombo || (!isPi && list[1].length ? list[1][0] : list[0][0]);
 
             // 构建提示文本
             const hints = [];
@@ -214,8 +207,8 @@ export const skill = {
                 return has13 || list[1].some(c => isSubset([nums[0]], c));
             }).set("ai", button => {
                 const nums = [...ui.selected.buttons.map(b => get.number(b)), get.number(button.link)];
-                const target = (!isPi && list[1].length) ? list[1][0] : list[0][0];
-                return isSubset(nums, target) ? 10 : 0;
+                if (!preferredCombo) return 0;
+                return isSubset(nums, preferredCombo) ? 10 : 0;
             }).forResult();
 
             if (!result.bool) return;
@@ -234,17 +227,18 @@ export const skill = {
             }
         },
         ai: {
-            order: 1,
+            order: (item, player) => {
+                const assessment = lib.skill.lit_saohua_sub.utils.evaluate(player);
+                if (!assessment.shouldUse) return -1;
+                return assessment.type === 3 ? 9 : 6.5;
+            },
             expose: 0.3,
             threaten: 1.9,
             thunderAttack: true,
             result: {
                 player: player => {
-                    const list = lib.skill.lit_saohua_sub.getAuto(player);
-                    if (list[1].length && game.hasPlayer(t => get.damageEffect(t, player, player, "thunder") > 0)) return 6;
-                    if (list[0].length && player.getExpansions("lit_saohua").length > 4 &&
-                        game.hasPlayer(t => t.canAddJudge('shandian') && get.effect(t, { name: "shandian" }, player, player) > 1)) return 2;
-                    return -1;
+                    const assessment = lib.skill.lit_saohua_sub.utils.evaluate(player);
+                    return assessment.score;
                 }
             },
             effect: {
@@ -317,6 +311,55 @@ export const skill = {
                             }
                         }
                         return [list13, list33];
+                    },
+                    evaluate(player) {
+                        const combos = lib.skill.lit_saohua_sub.utils.generateCombos(
+                            player,
+                            player.getExpansions("lit_saohua"),
+                            player.hasSkill('lit_saohua_pi')
+                        );
+                        const [list13, list33] = combos;
+                        const canThunder = !player.hasSkill('lit_saohua_pi');
+                        let best = {
+                            shouldUse: false,
+                            score: -1,
+                            type: 0,
+                            bestCombo: null,
+                            combos,
+                        };
+                        if (canThunder && list33.length) {
+                            let thunderScore = 0;
+                            game.countPlayer(current => {
+                                thunderScore = Math.max(thunderScore, get.damageEffect(current, player, player, "thunder"));
+                            });
+                            if (thunderScore > best.score) {
+                                best = {
+                                    shouldUse: thunderScore > 0,
+                                    score: thunderScore > 0 ? 3 + thunderScore : thunderScore,
+                                    type: 3,
+                                    bestCombo: list33[0],
+                                    combos,
+                                };
+                            }
+                        }
+                        if (list13.length) {
+                            let shandianScore = 0;
+                            game.countPlayer(current => {
+                                if (current.canAddJudge('shandian')) {
+                                    shandianScore = Math.max(shandianScore, get.effect(current, { name: "shandian" }, player, player));
+                                }
+                            });
+                            if (shandianScore > best.score) {
+                                best = {
+                                    shouldUse: shandianScore > 0,
+                                    score: shandianScore > 0 ? 1 + shandianScore : shandianScore,
+                                    type: 2,
+                                    bestCombo: list13[0],
+                                    combos,
+                                };
+                            }
+                        }
+                        return best;
                     }
                 },
                 getAuto(player) {
