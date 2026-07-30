@@ -139,6 +139,30 @@ export const skill = {
         },
     },
     lit_zhanshi: {
+        utils: {
+            evaluate(player, target) {
+                const shown = target.countCards('h');
+                const giveBack = Math.max(0, player.needsToDiscard(shown, null, true));
+                let targetBenefit = giveBack;
+                if (target.hasSkill("lit_zhishu")) {
+                    const branches = target.getExpansions("lit_zhishu").length;
+                    const usefulBranches = Math.max(0, Math.min(giveBack, 6 - branches));
+                    const coreBranches = Math.max(0, Math.min(usefulBranches, 3 - branches));
+                    targetBenefit = coreBranches * 1.2 + (usefulBranches - coreBranches) * 0.4;
+                    if (branches < 3 && branches + giveBack >= 3) targetBenefit += 1.5;
+
+                    const enemies = game.countPlayer(current => current !== target && get.attitude(target, current) < 0 && current.inRange(target));
+                    if (shown > 0 && enemies > 0) {
+                        const fragile = Math.max(0, 3 - target.hp);
+                        targetBenefit -= Math.min(shown, 2) * (0.4 + fragile * 0.6) * Math.min(enemies, 2);
+                    }
+                }
+                return {
+                    player: shown - giveBack + get.threaten(target) * (player.hasSkill("lit_zhanshiV2") ? 0.5 : 0),
+                    target: -shown + targetBenefit + get.threaten(target) * 0.5,
+                };
+            },
+        },
         usable: 1,
         enable: 'phaseUse',
         locked: false,
@@ -164,7 +188,6 @@ export const skill = {
                         //if(get.tag(card, "multitarget")&&get.tag(card, "damage"))return -1;
                         return (8 - get.value(card)) * 0.5 + (get.value(card, target) - 6) * get.sgn(att - 0.001);
                     });
-                await target.draw(Math.min(num, 3)).set("source", player);
             }
             target.addSkill('lit_zhanshi_sub');
         },
@@ -175,7 +198,7 @@ export const skill = {
                 }
             },
         },
-        ai: {// todo：适配枝疏
+        ai: {
             threaten: 1.1,
             order: (item, player) => {
                 if (!player) player = get.player();
@@ -183,18 +206,10 @@ export const skill = {
                 return get.order({ name: "tiesuo" }) - 0.03;
             },
             result: {
-                player: (player, target) => {
-                    const shown = target.countCards('h');
-                    const discardNeed = Math.max(0, player.needsToDiscard(shown, null, true));
-                    const drawBack = Math.min(discardNeed, 3);
-                    return shown - discardNeed + drawBack * 0.8;
-                },
+                player: (player, target) => lib.skill.lit_zhanshi.utils.evaluate(player, target).player,
                 target: (player, target) => {
                     if (target.hasSkillTag('noh')) return 1;
-                    const shown = target.countCards('h');
-                    const discardNeed = Math.max(0, player.needsToDiscard(shown, null, true));
-                    const drawBack = Math.min(discardNeed, 3);
-                    return -shown + discardNeed + drawBack + get.threaten(target) * 0.5;
+                    return lib.skill.lit_zhanshi.utils.evaluate(player, target).target;
                 },
             },
         },
@@ -342,7 +357,6 @@ export const skill = {
                         //if(get.tag(card, "multitarget")&&get.tag(card, "damage"))return -1;
                         return (8 - get.value(card)) * 0.5 + (get.value(card, target) - 6) * get.sgn(att - 0.001);
                     });
-                await target.draw(Math.min(num, 3)).set("source", player);
             }
             player.addSkill('lit_zhanshi_sub');
             target.addSkill('lit_zhanshi_sub');
@@ -400,9 +414,9 @@ export const translate = {
     'lit_xinren': "信任",
     'lit_xinren_info': "主公技，出牌阶段限一次，你可以交给一名“叁”势力角色一张牌，其可立即使用之，然后你摸X张牌（X为此牌造成的伤害值）",
     'lit_zhanshi': "展示",
-    'lit_zhanshi_info': `出牌阶段限一次，你可以令一名其他角色展示所有手牌并交给你，然后你交给其${X}张牌，其摸${X}张牌，直到其回合结束，其使用点数为${Y}的牌：<li>倍数，无次数限制；</li><li>约数，其摸一张牌</li>（${X}为其手牌溢出量且摸牌数至多为3，${Y}为其使用的上一张牌的点数）`,
+    'lit_zhanshi_info': `出牌阶段限一次，你可以令一名其他角色展示所有手牌并交给你，然后你交给其${X}张牌，直到其回合结束，其使用点数为${Y}的牌：<li>倍数，无次数限制；</li><li>约数，其摸一张牌</li>（${X}为你的手牌溢出量，${Y}为其使用的上一张牌的点数）`,
     'lit_zhanshiV2': "展示",
-    'lit_zhanshiV2_info': `出牌阶段限一次，你可以令一名其他角色展示所有手牌并交给你，然后你交给其${X}张牌，其摸${X}张牌，直到你或其回合结束，你或其使用点数为${Y}的牌：<li>倍数，无次数限制；</li><li>约数，摸一张牌</li>（${X}为其手牌溢出量且摸牌数至多为3，${Y}为其使用的上一张牌的点数）`,
+    'lit_zhanshiV2_info': `出牌阶段限一次，你可以令一名其他角色展示所有手牌并交给你，然后你交给其${X}张牌，直到你或其回合结束，你或其使用点数为${Y}的牌：<li>倍数，无次数限制；</li><li>约数，摸一张牌</li>（${X}为你的手牌溢出量，${Y}为其使用的上一张牌的点数）`,
     'lit_zhanshi_sub': `<span class='bluetext'>【展示】</span>`,
     'lit_zhanshi_math1': "倍数",
     'lit_zhanshi_math2': "约数",
@@ -415,8 +429,8 @@ export const translate = {
 
 export const simpleTranslate = {
     'lit_xinren_info': "主；出牌限1次，交给某“叁”势力角色1牌，其可立即使用，你摸与该牌造成的总伤害相等的牌",
-    'lit_zhanshi_info': `出牌限1次，令他人展示所有手牌并给你，你给其${X}牌其摸${X}牌，直到其回合结束，其使用牌点数为${Y}的：<li>倍数，无次数限制；</li><li>约数，+1牌</li>（${X}为手牌溢出量且摸牌数至多为3，${Y}为其使用的上一牌的点数）`,
-    'lit_zhanshiV2_info': `V2 出牌限1次，令他人展示所有手牌并给你，你给其${X}牌其摸${X}牌，直到你/其回合结束，你/其使用牌点数为${Y}的：<li>倍数，无次数限制；</li><li>约数，+1牌</li>（${X}为手牌溢出量且摸牌数至多为3，${Y}为使用的上一牌的点数）`,
+    'lit_zhanshi_info': `出牌限1次，令他人展示所有手牌并给你，你给其${X}牌，直到其下回合结束，其使用牌点数为${Y}的：<li>倍数，无次数限制；</li><li>约数，+1牌</li>（${X}为手牌溢出量，${Y}为其使用的上一牌的点数）`,
+    'lit_zhanshiV2_info': `V2 出牌限1次，令他人展示所有手牌并给你，你给其${X}牌，直到你/其下回合结束，你/其使用牌点数为${Y}的：<li>倍数，无次数限制；</li><li>约数，+1牌</li>（${X}为手牌溢出量，${Y}为使用的上一牌的点数）`,
     'lit_chantaer_info': "锁；手牌上限基准为体力上限<li>准备阶段手牌数≤上限+1血</li><li>结束阶段本回合无人受过伤摸2牌并-1血</li>",
     'lit_shengjizg_info': `${get.poptip('lit_zhanshiV2')} 获得并修改“展示”：你也拥有后半段技能`,
 };

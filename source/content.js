@@ -6,10 +6,10 @@ export const updateContent = [
 	{ type: "players", data: [] },
 	{
 		type: "text", addText: true, data: `<div style="text-align: left;font-size: 16px;">
-① 临时更新，用于测试平衡性与检验新版本适配状况，正式更新约莫会在7月中下旬；<br>
-② 加入了新角色 ${get.poptip("lit_sunnan孙楠")}；<br>
-③ 调整了：<br>${get.poptip("lit_zhangshengjie张盛杰")}（优化了心毅因场上缺少判定牌导致后续爆发不足，伤害低的问题）、<br>${get.poptip("lit_boshu菠树")}（增加过牌量，并且将闺蜜效果调整得更加贴合易碎的需要）、<br>${get.poptip("lit_ritaRita")}（优化补牌能力）、<br>${get.poptip("lit_hupan胡畔")}（优化升级后的技能体验，避免两个技能联动过低，设计割裂且缺乏爽感）、<br>${get.poptip("lit_huxinyu胡馨予")}（技能组变动较大，主要从被动弃牌改为主动攻击，将0手牌的技能效果转为次要位置）、<br>${get.poptip("lit_hujunwei胡峻玮")}（优化卖血体验，加强其控制地位）、<br>${get.poptip("lit_qianbaocan钱保灿")}（避免过多判定打断技能体验，优化升级方向，将其定位放得更明确）；<br>
-④ 由于更新时间较紧张，故叁岛国战的进一步适配，以及叁岛测试的转正要延后了；<br>
+① 优化“叁岛幻化”模式：调整任务、灵力获取与击败奖励，优化技能选项刷新，完善死战阶段规则；同时改善联机状态同步、录像恢复及任务框拖动体验；<br>
+② 集中优化角色AI的出牌、选牌与目标判断，涉及近乎全体角色，包括“叁岛测试”角色；<br>
+③ 优化扩展内置的联机修改功能和在线更新功能，改善起始摸牌、手牌更换等联机流程，同时让手机端也支持在线更新；<br>
+④ 重构叁岛、国战及测试角色包的加载结构，将叁岛与测试技能按角色拆分；统一版本、更新日志与在线更新清单的构建流程，便于后续维护与发布。<br>
 <hr>
 <li>可在「选项」-「扩展」-「叁岛世界」中查看帮助文档<span style='opacity: 0.315;color:Red'> =)</span></li>
 </div>`

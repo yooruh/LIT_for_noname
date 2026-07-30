@@ -48,8 +48,8 @@ export const skill = {
                 },
             }).forResult();
 
-            const { bool, cards: [card], targets: [target] } = result;
-            if (!bool) return;
+            if (!result.bool) return;
+            const { cards: [card], targets: [target] } = result;
             event.result = {
                 bool: true,
                 cost_data: {

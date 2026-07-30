@@ -210,7 +210,7 @@
     "size": 16480
   },
   "source/character/lit/roles/zengpinjia.js": {
-    "size": 22706
+    "size": 22707
   },
   "source/character/lit/roles/zhangchi.js": {
     "size": 12782
@@ -225,7 +225,7 @@
     "size": 14170
   },
   "source/character/lit/roles/zigao.js": {
-    "size": 22113
+    "size": 22787
   },
   "source/character/lit/shared.js": {
     "size": 826
@@ -285,7 +285,7 @@
     "size": 7625
   },
   "source/content.js": {
-    "size": 4368
+    "size": 3905
   },
   "source/help.js": {
     "size": 3511
@@ -354,7 +354,7 @@
     "size": 8718
   },
   "style/html/update.html": {
-    "size": 13643
+    "size": 13406
   },
   "style/nncfg/android_wide11.0.nncfg": {
     "size": 3956
