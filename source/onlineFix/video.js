@@ -1,4 +1,4 @@
-import { game, ui, _status, ai, lib, get } from "../../../noname.js";
+import { game, ui, _status, ai, lib, get } from "../../../../noname.js";
 import { suiSet } from "../tool/suiSet.js";
 game.videoContent.addStyle = function ({ style, globalSkills }) {
 	const system = ui.create.system('<span style="color:skyblue;">录像暂停</span>', () => {

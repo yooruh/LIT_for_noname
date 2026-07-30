@@ -181,6 +181,84 @@ export const skill = {
             }
         },
     },
+    lit_shengjiqb: {
+        inherit: 'lit_sj',
+        derivation: 'lit_tiannaV2',
+    },
+    lit_shengjizsj: {
+        inherit: 'lit_sj',
+    },
+    lit_shengjizqy: {
+        inherit: 'lit_sj',
+        derivation: 'lit_zishaV2',
+    },
+    lit_shengjipjl: {
+        inherit: 'lit_sj',
+        derivation: 'lit_duilianV2',
+    },
+    lit_shengjiwxq: {
+        inherit: 'lit_sj',
+        derivation: ['lit_mianjuV2', 'lit_xiaochouV2'],
+    },
+    lit_shengjizg: {
+        inherit: 'lit_sj',
+        derivation: 'lit_zhanshiV2',
+    },
+    lit_shengjizpj: {
+        inherit: 'lit_sj',
+        derivation: 'lit_saohuaV2',
+    },
+    lit_shengjibs: {
+        inherit: 'lit_sj',
+        derivation: 'lit_yisuiV2',
+    },
+    lit_shengjilcm: {
+        inherit: 'lit_sj',
+        derivation: 'lit_jijinV2',
+    },
+    lit_shengjizmh: {
+        inherit: 'lit_sj',
+        derivation: 'lit_jianrenV2',
+    },
+    lit_shengjirita: {
+        inherit: 'lit_sj',
+        derivation: ['lit_dafang', 'lit_hengshuiti'],
+    },
+    lit_shengjihp: {
+        inherit: 'lit_sj',
+        derivation: 'lit_yigou',
+    },
+    lit_shengjilbx: {
+        inherit: 'lit_sj',
+    },
+    lit_shengjihxy: {
+        inherit: 'lit_sj',
+        derivation: 'lit_mimangV2',
+    },
+    lit_shengjihjw: {
+        inherit: 'lit_sj',
+        derivation: 'lit_wutongV2',
+    },
+    lit_shengjirs: {
+        inherit: 'lit_sj',
+        derivation: 'lit_qixuV2',
+    },
+    lit_shengjijhx: {
+        inherit: 'lit_sj',
+        derivation: 'lit_shanliangV2',
+    },
+    lit_shengjiqbc: {
+        inherit: 'lit_sj',
+        derivation: 'lit_chushouV2',
+    },
+    lit_shengjizc: {
+        inherit: 'lit_sj',
+        derivation: 'lit_shuxinV2',
+    },
+    lit_shengjiyxl: {
+        inherit: 'lit_sj',
+        derivation: 'lit_juji',
+    },
 };
 
 export const translate = {

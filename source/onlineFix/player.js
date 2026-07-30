@@ -1,4 +1,4 @@
-import { lib, game, ui, get, ai, _status } from '../../../noname.js';
+import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
 
 lib.element.player.chooseButtonAndWriteNameOL = function(list, callback, ai) {
 	let next = game.createEvent("chooseButtonAndWriteNameOL");

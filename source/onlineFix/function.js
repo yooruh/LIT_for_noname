@@ -1,4 +1,4 @@
-import { lib, game, ui, get, ai, _status } from '../../../noname.js';
+import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
 //这个文件是写给主机执行的代码
 
 import { config } from '../config.js'

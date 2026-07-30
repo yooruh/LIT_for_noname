@@ -4,7 +4,7 @@
  * 统一导出所有角色文件需要的基础依赖，避免每个角色文件重复 3 行 import。
  *
  * 用法 (在 roles/*.js 中):
- *   import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
+ *   import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
  */
 
 // 游戏引擎核心 API

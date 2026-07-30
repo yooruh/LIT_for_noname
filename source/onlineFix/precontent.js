@@ -1,4 +1,4 @@
-import { game, ui, _status, ai, lib, get } from "../../../noname.js";
+import { game, ui, _status, ai, lib, get } from "../../../../noname.js";
 import { suiSet } from "../tool/suiSet.js";
 
 ui.create.buttonPresets.vcardx = suiSet.vcardx;

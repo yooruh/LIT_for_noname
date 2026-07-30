@@ -57,9 +57,19 @@ for (const name of ROLE_FILES) {
 }
 export const characterIntro = _characterIntro;
 
-// characterReplace / perfectPair：直接从 role 文件合并
+// characterReplace：直接从 role 文件合并
 export const characterReplace = _merge('characterReplace');
-export const perfectPair = _merge('perfectPair');
+
+// perfectPair：role 文件仅声明当前角色的配对角色列表
+const _perfectPair = {};
+for (const name of ROLE_FILES) {
+    const pairs = _roles[name].perfectPair;
+    const charName = _charNames[name];
+    if (Array.isArray(pairs) && charName) {
+        _perfectPair[charName] = pairs;
+    }
+}
+export const perfectPair = _perfectPair;
 
 // ── 包级别全局配置 ──
 export const connectBanned = [];
