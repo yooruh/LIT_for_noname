@@ -5,11 +5,7 @@ import basic from '../tool/basic.js';
 function sdhhResetMissionUI() {
     if (!ui.sandaohuanhua) return;
     if (ui.sandaohuanhua?._docHandlers) {
-        const handlers = ui.sandaohuanhua._docHandlers;
-        document.removeEventListener("mouseup", handlers.mouseUp);
-        document.removeEventListener("mousemove", handlers.mouseMove);
-        document.removeEventListener("touchend", handlers.touchEnd);
-        document.removeEventListener("touchmove", handlers.touchMove);
+        ui.sandaohuanhua.clearDocumentHandlers?.();
     }
     game.saveExtensionConfig('sandaohuanhua', 'uiPos', null);
     game.saveExtensionConfig('sandaohuanhua', 'uiFixed', false);
@@ -218,19 +214,16 @@ export let info = {
             '主要目标：活到最后一个便可获胜<br>' +
             '次要目标：随机分配，于正上方显示（杀伤xx，保护xx），判乾坤八卦后重置；保护目标死亡时，随机失去4张牌<br>' +
             '<br>' +
-            '获得灵力值：<br>' +
-            '(1)七号位和八号位起始1点，六七八号位多一牌<br>' +
-            '(2)每轮+1点灵力值<br>' +
-            '(3)击败1人+1点灵力值+1牌，为杀伤目标，则+3点灵力值，对保护目标用桃，+1点灵力值<br>' +
-            '使用灵力值：<br>' +
-            '(1)回合开始时可-2~3点灵力值获得新技能(3选1或6选1，超过3个需弃一个)<br>' +
-            '(2)选择新技能时可消耗一点灵力值刷新技能选项<br>' +
-            '(3)出牌阶段限一次，可将任意数量的灵力值转等数量的牌<br><br>' +
+            '灵力值（上限5点）：<br>' +
+            '(1)七、八号位起始+1；死战前每轮+1<br>' +
+            '(2)对杀伤目标每造成1点伤害+1；击败非NPC时，非杀伤/杀伤目标另+2/+3，并摸1/2张牌<br>' +
+            '(3)对保护目标使用【桃】+1；兑卦令全场+1<br>' +
+            '使用：回合开始时消耗2/3点进行三/六选一，选择时可额外消耗1点刷新；出牌阶段每1点灵力可换1张牌<br><br>' +
             '三个起始技能任选一个：<br>' +
             '牺牲：每名其他角色的回合限一次，可将两张牌当做【桃】使用<br>' +
             '熟虑：出牌阶段限一次，可以弃置1/2张牌并摸等量张牌<br>' +
             '先登：锁定技；出牌阶段，使用的首张杀不计次数且无距离限制<br>' +
-            '<li>场上存活人数（不计宝箱和女子）≤4人时，进入死战：不再获得灵力值，次要目标消失，若角色在自己的回合内没有造成伤害，则-1体力<br><br>' +
+            '<li>场上存活人数（不计宝箱和女子）≤4人时，进入死战：取消任务且不再每轮获得灵力；击败非NPC仍+2，回合内未造成伤害则失去1点体力并+1，兑卦仍生效<br><br>' +
             '二、乾坤八卦<br>' +
             '有玩家阵亡的回合结束后，判一次乾坤八卦，不同卦象效果不同<br>' +
             '离：全场-1体力<br>' +
@@ -287,8 +280,7 @@ export let info = {
                                 const target = event.target;
                                 target.fixSkillH();
                                 target.removeSkillH(target.skillH.randomGet());
-                                const skills = lib.sandaohuanhua.skills;
-                                skills.randomSort();
+                                const skills = lib.sandaohuanhua.skills.slice().randomSort();
                                 for (const skill of skills) {
                                     if (!target.skillH.includes(skill)) {
                                         target.addSkillH(skill);
@@ -352,8 +344,8 @@ export let info = {
                             },
                             async cost(event, trigger, player) {
                                 player.fixSkillH();
-                                const allSkills = lib.sandaohuanhua.skills.randomSort();
-                                const availableSkills = allSkills.filter(s => !player.skillH.includes(s));
+                                const availableSkills = lib.sandaohuanhua.skills.slice().randomSort()
+                                    .filter(skill => !player.skillH.includes(skill));
                                 const skillNames = player.skillH.map(get.poptip).join(" ");
                                 const basePrompt = `当前已拥有技能：${skillNames}`;
 
@@ -384,20 +376,13 @@ export let info = {
                                 let selectedSkill = null;
 
                                 while (true) {
-                                    let candidates = availableSkills.slice(candidateOffset, candidateOffset + numCandidates);
-
-                                    if (candidates.length < numCandidates) {
-                                        const refreshed = lib.sandaohuanhua.skills.randomSort();
-                                        const newAvailable = refreshed.filter(s => !player.skillH.includes(s));
-                                        candidates = newAvailable.slice(0, numCandidates);
-                                    }
-
+                                    const candidates = availableSkills.slice(candidateOffset, candidateOffset + numCandidates);
                                     if (candidates.length === 0) {
                                         player.popup("技能耗尽");
                                         return;
                                     }
 
-                                    const canRefresh = player.storage._lingli >= baseCost + 1;
+                                    const canRefresh = player.storage._lingli >= baseCost + 1 && candidateOffset + candidates.length < availableSkills.length;
                                     const choices = canRefresh ? [...candidates, "刷新"] : candidates;
 
                                     const chooseSkill = function (player, choicesList, skillsList) {
@@ -407,11 +392,13 @@ export let info = {
                                         return next;
                                     };
 
-                                    const chooseResult = await game.chooseAnyOL ?
-                                        await game.chooseAnyOL([player], chooseSkill, [choices, candidates]).forResult() :
-                                        await chooseSkill(player, choices, candidates).forResult().then(r => new Map([[player, r]]));
-
-                                    const result = chooseResult.get ? chooseResult.get(player) : chooseResult;
+                                    let result;
+                                    if (_status.connectMode && game.chooseAnyOL) {
+                                        const chooseResult = await game.chooseAnyOL([player], chooseSkill, [choices, candidates]).forResult();
+                                        result = chooseResult.get(player);
+                                    } else {
+                                        result = await chooseSkill(player, choices, candidates).forResult();
+                                    }
                                     const control = result ? result.control : "cancel2";
 
                                     if (control === "刷新") {
@@ -513,9 +500,9 @@ export let info = {
                             },
                             async content(event, trigger, player) {
                                 if (_status._aozhan && !player.getStat("damage") && !player.name.startsWith("sdhh_")) {
-                                    player.loseHp();
+                                    await player.loseHp();
                                     player.changeLingli(1);
-                                    game.log(player, "本回合内未造成伤害，触发死战模式惩罚");
+                                    game.log(player, "本回合内未造成伤害，失去1点体力并获得1点灵力");
                                 }
 
                                 if (trigger._lastDead) {
@@ -587,8 +574,7 @@ export let info = {
                                 if (source.skillH.length === 3) {
                                     source.removeSkillH(source.skillH.randomGet());
                                 }
-                                const skills = lib.sandaohuanhua.skills;
-                                skills.randomSort();
+                                const skills = lib.sandaohuanhua.skills.slice().randomSort();
                                 for (const skill of skills) {
                                     if (!source.skillH.includes(skill)) {
                                         source.addSkillH(skill);
@@ -610,8 +596,7 @@ export let info = {
                                 if (source.skillH.length === 3) {
                                     source.removeSkillH(source.skillH.randomGet());
                                 }
-                                const skills = lib.sandaohuanhua.skills;
-                                skills.randomSort();
+                                const skills = lib.sandaohuanhua.skills.slice().randomSort();
                                 for (const skill of skills) {
                                     if (!source.skillH.includes(skill)) {
                                         source.addSkillH(skill);
@@ -730,10 +715,14 @@ export let info = {
                 },
                 eltp: {
                     addSkillH(skill) {
+                        this.skillH ??= [];
+                        if (!skill || this.skillH.includes(skill)) return;
                         this.skillH.add(skill);
-                        this.addSkillLog.apply(this, arguments);
+                        this.addSkillLog(skill);
                     },
                     removeSkillH(skill) {
+                        this.skillH ??= [];
+                        if (!skill || !this.skillH.includes(skill)) return;
                         this.skillH.remove(skill);
                         game.log(this, "失去了技能", "#g【" + get.translation(skill) + "】");
                         this.removeSkill(skill);
@@ -762,7 +751,8 @@ export let info = {
                         return list;
                     },
                     dieAfter2(source) {
-                        if (source && this.name.indexOf("sdhh_") != 0) {
+                        if (this.name.indexOf("sdhh_") === 0) return;
+                        if (source) {
                             const isKillTarget = source._toKill === this;
                             game.log(source, isKillTarget ? "击杀目标成功" : "完成补刀");
                             source.popup(isKillTarget ? "击杀成功" : "补刀成功");
@@ -784,6 +774,7 @@ export let info = {
                     logAi() { },
                     changeLingli(num) {
                         if (typeof num != "number") num = 1;
+                        this.storage ??= {};
                         if (typeof this.storage._lingli != "number") this.storage._lingli = 0;
 
                         if (num > 0) {
@@ -813,31 +804,31 @@ export let info = {
 
                         const baguaNames = ["离", "坎", "乾", "震", "兑", "艮", "巽", "坤"];
                         const logArg = ["#g乾坤八卦·" + baguaNames[type - 1], "：<br>"];
-                        game.me.$fullscreenpop(logArg[0].slice(2), get.groupnature(deadPlayer.group, "raw"));
-                        game.delay(1.5);
+                        game.broadcastAll((text, nature) => game.me?.$fullscreenpop(text, nature), logArg[0].slice(2), get.groupnature(deadPlayer.group, "raw"));
+                        await game.delay(1.5);
 
                         const effects = {
                             1: async () => {
                                 logArg.push("#r每人失去1点体力");
                                 game.log.apply(this, logArg);
-                                game.countPlayer(async p => await p.loseHp());
+                                for (const p of game.filterPlayer()) await p.loseHp();
                             },
                             2: async () => {
                                 logArg.push("#y每人摸2张牌");
                                 game.log.apply(this, logArg);
-                                game.countPlayer(async p => await p.draw(2, "nodelay"));
+                                for (const p of game.filterPlayer()) await p.draw(2, "nodelay");
                             },
                             3: async () => {
                                 logArg.addArray([`上一位阵亡玩家（`, `#b${get.translation(deadPlayer)}`, `）3血复活，摸3牌`]);
                                 game.log.apply(this, logArg);
-                                await deadPlayer.revive(3);
+                                await deadPlayer.reviveEvent(3);
                                 await deadPlayer.draw(3);
                             },
                             4: async () => {
                                 logArg.push("#r每人随机失去1张牌");
                                 game.log.apply(this, logArg);
                                 let lose_list = [];
-                                game.countPlayer(async p => {
+                                game.countPlayer(p => {
                                     const he = p.getCards("he");
                                     if (he.length) lose_list.push([p, [he.randomGet()]]);
                                 });
@@ -846,19 +837,18 @@ export let info = {
                             5: async () => {
                                 logArg.push("#y每人+1灵力");
                                 game.log.apply(this, logArg);
-                                game.countPlayer(p => p.changeLingli(1));
+                                for (const p of game.filterPlayer()) p.changeLingli(1);
                             },
                             6: async () => {
                                 logArg.push("#y每人获得1张装备牌");
                                 game.log.apply(this, logArg);
                                 const cards = [];
-                                game.countPlayer(async p => {
+                                for (const p of game.filterPlayer()) {
                                     const card = get.cardPile(c => !cards.includes(c) && get.type(c) === "equip");
-                                    if (card) {
-                                        cards.push(card);
-                                        await p.gain(card);
-                                    }
-                                });
+                                    if (!card) continue;
+                                    cards.push(card);
+                                    await p.gain(card);
+                                }
                             },
                             7: async () => {
                                 logArg.push("#y每人获得1个技能");
@@ -866,7 +856,7 @@ export let info = {
                                 game.countPlayer(p => {
                                     p.fixSkillH();
                                     if (p.skillH?.length < 3) {
-                                        const skills = lib.sandaohuanhua.skills.randomSort();
+                                        const skills = lib.sandaohuanhua.skills.slice().randomSort();
                                         for (const skill of skills) {
                                             if (!p.skillH.includes(skill)) {
                                                 p.addSkillH(skill);
@@ -882,9 +872,10 @@ export let info = {
                                 logArg.addArray([`变为`, `#b${get.translation(initTarget)}`, `复活`]);
                                 game.log.apply(this, logArg);
 
-                                await deadPlayer.clearSkills(true);
-                                await deadPlayer.reinit(deadPlayer.name, initTarget, [lib.character[initTarget].hp, lib.character[initTarget].maxHp]);
-                                await deadPlayer.revive(deadPlayer.maxHp, false);
+                                deadPlayer.clearSkills(true);
+                                deadPlayer.skillH = [];
+                                deadPlayer.reinit(deadPlayer.name, initTarget, [lib.character[initTarget].hp, lib.character[initTarget].maxHp]);
+                                await deadPlayer.reviveEvent(deadPlayer.maxHp, false);
                                 deadPlayer.addSkill("sdhh_noCard");
                             }
                         };
@@ -988,10 +979,11 @@ export let info = {
                                 dragState.dragStartY = y;
                                 container.style.transition = 'none';
 
-                                document.addEventListener('mouseup', this.end);
-                                document.addEventListener('mousemove', this.move);
-                                document.addEventListener('touchend', this.end);
-                                document.addEventListener('touchmove', this.move);
+                                container.clearDocumentHandlers();
+                                document.addEventListener('mouseup', container._docHandlers.mouseUp);
+                                document.addEventListener('mousemove', container._docHandlers.mouseMove);
+                                document.addEventListener('touchend', container._docHandlers.touchEnd);
+                                document.addEventListener('touchmove', container._docHandlers.touchMove, { passive: false });
                             },
 
                             move(e) {
@@ -1027,10 +1019,7 @@ export let info = {
                             end(e) {
                                 if (!dragState.active) return;
                                 dragState.active = false;
-                                document.removeEventListener('mouseup', this.end);
-                                document.removeEventListener('mousemove', this.move);
-                                document.removeEventListener('touchend', this.end);
-                                document.removeEventListener('touchmove', this.move);
+                                container.clearDocumentHandlers();
                                 container.style.transition = '';
 
                                 if (dragState.isFixed) {
@@ -1049,12 +1038,23 @@ export let info = {
                             }
                         };
 
-                        // 绑定事件
+                        container._docHandlers = {
+                            mouseUp: e => DragHandler.end(e),
+                            mouseMove: e => DragHandler.move(e),
+                            touchEnd: e => DragHandler.end(e),
+                            touchMove: e => DragHandler.move(e),
+                        };
+                        container.clearDocumentHandlers = () => {
+                            const handlers = container._docHandlers;
+                            document.removeEventListener('mouseup', handlers.mouseUp);
+                            document.removeEventListener('mousemove', handlers.mouseMove);
+                            document.removeEventListener('touchend', handlers.touchEnd);
+                            document.removeEventListener('touchmove', handlers.touchMove);
+                        };
+
                         const events = [
-                            ['touchstart', (e) => DragHandler.start(e), { passive: false }],
-                            ['touchend', (e) => DragHandler.end(e), { passive: false }],
-                            ['touchmove', (e) => DragHandler.move(e), { passive: false }],
-                            ['mousedown', (e) => DragHandler.start(e)]
+                            ['touchstart', e => DragHandler.start(e), { passive: false }],
+                            ['mousedown', e => DragHandler.start(e)]
                         ];
                         events.forEach(([type, handler, opts]) =>
                             container.addEventListener(type, handler, opts)
@@ -1143,7 +1143,7 @@ export let info = {
                             const skillInfo = get.info(this.link);
                             if (!skillInfo?.derivation) return;
 
-                            const derivationList = Array.isArray(info.derivation) ? info.derivation : [info.derivation];
+                            const derivationList = Array.isArray(skillInfo.derivation) ? skillInfo.derivation : [skillInfo.derivation];
                             let newContent = derivationList.map(key => {
                                 const content = get.translation(key + "_info");
                                 if (!content) return '';

@@ -174,22 +174,22 @@
     "size": 11835
   },
   "source/character/lit/roles/jianghaixu.js": {
-    "size": 16421
+    "size": 16528
   },
   "source/character/lit/roles/lanboxun.js": {
     "size": 6218
   },
   "source/character/lit/roles/linmiao.js": {
-    "size": 7699
+    "size": 7395
   },
   "source/character/lit/roles/liuchenmu.js": {
-    "size": 11188
+    "size": 11178
   },
   "source/character/lit/roles/pangjianlong.js": {
-    "size": 11054
+    "size": 10983
   },
   "source/character/lit/roles/qb.js": {
-    "size": 15838
+    "size": 15885
   },
   "source/character/lit/roles/qianbaocan.js": {
     "size": 9325
@@ -225,7 +225,7 @@
     "size": 14170
   },
   "source/character/lit/roles/zigao.js": {
-    "size": 22115
+    "size": 22113
   },
   "source/character/lit/shared.js": {
     "size": 815
@@ -237,7 +237,7 @@
     "size": 837
   },
   "source/character/lit/_shengji.js": {
-    "size": 8701
+    "size": 7810
   },
   "source/character/lit.js": {
     "size": 1288
@@ -258,22 +258,22 @@
     "size": 2658
   },
   "source/character/test/roles/9hupan.js": {
-    "size": 8292
+    "size": 8255
   },
   "source/character/test/roles/9zengpinjia.js": {
-    "size": 11239
+    "size": 10873
   },
   "source/character/test/roles/9zhengmohan.js": {
-    "size": 8624
+    "size": 8603
   },
   "source/character/test/roles/9zhongyutong.js": {
-    "size": 13734
+    "size": 13714
   },
   "source/character/test/roles/pengliying.js": {
     "size": 10139
   },
   "source/character/test/roles/wangsiyuan.js": {
-    "size": 6193
+    "size": 4448
   },
   "source/character/test/shared.js": {
     "size": 509
@@ -285,16 +285,16 @@
     "size": 7625
   },
   "source/content.js": {
-    "size": 4380
+    "size": 4368
   },
   "source/help.js": {
     "size": 3511
   },
   "source/mode/sandaohuanhua.js": {
-    "size": 63048
+    "size": 59651
   },
   "source/mode/sandaohuanhua_brawl.js": {
-    "size": 72813
+    "size": 73018
   },
   "source/onlineFix/content.js": {
     "size": 4697
@@ -351,10 +351,10 @@
     "size": 16969
   },
   "style/html/sandaohuanhua.html": {
-    "size": 9104
+    "size": 8718
   },
   "style/html/update.html": {
-    "size": 13953
+    "size": 13643
   },
   "style/nncfg/android_wide11.0.nncfg": {
     "size": 3956

@@ -152,7 +152,7 @@ function getAvailableCharacters(characterLimit) {
 }
 
 export default () => {
-	return {
+	const mode = {
 		name: "../extension/叁岛世界/source/mode/sandaohuanhua",
 		splash: "ext:叁岛世界/image/splash/sandaohuanhua.png",
 
@@ -213,11 +213,7 @@ export default () => {
 				onclick() {
 					// 强制清理 document 级别事件监听
 					if (ui.sandaohuanhua?._docHandlers) {
-						const handlers = ui.sandaohuanhua._docHandlers;
-						document.removeEventListener("mouseup", handlers.mouseUp);
-						document.removeEventListener("mousemove", handlers.mouseMove);
-						document.removeEventListener("touchend", handlers.touchEnd);
-						document.removeEventListener("touchmove", handlers.touchMove);
+						ui.sandaohuanhua.clearDocumentHandlers?.();
 					}
 
 					// 清除存储的位置和固定状态
@@ -287,27 +283,18 @@ export default () => {
 
 		// ==================== 初始化 ====================
 		startBefore() {
-			// lib初始化
 			get.sdhhInit();
 
-			// 录像初始化支持
 			if (!game.videoContent._sandaohuanhua_patched) {
 				game.videoContent._sandaohuanhua_patched = true;
-
-				// 保存原方法
-				const originalAddSkill = lib.element.player.addSkill;
-				const originalRemoveSkill = lib.element.player.removeSkill;
 				const originalInit = game.videoContent.init;
-				const originalArrangeLib = game.videoContent.arrangeLib;
 
 				game.videoContent.init = function (players) {
-					if (lib.config.mode !== '../extension/叁岛世界/source/mode/sandaohuanhua') {
-						if (originalInit) return originalInit.apply(this, arguments);
-						return;
+					if (lib.config.mode !== lib.lit.sdhh_connectName) {
+						return originalInit?.apply(this, arguments);
 					}
-
-					if (!players || !players.length) {
-						console.error('叁岛幻化录像初始化失败：玩家数据为空');
+					if (!players?.length) {
+						console.error("叁岛幻化录像初始化失败：玩家数据为空");
 						return;
 					}
 
@@ -315,163 +302,66 @@ export default () => {
 					ui.arena.classList.add("video");
 					game.players.length = 0;
 					game.dead.length = 0;
-
+					game.playerMap = {};
 					ui.create.players(players.length);
 					game.me = game.players[0];
+					ui.handcards1 = game.me.node.handcards1;
+					ui.handcards2 = game.me.node.handcards2;
+					ui.handcards1Container.appendChild(ui.handcards1);
+					ui.handcards2Container.appendChild(ui.handcards2);
 
-					if (game.me) {
-						ui.handcards1 = game.me.node.handcards1;
-						ui.handcards2 = game.me.node.handcards2;
-						ui.handcards1Container.appendChild(ui.handcards1);
-						ui.handcards2Container.appendChild(ui.handcards2);
-					}
-
-					players.forEach((info, index) => {
-						const player = game.players[index];
-						if (!player) return;
-
-						const position = info.position !== undefined ? info.position : index;
-						player.dataset.position = position;
-
-						if (info.nickname) {
-							player.nickname = info.nickname;
-							player.setNickname();
-						}
-
-						if (info.name1 && info.name2) {
-							player.init(info.name1, info.name2);
-						} else if (info.name1) {
-							player.init(info.name1);
-						} else if (info.name) {
-							player.init(info.name);
-						}
-
-						if (info.identity) {
-							player.identity = info.identity;
-							player.setIdentity(info.identity, player.group);
-						}
-
-						if (info.lingli !== undefined) {
-							player.storage._lingli = info.lingli;
-							player.markSkill("_lingli");
-						}
-
-						if (info.lingliSkill && info.lingliSkill.length) {
-							player.lingliSkill = info.lingliSkill.slice(0);
-							info.lingliSkill.forEach(skill => {
-								if (!player.hasSkill(skill)) player.addSkill(skill);
-							});
-						}
-
-						game.playerMap[position] = player;
+					players.forEach((playerInfo, index) => {
+						const current = game.players[index];
+						const position = playerInfo.position ?? index;
+						current.dataset.position = position;
+						current.playerid = playerInfo.playerid || String(position);
+						current.nickname = playerInfo.nickname || "";
+						current.setNickname();
+						current.init(playerInfo.name1 || playerInfo.name, playerInfo.name2);
+						current.identity = playerInfo.identity;
+						current._hSeat = playerInfo.hSeat;
+						current.setIdentity();
+						current.lingliSkill = (playerInfo.lingliSkill || []).slice();
+						current.storage._lingli = playerInfo.lingli || 0;
+						current.lingliSkill.forEach(skill => current.addSkill(skill));
+						current.markSkill("_lingli");
+						game.playerMap[position] = current;
 					});
-
+					players.forEach((playerInfo, index) => {
+						const current = game.players[index];
+						current._toKill = game.playerMap[playerInfo.toKillPos];
+						current._toSave = game.playerMap[playerInfo.toSavePos];
+					});
 					ui.updatehl();
-					// 建立 playerMap 方便引用恢复
-					game.playerMap = {};
-					game.players.forEach(p => {
-						game.playerMap[parseInt(p.dataset.position)] = p;
-					});
-
-					// 从录像数据恢复每个玩家的任务目标
-					players.forEach((info, index) => {
-						const player = game.players[index];
-						if (player && info.toKillPos !== undefined && info.toSavePos !== undefined) {
-							player._toKill = game.playerMap[info.toKillPos];
-							player._toSave = game.playerMap[info.toSavePos];
-						}
-					});
-					get.initMissionUI();
-					game.randomMission();
+					game.updateMissionUI();
 				};
-				game.videoContent.sdhh_mission = function (data) {
-					if (!game.playerMap) return;
 
+				game.videoContent.sdhh_mission = function (data) {
 					if (data.isAozhan) {
 						_status._aozhan = true;
-						if (ui.sandaohuanhua) ui.sandaohuanhua._textSpan.innerHTML = "死战模式";
-					} else if (data.toKillPos !== undefined && game.me) {
-						// 更新当前玩家的任务目标
-						game.me._toKill = game.playerMap[data.toKillPos];
-						game.me._toSave = game.playerMap[data.toSavePos];
-						const me = game.me;
-						if (ui.sandaohuanhua) {
-							ui.sandaohuanhua._textSpan.innerHTML =
-								`杀伤<span style='color:#ff5f56'>${get.translation(me._toKill)}(${me._toKill.identity})</span>，` +
-								`保护<span style='color:#98fb98'>${get.translation(me._toSave)}(${me._toSave.identity})</span>`;
-						}
+						game.updateMissionUI();
+						return;
 					}
+					if (!game.playerMap || !game.me) return;
+					game.me._toKill = game.playerMap[data.toKillPos];
+					game.me._toSave = game.playerMap[data.toSavePos];
+					game.updateMissionUI();
 				};
-				game.videoContent.arrangeLib = function (content) {
-					if (lib.config.mode === '../extension/叁岛世界/source/mode/sandaohuanhua') {
-						if (content && content.skill) {
-							Object.assign(lib.skill, content.skill);
-						}
-						if (content && content.character) {
-							Object.assign(lib.character, content.character);
-						}
-					}
-					if (originalArrangeLib) {
-						return originalArrangeLib.apply(this, arguments);
-					}
+				game.videoContent.sdhh_addLingliSkill = function (player, skill) {
+					player.lingliSkill ??= [];
+					player.lingliSkill.add(skill);
+					player.addSkill(skill);
 				};
-				// skill录像处理
-				game.videoContent.sdhh_addSkill = function (player, skill) {
-					if (!player.hasSkill(skill)) {
-						player.addSkill(skill);
-					}
-				};
-				game.videoContent.sdhh_removeSkill = function (player, skill) {
-					if (player.hasSkill(skill)) {
-						player.removeSkill(skill);
-					}
-				};
-
-				// 重写 addSkill
-				lib.element.player.addSkill = function (skill) {
-					const result = originalAddSkill.apply(this, arguments);
-					if (this.hasSkill(skill)) {
-						game.addVideo('sdhh_addSkill', this, skill);
-					}
-					return result;
-				};
-				// 重写 removeSkill
-				lib.element.player.removeSkill = function (skill) {
-					game.addVideo('sdhh_removeSkill', this, skill);
-					return originalRemoveSkill.apply(this, arguments);
+				game.videoContent.sdhh_removeLingliSkill = function (player, skill) {
+					player.lingliSkill?.remove(skill);
+					player.removeSkill(skill);
 				};
 			}
 		},
-		// 联机重进
 		onreinit() {
+			Object.assign(game, mode.game);
 			get.sdhhInit();
-			get.initMissionUI();
-
-			let elapsed = 0;
-			const timer = setInterval(() => {
-				elapsed += 100;
-
-				// 10秒超时退出
-				if (elapsed >= 10000) {
-					clearInterval(timer);
-					return;
-				}
-				if (get.playerx().length <= 0) return;
-
-				// 检测到玩家存在后执行
-				clearInterval(timer);
-				const me = game.me;
-				if (get.playerx().length <= 4 && !_status._aozhan) {
-					_status._aozhan = true;
-					if (ui.sandaohuanhua?._textSpan) {
-						ui.sandaohuanhua._textSpan.innerHTML = "死战模式";
-					}
-				} else if (me?._toKill && me?._toSave && ui.sandaohuanhua?._textSpan) {
-					ui.sandaohuanhua._textSpan.innerHTML =
-						`杀伤<span style='color:#ff5f56'>${get.translation(me._toKill)}(${me._toKill.identity})</span>，` +
-						`保护<span style='color:#98fb98'>${get.translation(me._toSave)}(${me._toSave.identity})</span>`;
-				}
-			}, 100);
+			GLOBAL_SKILLS.forEach(skill => game.addGlobalSkill(skill));
 		},
 
 		// ==================== 游戏流程 ====================
@@ -504,62 +394,11 @@ export default () => {
 				get.initMissionUI();
 				await game.chooseCharacter();
 			} else {
-				// 房间等待区
-				const playerNumber = lib.configOL.player_number || 8;
+				const playerNumber = parseInt(lib.configOL.player_number || 8);
 				await game.waitForPlayer(() => {
-					lib.configOL.number = parseInt(playerNumber);
+					lib.configOL.number = Math.max(2, playerNumber);
 				});
-				if (lib.configOL.number < 2) lib.configOL.number = 8;
-
-				game.randomMapOL();
-				if (!lib.playerOL || Object.keys(lib.playerOL).length === 0) {
-					await new Promise(resolve => {
-						const check = setInterval(() => {
-							if (lib.playerOL && Object.keys(lib.playerOL).length > 0) {
-								clearInterval(check);
-								resolve();
-							}
-						}, 50);
-						setTimeout(() => {
-							clearInterval(check);
-							resolve();
-						}, 3000);
-					});
-				}
-
-				if (!game.players || game.players.length === 0) {
-					if (lib.playerOL && Object.keys(lib.playerOL).length > 0) {
-						const players = Object.values(lib.playerOL);
-						players.sort((a, b) => (a.seatNum || 0) - (b.seatNum || 0));
-						game.players = players;
-						game.playerMap = {};
-
-						players.forEach((p, i) => {
-							if (!p.dataset) p.dataset = {};
-							p.dataset.position = i;
-							game.playerMap[i] = p;
-						});
-
-						if (!game.me || !players.includes(game.me)) {
-							const myPlayerId = game.onlineID || (window.lib && lib.config && lib.config.id);
-							if (myPlayerId && lib.playerOL[myPlayerId]) {
-								game.me = lib.playerOL[myPlayerId];
-							} else {
-								game.me = players.find(p => p.isMe) || players[0];
-							}
-						}
-					} else {
-						console.error("联机模式：lib.playerOL 为空，无法初始化");
-						return;
-					}
-				}
-
-				// 接onreinit()
-				game.broadcast(() => {
-					get.sdhhInit();
-					get.initMissionUI();
-				});
-				get.initMissionUI();
+				await game.randomMapOL();
 			}
 
 			GLOBAL_SKILLS.forEach(skill => game.addGlobalSkill(skill));
@@ -581,12 +420,14 @@ export default () => {
 			if (game.players && game.players.length > 0) {
 				const players = get.players(lib.sort.position);
 				const info = players.map(p => ({
-					name: p.name1,
+					name: p.name,
+					name1: p.name1,
 					name2: p.name2,
+					playerid: p.playerid,
 					identity: p.identity,
-					nickname: p.nickname || (p.node && p.node.nameol ? p.node.nameol.innerHTML : ''),
+					nickname: p.nickname || p.node?.nameol?.innerHTML || '',
 					position: parseInt(p.dataset.position),
-					_hSeat: p._hSeat,
+					hSeat: p._hSeat,
 					lingli: p.storage ? (p.storage._lingli || 0) : 0,
 					lingliSkill: p.lingliSkill ? p.lingliSkill.slice(0) : [],
 					toKillPos: p._toKill ? parseInt(p._toKill.dataset.position) : undefined,
@@ -636,31 +477,45 @@ export default () => {
 
 		game: {
 			getState() {
-				const state = {};
-				for (const i in lib.playerOL) {
-					const player = lib.playerOL[i];
-					state[i] = {
-						_toKill: { ...player._toKill },
-						_toSave: { ...player._toSave },
+				const players = {};
+				for (const id in lib.playerOL) {
+					const player = lib.playerOL[id];
+					players[id] = {
+						toKill: player._toKill?.playerid,
+						toSave: player._toSave?.playerid,
 						identity: player.identity,
-						lingli: player.storage._lingli || 0,
-						lingliSkill: player.lingliSkill || [],
+						hSeat: player._hSeat,
+						lingli: player.storage?._lingli || 0,
+						lingliSkill: (player.lingliSkill || []).slice(),
 					};
 				}
-				return state;
+				return { isAozhan: !!_status._aozhan, players };
 			},
 
 			updateState(state) {
-				for (const i in state) {
-					const player = lib.playerOL[i];
-					if (player) {
-						player._toKill = state[i]._toKill;
-						player._toSave = state[i]._toSave;
-						player.identity = state[i].identity;
-						player.storage._lingli = state[i].lingli;
-						player.lingliSkill = state[i].lingliSkill || [];
-					}
+				const players = state?.players || state || {};
+				for (const id in players) {
+					const current = lib.playerOL[id];
+					if (!current) continue;
+					const info = players[id];
+					current.identity = info.identity;
+					current._hSeat = info.hSeat;
+					current.storage ??= {};
+					current.storage._lingli = info.lingli || 0;
+					const previousSkills = current.lingliSkill || [];
+					const nextSkills = (info.lingliSkill || []).slice();
+					previousSkills.filter(skill => !nextSkills.includes(skill)).forEach(skill => current.removeSkill(skill));
+					current.lingliSkill = nextSkills;
+					nextSkills.forEach(skill => {
+						if (!current.hasSkill(skill)) current.addSkill(skill);
+					});
+					current._toKill = lib.playerOL[info.toKill];
+					current._toSave = lib.playerOL[info.toSave];
+					current.setIdentity();
+					current.markSkill("_lingli");
 				}
+				_status._aozhan = !!state?.isAozhan;
+				game.updateMissionUI();
 			},
 
 			getRoomInfo(uiintro) {
@@ -678,6 +533,20 @@ export default () => {
 				let str = get.translation(game.me.name);
 				if (game.me.name2) str += "/" + get.translation(game.me.name2);
 				return [str, "叁岛幻化"];
+			},
+
+			updateMissionUI() {
+				if (_status._aozhan) {
+					if (ui.sandaohuanhua?._textSpan) ui.sandaohuanhua._textSpan.innerHTML = "死战模式";
+					return;
+				}
+				get.initMissionUI();
+				const me = game.me;
+				if (me?._toKill && me?._toSave && ui.sandaohuanhua?._textSpan) {
+					ui.sandaohuanhua._textSpan.innerHTML =
+						`杀伤<span style='color:#ff5f56'>${get.translation(me._toKill)}(${me._toKill.identity})</span>，` +
+						`保护<span style='color:#98fb98'>${get.translation(me._toSave)}(${me._toSave.identity})</span>`;
+				}
 			},
 
 			showIdentity() {
@@ -796,6 +665,10 @@ export default () => {
 						}
 					}, map);
 					const characterlist = lib.sandaohuanhua.characterlist;
+					game.broadcastAll(() => {
+						get.sdhhInit();
+						get.initMissionUI();
+					});
 
 					// ==================== 选择角色 ====================
 					const playerCharChoices = {};
@@ -961,14 +834,14 @@ export default () => {
 					// 调用新函数完成分配
 					assignMissions(assigners, targets);
 
-					let map = {};
-					for (let i in lib.playerOL) {
-						map[i] = [lib.playerOL[i]._toKill, lib.playerOL[i]._toSave];
+					const map = {};
+					for (const id in lib.playerOL) {
+						map[id] = [lib.playerOL[id]._toKill?.playerid, lib.playerOL[id]._toSave?.playerid];
 					}
-					game.broadcast((map) => {
-						for (let i in map) {
-							lib.playerOL[i]._toKill = map[i][0];
-							lib.playerOL[i]._toSave = map[i][1];
+					game.broadcast(map => {
+						for (const id in map) {
+							lib.playerOL[id]._toKill = lib.playerOL[map[id][0]];
+							lib.playerOL[id]._toSave = lib.playerOL[map[id][1]];
 						}
 					}, map);
 
@@ -978,15 +851,7 @@ export default () => {
 					});
 				}
 
-				// 更新任务目标
-				game.broadcastAll(() => {
-					const me = game.me;
-					if (me?._toKill && me?._toSave && ui.sandaohuanhua?._textSpan) {
-						ui.sandaohuanhua._textSpan.innerHTML =
-							`杀伤<span style='color:#ff5f56'>${get.translation(me._toKill)}(${me._toKill.identity})</span>，` +
-							`保护<span style='color:#98fb98'>${get.translation(me._toSave)}(${me._toSave.identity})</span>`;
-					}
-				});
+				game.broadcastAll(() => game.updateMissionUI());
 			},
 
 			// 进入死战模式
@@ -1015,8 +880,8 @@ export default () => {
 
 				const baguaNames = ["离", "坎", "乾", "震", "兑", "艮", "巽", "坤"];
 				const logArg = ["#g乾坤八卦·" + baguaNames[type - 1], "：<br>"];
-				game.me.$fullscreenpop(logArg[0].slice(2), get.groupnature(deadPlayer.group, "raw"));
-				game.delay(1.5);
+				game.broadcastAll((text, nature) => game.me?.$fullscreenpop(text, nature), logArg[0].slice(2), get.groupnature(deadPlayer.group, "raw"));
+				await game.delay(1.5);
 
 				const effects = {
 					1: async () => {
@@ -1052,7 +917,7 @@ export default () => {
 					5: async () => {
 						logArg.push("#y每人+1灵力");
 						game.log.apply(this, logArg);
-						game.countPlayer(p => p.changeLingli(1));
+						for (const p of game.filterPlayer()) p.changeLingli(1);
 					},
 					6: async () => {
 						logArg.push("#y每人获得1张装备牌");
@@ -1071,7 +936,7 @@ export default () => {
 						for (const p of game.filterPlayer()) {
 							p.fixLingliSkill();
 							if (p.lingliSkill?.length >= 3) continue;
-							const skills = lib.sandaohuanhua.skills.randomSort();
+							const skills = lib.sandaohuanhua.skills.slice().randomSort();
 							for (const skill of skills) {
 								if (p.lingliSkill.includes(skill)) continue;
 								p.addLingliSkill(skill);
@@ -1085,8 +950,9 @@ export default () => {
 						logArg.addArray([`变为`, `#b${get.translation(initTarget)}`, `复活`]);
 						game.log.apply(this, logArg);
 
-						await deadPlayer.clearSkills(true);
-						await deadPlayer.reinit(deadPlayer.name, initTarget, [lib.character[initTarget].hp, lib.character[initTarget].maxHp]);
+						deadPlayer.clearSkills(true);
+						deadPlayer.lingliSkill = [];
+						deadPlayer.reinit(deadPlayer.name, initTarget, [lib.character[initTarget].hp, lib.character[initTarget].maxHp]);
 						await deadPlayer.reviveEvent(deadPlayer.maxHp, false);
 						deadPlayer.addSkill("sdhh_noCard");
 					}
@@ -1102,12 +968,11 @@ export default () => {
 				if (!lib.sandaohuanhua) lib.sandaohuanhua = {};
 
 				if (_status.connectMode) {
-					lib.character = {};
-					for (let packName of lib.configOL.characterPack) {
-						let pack = lib.characterPack[packName];
-						for (let char in pack) {
-							lib.character[char] = pack[char];
-						}
+					for (const name of Object.keys(lib.character)) delete lib.character[name];
+					for (const packName of lib.configOL.characterPack || []) {
+						const pack = lib.characterPack[packName];
+						if (!pack) continue;
+						for (const name in pack) lib.character[name] = pack[name];
 					}
 				}
 				lib.sandaohuanhua.NPC = [];
@@ -1281,11 +1146,11 @@ export default () => {
 
 						container.style.transition = 'none';
 
-						// 绑定全局事件
-						document.addEventListener('mouseup', this.end);
-						document.addEventListener('mousemove', this.move);
-						document.addEventListener('touchend', this.end);
-						document.addEventListener('touchmove', this.move);
+						container.clearDocumentHandlers();
+						document.addEventListener('mouseup', container._docHandlers.mouseUp);
+						document.addEventListener('mousemove', container._docHandlers.mouseMove);
+						document.addEventListener('touchend', container._docHandlers.touchEnd);
+						document.addEventListener('touchmove', container._docHandlers.touchMove, { passive: false });
 					},
 
 					move(e) {
@@ -1326,11 +1191,7 @@ export default () => {
 						if (!dragState.active) return;
 						dragState.active = false;
 
-						// 清理全局事件
-						document.removeEventListener('mouseup', this.end);
-						document.removeEventListener('mousemove', this.move);
-						document.removeEventListener('touchend', this.end);
-						document.removeEventListener('touchmove', this.move);
+						container.clearDocumentHandlers();
 
 						container.style.transition = '';
 
@@ -1351,12 +1212,23 @@ export default () => {
 					}
 				};
 
-				// 绑定事件
+				container._docHandlers = {
+					mouseUp: e => DragHandler.end(e),
+					mouseMove: e => DragHandler.move(e),
+					touchEnd: e => DragHandler.end(e),
+					touchMove: e => DragHandler.move(e),
+				};
+				container.clearDocumentHandlers = () => {
+					const handlers = container._docHandlers;
+					document.removeEventListener('mouseup', handlers.mouseUp);
+					document.removeEventListener('mousemove', handlers.mouseMove);
+					document.removeEventListener('touchend', handlers.touchEnd);
+					document.removeEventListener('touchmove', handlers.touchMove);
+				};
+
 				const events = [
-					['touchstart', (e) => DragHandler.start(e), { passive: false }],
-					['touchend', (e) => DragHandler.end(e), { passive: false }],
-					['touchmove', (e) => DragHandler.move(e), { passive: false }],
-					['mousedown', (e) => DragHandler.start(e)]
+					['touchstart', e => DragHandler.start(e), { passive: false }],
+					['mousedown', e => DragHandler.start(e)]
 				];
 				events.forEach(([type, handler, opts]) =>
 					container.addEventListener(type, handler, opts)
@@ -1475,15 +1347,21 @@ export default () => {
 
 			player: {
 				addLingliSkill(skill) {
+					this.lingliSkill ??= [];
+					if (!skill || this.lingliSkill.includes(skill)) return;
 					this.lingliSkill.add(skill);
-					this.addSkills.apply(this, arguments);
+					game.addVideo("sdhh_addLingliSkill", this, skill);
+					return this.addSkills(skill);
 				},
 				removeLingliSkill(skill) {
+					this.lingliSkill ??= [];
+					if (!skill || !this.lingliSkill.includes(skill)) return;
 					this.lingliSkill.remove(skill);
-					this.removeSkills.apply(this, arguments);
+					game.addVideo("sdhh_removeLingliSkill", this, skill);
+					return this.removeSkills(skill);
 				},
 				fixLingliSkill() {
-					this.lingliSkill = this.lingliSkill.filter(skill => this.hasSkill(skill));
+					this.lingliSkill = (this.lingliSkill || []).filter(skill => this.hasSkill(skill));
 				},
 				dieAfter() {
 					const evt = _status.event.getParent("phase");
@@ -1497,13 +1375,15 @@ export default () => {
 					return get.playerx().filter(p => p !== this);
 				},
 				dieAfter2(source) {
-					if (!source || this.name?.startsWith("sdhh_")) return;
+					if (this.name?.startsWith("sdhh_")) return;
 
-					const isKillTarget = source._toKill === this;
-					game.log(source, isKillTarget ? "击杀目标成功" : "完成补刀");
-					source.popup(isKillTarget ? "击杀成功" : "补刀成功");
-					source.draw(isKillTarget ? 2 : 1);
-					source.changeLingli(isKillTarget ? 3 : 2);
+					if (source) {
+						const isKillTarget = source._toKill === this;
+						game.log(source, isKillTarget ? "击杀目标成功" : "完成补刀");
+						source.popup(isKillTarget ? "击杀成功" : "补刀成功");
+						source.draw(isKillTarget ? 2 : 1);
+						source.changeLingli(isKillTarget ? 3 : 2);
+					}
 
 					if (!_status._aozhan) {
 						game.countPlayer(current => {
@@ -1518,6 +1398,7 @@ export default () => {
 				},
 				logAi() { },
 				changeLingli(num = 1) {
+					this.storage ??= {};
 					if (typeof this.storage._lingli !== "number") this.storage._lingli = 0;
 
 					if (num > 0) {
@@ -1561,7 +1442,7 @@ export default () => {
 				content() {
 					target.fixLingliSkill();
 					target.removeLingliSkill(target.lingliSkill.randomGet());
-					const skills = lib.sandaohuanhua.skills.randomSort();
+					const skills = lib.sandaohuanhua.skills.slice().randomSort();
 					for (const skill of skills) {
 						if (!target.lingliSkill.includes(skill)) {
 							target.addLingliSkill(skill);
@@ -1655,8 +1536,8 @@ export default () => {
 				async cost(event, trigger, player) {
 					player.fixLingliSkill();
 
-					const allSkills = lib.sandaohuanhua.skills.randomSort();
-					const availableSkills = allSkills.filter(s => !player.lingliSkill.includes(s));
+					const availableSkills = lib.sandaohuanhua.skills.slice().randomSort()
+						.filter(skill => !player.lingliSkill.includes(skill));
 					const skillNames = player.lingliSkill.map(get.poptip).join(" ");
 					const basePrompt = `当前已拥有技能：${skillNames}`;
 
@@ -1687,43 +1568,28 @@ export default () => {
 					let selectedSkill = null;
 
 					while (true) {
-						let candidates = availableSkills.slice(candidateOffset, candidateOffset + numCandidates);
-
-						if (candidates.length < numCandidates) {
-							const refreshed = lib.sandaohuanhua.skills.randomSort();
-							const newAvailable = refreshed.filter(s => !player.lingliSkill.includes(s));
-							candidates = newAvailable.slice(0, numCandidates);
-						}
-
+						const candidates = availableSkills.slice(candidateOffset, candidateOffset + numCandidates);
 						if (candidates.length === 0) {
 							player.popup("技能耗尽");
 							return;
 						}
 
-						const canRefresh = player.storage._lingli >= baseCost + 1;
+						const canRefresh = player.storage._lingli >= baseCost + 1 && candidateOffset + candidates.length < availableSkills.length;
 						const choices = canRefresh ? [...candidates, "刷新"] : candidates;
 
-						// 不知道为什么坏了，以后修
-						// const { control } = await player.chooseControl(choices, 'cancel2')
-						// 	.set("ai", () => get.max(candidates, get.skillRank, "item"))
-						// 	.set("dialog", get.skillDialog(choices, "选择获得一个技能"))
-						// 	.forResult();
-
-						// 定义技能选择函数
-						const chooseSkill = function (player, choices, skills) {
-							const next = player.chooseControl(choices, 'cancel2');
-							next.set("ai", () => get.max(skills, get.skillRank, "item"));
-							next.set("dialog", get.skillDialog(choices, "选择获得一个技能"));
-							return next;
+						const chooseSkill = function (current, controls, skills) {
+							return current.chooseControl(controls, 'cancel2')
+								.set("ai", () => get.max(skills, get.skillRank, "item"))
+								.set("dialog", get.skillDialog(controls, "选择获得一个技能"));
 						};
-
-						const chooseResult = await game.chooseAnyOL(
-							[player], chooseSkill, [choices, candidates]
-						).forResult();
-
-						// 转换 Map 结果为 skillMap 格式
-						const result = chooseResult.get(player);
-						const control = result ? result.control : "cancel2";
+						let result;
+						if (_status.connectMode) {
+							const chooseResult = await game.chooseAnyOL([player], chooseSkill, [choices, candidates]).forResult();
+							result = chooseResult.get(player);
+						} else {
+							result = await chooseSkill(player, choices, candidates).forResult();
+						}
+						const control = result?.control || "cancel2";
 
 						if (control === "刷新") {
 							player.changeLingli(-1);
@@ -1828,8 +1694,8 @@ export default () => {
 				async content(event, trigger, player) {
 					if (_status._aozhan && !player.getStat("damage") && !player.name?.startsWith("sdhh_")) {
 						await player.loseHp();
-						await player.changeLingli(1);
-						game.log(player, "本回合内未造成伤害，触发死战扣血");
+						player.changeLingli(1);
+						game.log(player, "本回合内未造成伤害，失去1点体力并获得1点灵力");
 					}
 
 					if (trigger._lastDead) {
@@ -1837,7 +1703,7 @@ export default () => {
 					}
 					if (_status._aozhan) return;
 					game.randomMission();
-					game.delay(1.5);
+					await game.delay(1.5);
 				},
 			},
 
@@ -1911,8 +1777,7 @@ export default () => {
 					if (source.lingliSkill.length === 3) {
 						source.removeLingliSkill(source.lingliSkill.randomGet());
 					}
-					let skills = lib.sandaohuanhua.skills;
-					skills.randomSort();
+					const skills = lib.sandaohuanhua.skills.slice().randomSort();
 					for (let i = 0; i < skills.length; i++) {
 						if (!source.lingliSkill.includes(skills[i])) {
 							source.addLingliSkill(skills[i]);
@@ -1936,8 +1801,7 @@ export default () => {
 					if (source.lingliSkill.length === 3) {
 						source.removeLingliSkill(source.lingliSkill.randomGet());
 					}
-					let skills = lib.sandaohuanhua.skills;
-					skills.randomSort();
+					const skills = lib.sandaohuanhua.skills.slice().randomSort();
 					for (let i = 0; i < skills.length; i++) {
 						if (!source.lingliSkill.includes(skills[i])) {
 							source.addLingliSkill(skills[i]);
@@ -2035,4 +1899,5 @@ export default () => {
 			刷新_info: "消耗1点灵力值，刷新上述技能。",
 		},
 	};
+	return mode;
 };
