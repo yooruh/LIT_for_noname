@@ -1,1 +1,0 @@
-export { skill } from './index.js';

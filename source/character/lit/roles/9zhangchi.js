@@ -1,5 +1,8 @@
 ﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
 
+export const sort = 'jbs';
+export const perfectPair = ['lit_zhangchi张驰', 'lit_liyang9李洋'];
+
 export const character = {
     'lit_zhangchi9张驰': {
         sex: "male",

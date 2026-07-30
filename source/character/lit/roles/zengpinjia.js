@@ -1,4 +1,12 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+
+export const sort = 'ybs';
+export const title = `凑牌·追击·${Styled('y', "中")}`;
+export const intro = `${B("曾品嘉")}想要玩得舒服，又要牌运又要计算，联机时浪费时间，伤害高而慢……什么，铁索连环？只要没有${get.poptip("lit_zigaodebeixin")}`
+    + `${get.poptip("lit_qbzhimao")}之类的技能，完全有可能"五连·诸天灭地"！`
+    + `<li>主公：非常不建议当主公，在写此info的当前环境下（26.2.11）一轮下来的存活率不超过1成，除非队友特别合适。硬要玩的话记得多留防御牌，不要奢求打伤害`
+    + "<li>忠臣、反贼、内奸：用好右上角的记牌器功能很关键。要尽量用牌，通常牌的点数越高越好，前期可以预先存一些点数为3~6的牌，升级后往往可以直接破敌";
+export const perfectPair = ['lit_chenke陈可', 'lit_qianbaocan钱保灿'];
 
 export const character = {
     'lit_zengpinjia曾品嘉': {

@@ -1,5 +1,7 @@
 ﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
 
+export const sort = 'jbs';
+
 export const character = {
     'lit_liyang9李洋': {
         sex: "male",

@@ -1,5 +1,7 @@
 ﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
 
+export const sort = 'jbs';
+
 export const character = {
     'lit_linmiao林淼': {
         sex: "female",
@@ -11,8 +13,7 @@ export const character = {
 };
 
 export const skill = {
-    // 林淼
-    lit_shenge: {
+        lit_shenge: {
         derivation: "lit_shenge_faq",
         locked: false,
         trigger: {
@@ -113,15 +114,10 @@ export const skill = {
                     if (!get.tag(card, 'damage')) return;
                     if (target.hp > 1) return;
                     let gugu = target.countMark('lit_gugu');
-                    let allyFollow = 0;
-                    game.countPlayer(current => {
-                        if (current !== target && get.attitude(current, target) > 0) allyFollow += 0.1;
-                    });
 
-                    if (gugu >= 4) return [1, 0.1];
-                    if (gugu === 3) return [1, 0.3];
-                    if (gugu === 2) return [1, 0.7];
-                    return [1, Math.max(0.9 - allyFollow, 0.2)];
+                    if (gugu === 0) return [1, 2];
+                    if (gugu === 1) return [1, -2];
+                    return [1, Math.max(0, gugu*0.1)];
                 }
             }
         },
@@ -147,7 +143,7 @@ export const skill = {
                 sourceSkill: "lit_gugu",
             },
         },
-    },// Qb
+    },
 };
 
 export const translate = {

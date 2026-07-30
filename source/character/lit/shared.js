@@ -18,3 +18,8 @@ import { Styled } from '../../tool/basic.js';
 export const X = Styled('b', 'X');   // 靛蓝 X
 export const Y = Styled('p', 'Y');   // 粉色 Y
 export const Z = Styled('y', 'Z');   // 黄色 Z
+
+// 加粗靛蓝色文字
+export function B(text) {
+    return Styled('b', text);
+}

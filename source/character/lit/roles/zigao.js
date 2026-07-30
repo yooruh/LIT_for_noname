@@ -1,4 +1,13 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+
+export const sort = 'ybs';
+export const title = `补牌·辅助·${Styled('o', "较难")}`;
+export const intro = `如果没人理${B("自高")}，而他又打不出伤害，那很可能被活活拖死。他自带两种模式：牌少回血拿对手牌，牌多扣血送队友牌；对于缺牌的对手和牌多的队友有奇效，`
+    + `不过有一定风险。`
+    + `<li>主公：回合外的防御牌随便出，压低手牌方便回血。但是回合内的伤害牌不要乱用，尤其是AOE，通过${get.poptip("lit_xinren")}给队友开很关键。不仅可以联动队友的技能，而且队友造成的伤害也能防止回合内的崩血`
+    + `<li>忠臣、反贼：主要辅助队友过牌，如果不能保证对手被控，或者让他打不出伤害，就要注意白送${get.poptip("lit_zhanshi")}的风险`
+    + "<li>内奸：前期要会忍耐，升级后自己也有输出能力了，再打伤害。有些时候，手牌越少，手牌越多";
+export const perfectPair = ['lit_zengpinjia曾品嘉', 'lit_lanboxun兰柏勋'];
 
 export const character = {
     'lit_zigao自高': {
@@ -76,7 +85,7 @@ export const skill = {
                         const canActuallyUse = user.hasUseTarget(card, true, true);
                         return (canActuallyUse ? 0.5 : -0.5) + get.threaten(target) / 2 + res;
                     }
-                    if (target?.hasUseTarget?.(card, true, true)) return 0.6;
+                    if (target?.hasUseTarget(card, true, true)) return 0.6;
                     return -0.5;
                 },
                 target: 1.2,

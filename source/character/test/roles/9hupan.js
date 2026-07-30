@@ -1,5 +1,8 @@
 ﻿import { lib, game, ui, get, ai, _status } from '../shared.js';
 
+export const sort = 'jbs';
+export const characterReplace = { 'lit_hupan': ['lit_hupan胡畔', 'lit_hupan9胡畔'] };
+
 export const character = {
     'lit_hupan9胡畔': {
         sex: "male",
@@ -12,7 +15,6 @@ export const character = {
 };
 
 export const skill = {
-    // 9胡畔
     lit_beiai: {
         forced: true,
         group: ["lit_beiai_end", "lit_beiai_bazhen"],
@@ -195,8 +197,6 @@ export const skill = {
             },
         },
     },
-
-    // 9郑墨翰
 };
 
 export const translate = {

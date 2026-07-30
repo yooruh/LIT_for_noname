@@ -1,4 +1,11 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+
+export const sort = 'ybs';
+export const title = `辅助·干扰·${Styled('y', "中")}`;
+export const intro = `干扰对手，辅助队友造成伤害或者为其提供补益（如杀、桃、无中生有等），对付${B("刘晨沐")}时需注意好牌后出`
+    + `<li>主公：在${get.poptip("lit_jijin")}的加持下开局可以盲杀，如果能造成伤害，下一张杀就没法杀你；如果血量比较低，回合外可以先不用技能，在别人吃桃或无中生有时再用`
+    + "<li>忠臣、反贼：看队友的主要输出牌是什么，例如靠【杀】打伤害的，就可以帮他加【杀】的目标，从而最大化收益。借敌人的输出灭残血、让敌方互拆、偷桃、吊卡、无中生有等都是常规操作。此外，可以参考主公的玩法，杀对面来换取己方关键队友的防御"
+    + `<li>内奸：前期嫖别人的补益牌来发育，到主内单挑的时候，"贯石斧"会是你的好朋友，主公一旦${get.poptip("lit_shouji")}，就很难再杀到你了`;
 
 export const character = {
     'lit_liuchenmu刘晨沐': {
@@ -10,7 +17,6 @@ export const character = {
 };
 
 export const skill = {
-    // 刘晨沐
     lit_gufeng: {
         derivation: 'lit_gufeng_append',
         trigger: {

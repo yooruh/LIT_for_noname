@@ -1,5 +1,7 @@
 ﻿import { lib, game, ui, get, ai, _status } from '../shared.js';
 
+export const sort = 'jbs';
+
 export const character = {
     'lit_wangsiyuan王思媛': {
         sex: "female",
@@ -29,7 +31,7 @@ export const skill = {
                 .set("prompt", "【大哈】")
                 .set("prompt2", "弃置所有手牌，否则此伤害视为失去体力")
                 .set("ai", () => {
-                    // 如果对方有卖血技能，选择弃牌
+                    // 如果对方有卖血技能，取消弃牌
                     if (hasMaixie) return 1;
                     // 如果自己手牌很少或很烂，选择弃牌
                     if (player.countCards('h') === 0) return 0;
@@ -41,7 +43,6 @@ export const skill = {
                         }
                         if (totalValue < 10) return 1;
                     }
-                    // 默认选择取消，让伤害变为失去体力
                     return 0;
                 }).forResult();
 
@@ -55,40 +56,6 @@ export const skill = {
         ai: {
             jueqing: true,
             threaten: 1.2,
-            effect: {
-                target: (card, player, target) => {
-                    if (get.tag(card, "damage")) {
-                        // 如果目标有卖血技能，大哈更有价值
-                        if (target.hasSkillTag('maixie') ||
-                            target.hasSkillTag('maixie_defend') ||
-                            target.hasSkillTag('maixie_hp')) {
-                            return [1, 0.5];
-                        }
-                        // 如果目标手牌多，大哈更有价值
-                        if (target.countCards('h') > 3) {
-                            return [1, 0.3];
-                        }
-                        // 若目标队友多，改成失去体力的全局压制价值更高
-                        let ally = 0;
-                        game.countPlayer(current => {
-                            if (current !== target && get.attitude(current, target) > 0) ally += 1;
-                        });
-                        if (ally > 1) return [1, 0.2 + ally * 0.05];
-                    }
-                },
-                player: (card, player) => {
-                    if (get.tag(card, "damage")) {
-                        // 如果自己手牌少，大哈的代价小
-                        if (player.countCards('h') <= 2) {
-                            return [1, -0.2];
-                        }
-                        // 如果自己手牌多，大哈的代价大
-                        if (player.countCards('h') > 4) {
-                            return [1, -0.5];
-                        }
-                    }
-                },
-            },
         },
     },
     lit_fushu: {
@@ -106,6 +73,8 @@ export const skill = {
         },
         ai: {
             noh: true,
+            freeSha: true,
+			freeShan: true,
             skillTagFilter: (player, tag) => {
                 if (tag === 'noh') {
                     const required = Math.max(1, player.getDamagedHp());
@@ -129,7 +98,6 @@ export const skill = {
                     }
                 },
             },
-            threaten: 0.8,
             result: {
                 player: (player) => {
                     const required = Math.max(1, player.getDamagedHp());
@@ -139,8 +107,6 @@ export const skill = {
             },
         },
     },
-
-    // 9钟雨桐
 };
 
 export const translate = {

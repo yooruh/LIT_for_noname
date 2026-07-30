@@ -1,4 +1,12 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+
+export const sort = 'sdp';
+export const title = `换牌·复活·亡语·${Styled('b', "较易")}`;
+export const intro = `天呐，他真恶心！甚至能复活！赶快留点垃圾牌恶心他！要是${B("伍小戚")}费尽心思换来的牌全是废牌，他才能真正体会到${get.poptip("lit_xiaochou")}`
+    + `的滋味！`
+    + `<li>主公：别急着用牌，等没血或者输出型队友没牌的时候再发动技能，千万别提前把${get.poptip("lit_mianju")}用完了，不然少一个复活`
+    + "<li>忠臣：开头有复活，后期有亡语，直接给主公递牌就好了。不过不要乱开技能，把好牌换废牌就舒服了"
+    + "<li>反贼、内奸：直接用光牌，然后给别人底裤都扒下来。当然了，最好祈祷没人会因此发动神秘索敌技";
 
 export const character = {
     'lit_wuxiaoqi伍小戚': {

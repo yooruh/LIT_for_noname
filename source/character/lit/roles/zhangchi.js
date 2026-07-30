@@ -1,4 +1,13 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+
+export const sort = 'ybs';
+export const title = `拆牌·反伤·${Styled('o', "较难")}`;
+export const intro = `与${B("氹")}诡辩之时，你会怀念仁王盾和藤甲的。什么？你卖血啊~那没事了，${B("氹")}最怕的就是不怕自己会反伤自己的人`
+    + `<li>主公：留防御牌方便${get.poptip("lit_guibian")}。${get.poptip("lit_shuxin")}改为主动技后，要小心发动技能对使用者的真实收益`
+    + "<li>忠臣：诡辩反贼的伤害牌，吸引火力以便进行消耗战"
+    + "<li>反贼：诡辩酒、闪、无懈可击，或满血诡辩桃100%成功。可以显著干扰对面关键人物的牌型"
+    + "<li>内奸：有竖心在很容易苟到最后，苟吧";
+export const characterReplace = { 'lit_zhangchi': ['lit_zhangchi张驰', 'lit_zhangchi9张驰'] };
 
 export const character = {
     'lit_zhangchi张驰': {

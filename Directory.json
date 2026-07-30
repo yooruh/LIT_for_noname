@@ -135,109 +135,100 @@
     "size": 35475
   },
   "source/card/lit_card.js": {
-    "size": 556
+    "size": 537
   },
   "source/card/lit_cardSkills.js": {
     "size": 30704
   },
   "source/card/lit_cardTranslate.js": {
-    "size": 3853
+    "size": 3788
   },
   "source/character/lit/index.js": {
-    "size": 2156
-  },
-  "source/character/lit/lit_characters.js": {
-    "size": 19918
-  },
-  "source/character/lit/lit_skills.js": {
-    "size": 35
-  },
-  "source/character/lit/lit_translate.js": {
-    "size": 87
+    "size": 3172
   },
   "source/character/lit/roles/9liyang.js": {
-    "size": 4736
+    "size": 4766
   },
   "source/character/lit/roles/9wangcan.js": {
-    "size": 6564
+    "size": 6594
   },
   "source/character/lit/roles/9zhangchi.js": {
-    "size": 29367
+    "size": 29470
   },
   "source/character/lit/roles/9zhangshengjie.js": {
-    "size": 12905
+    "size": 12935
   },
   "source/character/lit/roles/boshu.js": {
-    "size": 20091
+    "size": 21206
   },
   "source/character/lit/roles/chenke.js": {
-    "size": 7977
+    "size": 8007
   },
   "source/character/lit/roles/hujunwei.js": {
-    "size": 13329
+    "size": 14221
   },
   "source/character/lit/roles/hupan.js": {
-    "size": 26360
+    "size": 27437
   },
   "source/character/lit/roles/huxinyu.js": {
-    "size": 11004
+    "size": 11835
   },
   "source/character/lit/roles/jianghaixu.js": {
-    "size": 15575
+    "size": 16421
   },
   "source/character/lit/roles/lanboxun.js": {
-    "size": 5568
+    "size": 6218
   },
   "source/character/lit/roles/linmiao.js": {
-    "size": 7669
+    "size": 7699
   },
   "source/character/lit/roles/liuchenmu.js": {
-    "size": 10136
+    "size": 11188
   },
   "source/character/lit/roles/pangjianlong.js": {
-    "size": 10529
+    "size": 11054
   },
   "source/character/lit/roles/qb.js": {
-    "size": 14831
+    "size": 15838
   },
   "source/character/lit/roles/qianbaocan.js": {
-    "size": 8398
+    "size": 9325
   },
   "source/character/lit/roles/rita.js": {
-    "size": 8889
+    "size": 9941
   },
   "source/character/lit/roles/sunnan.js": {
-    "size": 18005
+    "size": 18804
   },
   "source/character/lit/roles/wangrong.js": {
-    "size": 25604
+    "size": 26310
   },
   "source/character/lit/roles/wuxiaoqi.js": {
-    "size": 15317
+    "size": 16147
   },
   "source/character/lit/roles/yangxiangling.js": {
-    "size": 15553
+    "size": 16480
   },
   "source/character/lit/roles/zengpinjia.js": {
-    "size": 21783
+    "size": 22706
   },
   "source/character/lit/roles/zhangchi.js": {
-    "size": 11937
+    "size": 12782
   },
   "source/character/lit/roles/zhangqinyi.js": {
-    "size": 7987
+    "size": 8834
   },
   "source/character/lit/roles/zhangshengjie.js": {
-    "size": 27992
+    "size": 29069
   },
   "source/character/lit/roles/zhengmohan.js": {
-    "size": 13355
+    "size": 14170
   },
   "source/character/lit/roles/zigao.js": {
-    "size": 21041
+    "size": 22115
   },
   "source/character/lit/shared.js": {
-    "size": 706
+    "size": 815
   },
   "source/character/lit/_meta.js": {
     "size": 211
@@ -252,73 +243,58 @@
     "size": 1288
   },
   "source/character/lit_gz/index.js": {
-    "size": 1742
-  },
-  "source/character/lit_gz/lit_gz_characters.js": {
-    "size": 1471
-  },
-  "source/character/lit_gz/lit_gz_translate.js": {
-    "size": 977
+    "size": 4402
   },
   "source/character/lit_gz/roles/README.md": {
-    "size": 1342
+    "size": 1396
   },
   "source/character/lit_gz.js": {
-    "size": 4218
+    "size": 4332
   },
   "source/character/lit_test.js": {
     "size": 835
   },
   "source/character/test/index.js": {
-    "size": 1190
+    "size": 2658
   },
   "source/character/test/roles/9hupan.js": {
-    "size": 7960
+    "size": 8292
   },
   "source/character/test/roles/9zengpinjia.js": {
-    "size": 10804
+    "size": 11239
   },
   "source/character/test/roles/9zhengmohan.js": {
-    "size": 8224
+    "size": 8624
   },
   "source/character/test/roles/9zhongyutong.js": {
-    "size": 13369
+    "size": 13734
   },
   "source/character/test/roles/pengliying.js": {
-    "size": 9776
+    "size": 10139
   },
   "source/character/test/roles/wangsiyuan.js": {
-    "size": 6011
+    "size": 6193
   },
   "source/character/test/shared.js": {
-    "size": 307
-  },
-  "source/character/test/test_characters.js": {
-    "size": 1116
-  },
-  "source/character/test/test_skills.js": {
-    "size": 37
-  },
-  "source/character/test/test_translate.js": {
-    "size": 68
+    "size": 509
   },
   "source/character/test/_meta.js": {
     "size": 161
   },
   "source/config.js": {
-    "size": 7874
+    "size": 7625
   },
   "source/content.js": {
-    "size": 4368
+    "size": 4380
   },
   "source/help.js": {
-    "size": 3614
+    "size": 3511
   },
   "source/mode/sandaohuanhua.js": {
-    "size": 65085
+    "size": 63048
   },
   "source/mode/sandaohuanhua_brawl.js": {
-    "size": 74169
+    "size": 72813
   },
   "source/onlineFix/content.js": {
     "size": 4697
@@ -333,10 +309,10 @@
     "size": 1740
   },
   "source/onlineFix/precontent.js": {
-    "size": 1471
+    "size": 1504
   },
   "source/onlineFix/useFunction.js": {
-    "size": 147
+    "size": 151
   },
   "source/onlineFix/video.js": {
     "size": 4978
@@ -345,16 +321,16 @@
     "size": 7023
   },
   "source/tool/basic.js": {
-    "size": 2487
+    "size": 2414
   },
   "source/tool/configSetter.js": {
-    "size": 26767
+    "size": 26078
   },
   "source/tool/extraUI.js": {
     "size": 46447
   },
   "source/tool/skillFactory.js": {
-    "size": 3361
+    "size": 3468
   },
   "source/tool/suiSet.js": {
     "size": 39097
@@ -363,22 +339,22 @@
     "size": 89305
   },
   "style/css/cards.css": {
-    "size": 91
+    "size": 88
   },
   "style/css/extension.css": {
-    "size": 6183
+    "size": 5964
   },
   "style/css/extraUI.css": {
-    "size": 10997
+    "size": 10489
   },
   "style/html/help.html": {
-    "size": 17621
+    "size": 16969
   },
   "style/html/sandaohuanhua.html": {
-    "size": 9323
+    "size": 9104
   },
   "style/html/update.html": {
-    "size": 13643
+    "size": 13953
   },
   "style/nncfg/android_wide11.0.nncfg": {
     "size": 3956

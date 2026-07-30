@@ -1,5 +1,7 @@
 ﻿import { lib, game, ui, get, ai, _status } from '../shared.js';
 
+export const sort = 'jbs';
+
 export const character = {
     'lit_zhongyutong9钟雨桐': {
         sex: "female",
@@ -319,8 +321,6 @@ export const skill = {
             },
         },
     },
-
-    // 彭丽颖
 };
 
 export const translate = {

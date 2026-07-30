@@ -183,40 +183,7 @@ export const skill = {
     },
 };
 
-const SHENGJI_MAP = {
-    qb: 'lit_tiannaV2',
-    zsj: null,
-    zqy: 'lit_zishaV2',
-    pjl: 'lit_duilianV2',
-    wxq: ['lit_mianjuV2', 'lit_xiaochouV2'],
-    zg: 'lit_zhanshiV2',
-    zpj: 'lit_saohuaV2',
-    bs: 'lit_yisuiV2',
-    lcm: 'lit_jijinV2',
-    zmh: 'lit_jianrenV2',
-    rita: ['lit_dafang', 'lit_hengshuiti'],
-    hp: ['lit_yinren', 'lit_fumeng', 'lit_mengying'],
-    lbx: null,
-    hxy: 'lit_shihuaiV2',
-    hjw: 'lit_wutongV2',
-    rs: 'lit_qixuV2',
-    jhx: 'lit_shanliangV2',
-    qbc: 'lit_chushouV2',
-    zc: 'lit_shuxinV2',
-    yxl: 'lit_juji',
-};
-
-const shengjiSkills = {};
-for (const [key, derivation] of Object.entries(SHENGJI_MAP)) {
-    const def = { inherit: 'lit_sj' };
-    if (derivation) def.derivation = derivation;
-    shengjiSkills[`lit_shengji${key}`] = def;
-}
-Object.assign(skill, shengjiSkills);
-
 export const translate = {
     'lit_shengji': "升级",
     'lit_shengji_info': "场上每有一名角色死亡，所有角色获得1点经验，击杀者额外获得1点经验，当经验值达到3或全场角色数小于5时升级",
 };
-
-export { shengjiSkills };

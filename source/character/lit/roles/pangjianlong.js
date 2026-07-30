@@ -1,4 +1,11 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+
+export const sort = 'ybs';
+export const title = `控场·强杀·${Styled('g', "易")}`;
+export const intro = `什么超级吕布，摸牌白罢了。不过${B("庞建龙")}比较适合新手，乱打也容易出伤害，尤其针对不清楚技能出两张牌机制的人`
+    + "<li>主公、内奸：适当决斗控场，对有杀但是杀不多的人，记得让自己来决斗"
+    + "<li>忠臣：放AOE前先看看主公状态，可千万不能坑主公"
+    + "<li>反贼：负责捣乱就好了";
 
 export const character = {
     'lit_pangjianlong庞建龙': {
@@ -199,9 +206,7 @@ export const skill = {
                         return lib.skill.lit_duilian.utils.futurePressure(ui.selected.targets[i - 1], target);
                     }
                 },
-                player: (player) => {
-                    return 0;
-                },
+                player: 0,
             },
             expose: 0.4,
             threaten: 3.2,
@@ -212,13 +217,13 @@ export const skill = {
 export const translate = {
     'lit_pangjianlong庞建龙': "庞建龙",
     'lit_qiangjian': "强健",
-    'lit_qiangjian_info': "锁定技，当其他角色使用【杀】、【决斗】、【万箭齐发】或【南蛮入侵】时，其需要额外打出一张【杀】或【闪】来响应",
+    'lit_qiangjian_info': "锁定技，对其他角色使用【杀】、【决斗】、【万箭齐发】或【南蛮入侵】时，其需要额外打出一张【杀】或【闪】来响应",
     'lit_duilian': "对练",
-    'lit_duilian_info': "出牌阶段限一次，你可以弃置一张牌，选择任意名角色，令这些角色依次选择是否对你选择的另一名角色使用【决斗】，此【决斗】不可被【无懈可击】响应",
+    'lit_duilian_info': "出牌阶段限一次，你可以弃置一张牌，选择任意对角色，令每对中的第二位角色对你选择的另一名角色使用【决斗】，此【决斗】不可被【无懈可击】响应",
     'lit_duilianV2': "对练V2",
-    'lit_duilianV2_info': "出牌阶段限一次，你可以选择任意名角色，令这些角色依次选择是否对你选择的另一名角色使用【决斗】，此【决斗】不可被【无懈可击】响应",
+    'lit_duilianV2_info': "出牌阶段限一次，你可以选择任意对角色，令每对中的第二位角色对你选择的另一名角色使用【决斗】，此【决斗】不可被【无懈可击】响应",
     'lit_shengjipjl': "升级·庞建龙",
-    'lit_shengjipjl_info': `${get.poptip('lit_duilianV2')} 获得并修改〖对练〗：出牌阶段限一次，你可以选择任意名角色，令这些角色依次选择是否对你选择的另一名角色使用【决斗】，此【决斗】不可被【无懈可击】响应`,
+    'lit_shengjipjl_info': `${get.poptip('lit_duilianV2')} 获得并修改〖对练〗：出牌阶段限一次，你可以选择任意对角色，令每对中的第二位角色对你选择的另一名角色使用【决斗】，此【决斗】不可被【无懈可击】响应`,
 };
 
 export const simpleTranslate = {

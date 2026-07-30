@@ -1,4 +1,10 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+
+export const sort = 'ybs';
+export const title = `防拆·补牌·复活·${Styled('y', "中")}`;
+export const intro = `如果己方队友是${B("蒋海旭")}，那每回合都相当于有一次卖血技。而且${B("蒋海旭")}的补牌技能在濒死之前触发，对能转化桃的队友很友好。还能防止队友弃牌，不过对${get.poptip("lit_boshu菠树")}、${get.poptip("lit_huxinyu胡馨予")}之类的得考虑考虑。`
+    + `<li>主公、反贼：除非受到巨额爆伤，否则前期几乎死不掉，而且队友在有${get.poptip("lit_yuanzhu")}的情况下，对${B("蒋海旭")}的桃相当于能用两次.可多补牌，援助容易蓄牌的队友`
+    + "<li>忠臣、内奸：辅助主公，但有可能把主公的桃抢了……因此在主公血量危急的时候尽量别被打进濒死了";
 
 export const character = {
     'lit_jianghaixu蒋海旭': {
@@ -69,14 +75,6 @@ export const skill = {
         },
         ai: {
             expose: 0.2,
-            effect: {
-                target(card, player, target) {
-                    if (!target.hasMark("lit_yuanzhu")) return;
-                    if (get.tag(card, "loseCard") || get.tag(card, "discard")) {
-                        return [1, 0.8 + Math.min(1.2, target.countMark("lit_yuanzhu") * 0.3)];
-                    }
-                },
-            },
         },
         global: "lit_yuanzhu_yuan",
         group: "lit_yuanzhu_die",
@@ -95,6 +93,16 @@ export const skill = {
                 async content(event, trigger, player) {
                     player.removeMark("lit_yuanzhu", 1);
                     trigger.cards.removeArray(player.getCards('hes'));
+                },
+                ai: {
+                    effect: {
+                        target(card, player, target) {
+                            if (!target.hasMark("lit_yuanzhu")) return;
+                            if (get.tag(card, "loseCard") || get.tag(card, "discard")) {
+                                return [0, 0.8 + Math.min(1.2, target.countMark("lit_yuanzhu") * 0.3)];
+                            }
+                        },
+                    },
                 },
                 sub: true,
                 sourceSkill: "lit_yuanzhu",

@@ -1,5 +1,9 @@
 ﻿import { lib, game, ui, get, ai, _status } from '../shared.js';
 
+export const sort = 'jbs';
+export const title = "应该是颟翰";
+export const characterReplace = { 'lit_zhengmohan': ['lit_zhengmohan郑墨翰', 'lit_zhengmohan9郑墨翰'] };
+
 export const character = {
     'lit_zhengmohan9郑墨翰': {
         sex: "male",
@@ -201,8 +205,6 @@ export const skill = {
             },
         },
     },
-
-    // 9曾品嘉
 };
 
 export const translate = {

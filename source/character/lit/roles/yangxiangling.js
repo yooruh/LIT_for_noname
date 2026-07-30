@@ -1,4 +1,12 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+
+export const sort = 'ybs';
+export const title = `控人·斩杀·连破·${Styled('o', "较难")}`;
+export const intro = `前期约等于没有技能，想杀${B("杨湘铃")}要趁早，就算是队友也可能被AOE误伤。一旦${B("杨湘铃")}到了后期，可以显著提高敌方的斩杀线，对手的血量变化完全可能为5→4→3→2→-2→-3→-4……非常适合打消耗战`
+    + `<li>主公：前期只考虑活下来，及时翻面高嘲讽敌方。后期可以亲自下场，利用${get.poptip("lit_dongjie")}掉血效果杀到忠臣也不怕`
+    + "<li>忠臣、反贼：及时补刀残血，可以造成双倍伤害，不过很多时候人头不会是你的，人头算的是「使其从正常状态进入濒死状态并在最终死亡」的伤害源"
+    + "<li>内奸：比较容易发死人财，找准机会连破定胜";
+export const perfectPair = ['lit_linmiao林淼'];
 
 export const character = {
     'lit_yangxiangling杨湘铃': {

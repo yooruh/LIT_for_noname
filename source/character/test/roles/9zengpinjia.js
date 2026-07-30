@@ -1,5 +1,8 @@
 ﻿import { lib, game, ui, get, ai, _status } from '../shared.js';
 
+export const sort = 'jbs';
+export const characterReplace = { 'lit_zengpinjia': ['lit_zengpinjia曾品嘉', 'lit_zengpinjia9曾品嘉'] };
+
 export const character = {
     'lit_zengpinjia9曾品嘉': {
         sex: "male",
@@ -266,19 +269,10 @@ export const skill = {
                 },
             },
             result: {
-                player: (player) => {
-                    return player.hasFriend() ? 1 : -1;
-                },
-                target: (player, target) => {
-                    if (get.attitude(player, target) <= 0) return 0;
-                    let recover = get.recoverEffect(target, player, player);
-                    return recover + 0.8;
-                },
+                player: 1,
             },
         },
     },
-
-    // 王思媛
 };
 
 export const translate = {

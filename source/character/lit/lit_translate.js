@@ -1,1 +1,0 @@
-export { fullTranslate, simpleTranslate, dynamicTranslate, pinyins } from './index.js';

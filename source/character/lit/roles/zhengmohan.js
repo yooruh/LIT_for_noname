@@ -1,4 +1,12 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+
+export const sort = 'ybs';
+export const title = `过牌·回血·爆发·${Styled('b', "较易")}`;
+export const intro = `每回合群体回血+制衡的收益很恐怖，因此跟${B("郑墨翰")}打消耗战很不现实，留点属性牌利用铁索打暴击通常比较好。对${B("郑墨翰")}自己而言，`
+    + `专门控状态打爆发收益不一定高，${get.poptip("lit_jianren")}更多是个保下限的技能`
+    + "<li>主公：利用加血活命，即便拖到主内对决都不慌，只要对面不是强命斩杀将，单挑问题不大"
+    + "<li>忠臣、反贼：横置控场，血低时择机打爆发。如果确信伤害能中，即便是给对面先回1点血都不一定亏"
+    + "<li>内奸：利用制衡屯牌，不要轻易掉血，后期就是主公打法";
 
 export const character = {
     'lit_zhengmohan郑墨翰': {

@@ -1,4 +1,12 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+
+export const sort = 'ybs';
+export const title = `控血·爆发·${Styled('b', "较易")}`;
+export const intro = `卖血？？白银狮子？！遇到他们不要怕，只要${B("张钦奕")}2血，薄纱！全部薄纱！`
+    + `<li>主公：在真人局，开场几乎就能逼其他人跳身份了，但这似乎是唯一的优点，不然遇到带有${get.poptip("lit_shichou")}的家伙，直接天崩开局`
+    + "<li>忠臣：辅助卖血主公有奇效，除此之外可以挑对面的玻璃大炮来打"
+    + "<li>反贼：在近主位说不定可以秒杀，只要队内有同性能记得留桃，就可以火攻自己万人迷"
+    + "<li>内奸：屯桃等候时机，再突然爆发，也许能瞬间进主内对决。只要主公没卖血、没复活或者名刀等，就算有再多防御牌都挡不住";
 
 export const character = {
     'lit_zhangqinyi张钦奕': {

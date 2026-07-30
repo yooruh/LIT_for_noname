@@ -1,5 +1,8 @@
 ﻿import { lib, game, ui, get, ai, _status } from '../shared.js';
 
+export const sort = 'jbs';
+export const title = "时过境迁，藻已物是人非";
+
 export const character = {
     'lit_pengliying彭丽颖': {
         sex: "female",

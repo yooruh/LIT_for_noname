@@ -1,4 +1,13 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+
+export const sort = 'ybs';
+export const title = `装备·补牌·爆发·${Styled('g', "易")}`;
+export const intro = `${B("Rita")}是装备驱动的辅助型主公。${get.poptip("lit_nuoruo")}在中期能依靠其他角色顶装备来获取较多装备牌，供给${get.poptip("lit_hengshuiti")}`
+    + `连续冰杀输出。作为主公技或升级技的${get.poptip("lit_dafang")}则是能给高输出队友补牌，或是以多手牌队友为跳板给自己回血，兼具团队续航与个人能力。`
+    + "<li>主公：必要时让忠臣拆装备配合补牌，后期自身装备≈1张杀+半个桃，不急着拿人头可以不着急装备"
+    + "<li>忠臣、反贼：前期爆发能力较弱，可以老实当一个控场角色，中后期再收人头并辅助队友补牌"
+    + "<li>内奸：前期控场，在最后单挑时的「懦弱」能恶心主公的装备体系，控制得当可以达成爆发+摸牌循环的效果";
+export const perfectPair = ['lit_huxinyu胡馨予', 'lit_yangxiangling杨湘铃'];
 
 export const character = {
     'lit_ritaRita': {
