@@ -1,6 +1,6 @@
 {
   "extension.js": {
-    "size": 5209
+    "size": 5236
   },
   "image/card/lit_diaoka.png": {
     "size": 4793
@@ -135,7 +135,7 @@
     "size": 35475
   },
   "source/card/lit_card.js": {
-    "size": 537
+    "size": 622
   },
   "source/card/lit_cardSkills.js": {
     "size": 30704
@@ -144,91 +144,91 @@
     "size": 3788
   },
   "source/character/lit/index.js": {
-    "size": 3454
-  },
-  "source/character/lit/roles/9liyang.js": {
-    "size": 4777
-  },
-  "source/character/lit/roles/9wangcan.js": {
-    "size": 6605
-  },
-  "source/character/lit/roles/9zhangchi.js": {
-    "size": 29481
-  },
-  "source/character/lit/roles/9zhangshengjie.js": {
-    "size": 12946
+    "size": 2956
   },
   "source/character/lit/roles/boshu.js": {
-    "size": 21206
+    "size": 21212
   },
   "source/character/lit/roles/chenke.js": {
-    "size": 8018
+    "size": 8027
   },
   "source/character/lit/roles/hujunwei.js": {
-    "size": 14221
+    "size": 14227
   },
   "source/character/lit/roles/hupan.js": {
-    "size": 27437
+    "size": 27443
   },
   "source/character/lit/roles/huxinyu.js": {
-    "size": 11835
+    "size": 11841
   },
   "source/character/lit/roles/jianghaixu.js": {
-    "size": 16528
+    "size": 16534
   },
   "source/character/lit/roles/lanboxun.js": {
-    "size": 6218
+    "size": 6224
   },
   "source/character/lit/roles/linmiao.js": {
-    "size": 7406
+    "size": 7445
   },
   "source/character/lit/roles/liuchenmu.js": {
-    "size": 11178
+    "size": 11184
+  },
+  "source/character/lit/roles/liyang9.js": {
+    "size": 4792
   },
   "source/character/lit/roles/pangjianlong.js": {
-    "size": 10983
+    "size": 10989
   },
   "source/character/lit/roles/qb.js": {
-    "size": 15885
+    "size": 15891
   },
   "source/character/lit/roles/qianbaocan.js": {
-    "size": 9325
+    "size": 9331
   },
   "source/character/lit/roles/rita.js": {
-    "size": 9941
+    "size": 9947
   },
   "source/character/lit/roles/sunnan.js": {
-    "size": 18808
+    "size": 18814
+  },
+  "source/character/lit/roles/wangcan9.js": {
+    "size": 6614
   },
   "source/character/lit/roles/wangrong.js": {
-    "size": 26310
+    "size": 26316
   },
   "source/character/lit/roles/wuxiaoqi.js": {
-    "size": 16147
+    "size": 16153
   },
   "source/character/lit/roles/yangxiangling.js": {
-    "size": 16480
+    "size": 16492
   },
   "source/character/lit/roles/zengpinjia.js": {
-    "size": 22707
+    "size": 22716
   },
   "source/character/lit/roles/zhangchi.js": {
-    "size": 12782
+    "size": 12788
+  },
+  "source/character/lit/roles/zhangchi9.js": {
+    "size": 29499
   },
   "source/character/lit/roles/zhangqinyi.js": {
-    "size": 8834
+    "size": 8840
   },
   "source/character/lit/roles/zhangshengjie.js": {
-    "size": 29069
+    "size": 29075
+  },
+  "source/character/lit/roles/zhangshengjie9.js": {
+    "size": 12967
   },
   "source/character/lit/roles/zhengmohan.js": {
-    "size": 14170
+    "size": 14176
   },
   "source/character/lit/roles/zigao.js": {
-    "size": 22787
+    "size": 22793
   },
   "source/character/lit/shared.js": {
-    "size": 826
+    "size": 869
   },
   "source/character/lit/_meta.js": {
     "size": 211
@@ -239,35 +239,17 @@
   "source/character/lit/_shengji.js": {
     "size": 9684
   },
-  "source/character/lit.js": {
-    "size": 1288
-  },
   "source/character/lit_gz/index.js": {
-    "size": 4402
+    "size": 3211
   },
   "source/character/lit_gz/roles/README.md": {
-    "size": 1396
-  },
-  "source/character/lit_gz.js": {
-    "size": 4332
-  },
-  "source/character/lit_test.js": {
-    "size": 835
+    "size": 1413
   },
   "source/character/test/index.js": {
-    "size": 2658
+    "size": 2214
   },
-  "source/character/test/roles/9hupan.js": {
+  "source/character/test/roles/hupan9.js": {
     "size": 8255
-  },
-  "source/character/test/roles/9zengpinjia.js": {
-    "size": 10873
-  },
-  "source/character/test/roles/9zhengmohan.js": {
-    "size": 8603
-  },
-  "source/character/test/roles/9zhongyutong.js": {
-    "size": 13714
   },
   "source/character/test/roles/pengliying.js": {
     "size": 10139
@@ -275,77 +257,152 @@
   "source/character/test/roles/wangsiyuan.js": {
     "size": 4448
   },
+  "source/character/test/roles/zengpinjia9.js": {
+    "size": 10873
+  },
+  "source/character/test/roles/zhengmohan9.js": {
+    "size": 8603
+  },
+  "source/character/test/roles/zhongyutong9.js": {
+    "size": 13714
+  },
   "source/character/test/shared.js": {
-    "size": 509
+    "size": 316
   },
   "source/character/test/_meta.js": {
     "size": 161
   },
   "source/config.js": {
-    "size": 7625
+    "size": 7949
   },
   "source/content.js": {
-    "size": 3905
+    "size": 3323
   },
   "source/help.js": {
-    "size": 3511
+    "size": 3653
   },
   "source/mode/sandaohuanhua.js": {
-    "size": 59651
+    "size": 61635
   },
   "source/mode/sandaohuanhua_brawl.js": {
-    "size": 73018
+    "size": 74410
+  },
+  "source/onlineFix/characterSelection.js": {
+    "size": 14608
   },
   "source/onlineFix/content.js": {
     "size": 4700
   },
   "source/onlineFix/function.js": {
-    "size": 13984
+    "size": 14030
+  },
+  "source/onlineFix/handcards.js": {
+    "size": 4903
+  },
+  "source/onlineFix/loader.js": {
+    "size": 383
+  },
+  "source/onlineFix/lobby.js": {
+    "size": 6921
   },
   "source/onlineFix/modeset.js": {
-    "size": 10547
+    "size": 10667
   },
   "source/onlineFix/player.js": {
     "size": 1743
   },
+  "source/onlineFix/playerControl.js": {
+    "size": 7210
+  },
   "source/onlineFix/precontent.js": {
-    "size": 1507
+    "size": 1632
+  },
+  "source/onlineFix/runtime.js": {
+    "size": 1441
+  },
+  "source/onlineFix/transport.js": {
+    "size": 549
   },
   "source/onlineFix/useFunction.js": {
-    "size": 151
+    "size": 176
+  },
+  "source/onlineFix/utils.js": {
+    "size": 5358
   },
   "source/onlineFix/video.js": {
-    "size": 4981
+    "size": 5033
   },
   "source/precontent.js": {
-    "size": 7023
+    "size": 4170
   },
-  "source/tool/basic.js": {
-    "size": 2414
+  "source/tool/configuration/configManager.js": {
+    "size": 15031
   },
-  "source/tool/configSetter.js": {
-    "size": 26078
+  "source/tool/configuration/configService.js": {
+    "size": 12003
   },
-  "source/tool/extraUI.js": {
-    "size": 46447
+  "source/tool/pack/guozhanPack.js": {
+    "size": 1194
   },
-  "source/tool/skillFactory.js": {
-    "size": 3468
+  "source/tool/pack/manifest.js": {
+    "size": 222
   },
-  "source/tool/suiSet.js": {
-    "size": 39097
+  "source/tool/pack/registry.js": {
+    "size": 4840
   },
-  "source/tool/update.js": {
-    "size": 89305
+  "source/tool/pack/rolePack.js": {
+    "size": 1591
+  },
+  "source/tool/ui/dialogManager.js": {
+    "size": 46481
+  },
+  "source/tool/ui/poptips.js": {
+    "size": 1567
+  },
+  "source/tool/update/backupManager.js": {
+    "size": 4779
+  },
+  "source/tool/update/config.js": {
+    "size": 930
+  },
+  "source/tool/update/downloader.js": {
+    "size": 5156
+  },
+  "source/tool/update/extensionUpdater.js": {
+    "size": 30263
+  },
+  "source/tool/update/index.js": {
+    "size": 11691
+  },
+  "source/tool/update/repository.js": {
+    "size": 4971
+  },
+  "source/tool/update/stateManager.js": {
+    "size": 9424
+  },
+  "source/tool/update/updateDialogs.js": {
+    "size": 17401
+  },
+  "source/tool/update/utils.js": {
+    "size": 4358
+  },
+  "source/tool/update/versionChecker.js": {
+    "size": 2562
+  },
+  "source/tool/utils/paths.js": {
+    "size": 397
+  },
+  "source/tool/utils/textFormat.js": {
+    "size": 480
   },
   "style/css/cards.css": {
     "size": 88
   },
+  "style/css/dialogManager.css": {
+    "size": 10489
+  },
   "style/css/extension.css": {
     "size": 5964
-  },
-  "style/css/extraUI.css": {
-    "size": 10489
   },
   "style/html/help.html": {
     "size": 16969

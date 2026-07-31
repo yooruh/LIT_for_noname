@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `拆牌·消耗·${Styled('y', "中")}`;
+export const title = `拆牌·消耗·${styleText('y', "中")}`;
 export const intro = `${B("胡馨予")}是拼点驱动的进攻型角色。通过拼点触发${get.poptip("lit_xukong")}的决斗效果，快速消耗双方的大量手牌并造成伤害，造成伤害后`
     + `如果还有手牌则能连续发动。升级后的闪与装备牌在拼点时视为K点，能大幅提升拼点胜率。消耗完手牌后，${get.poptip("lit_shihuai")}可索取他人手牌续航，保底2收益。`
     + "<li>主公、内奸：要留少量防御牌来保持威慑，同时可以慢慢积攒拼点机会，用于在中期发动虚空连击"

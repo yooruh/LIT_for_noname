@@ -1,4 +1,4 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'jbs';
 
@@ -172,12 +172,12 @@ export const skill = {
 export const translate = {
     'lit_chenke陈可': "陈可",
     'lit_nitian': "逆天",
-    'lit_nitian_info': `当判定牌生效前，你可以打出一张牌代替之，并${Styled('g', '获得原判定牌')}，若你以此法打出的牌为♥️/♠️，你摸一张牌`,
+    'lit_nitian_info': `当判定牌生效前，你可以打出一张牌代替之，并${styleText('g', '获得原判定牌')}，若你以此法打出的牌为♥️/♠️，你摸一张牌`,
     'lit_yizhu': "遗嘱",
     'lit_yizhu_info': "你每失去1点体力或受到1点伤害后，可以获得一名其他角色一张牌；当你死亡时，你可以将所有牌置于牌堆顶或交给一名其他角色",
 };
 
 export const simpleTranslate = {
-    'lit_nitian_info': `场上判定时，可打1牌代替判定牌并${Styled('g', '拿走原判定牌')}，用♥️♠️改判则摸1牌`,
+    'lit_nitian_info': `场上判定时，可打1牌代替判定牌并${styleText('g', '拿走原判定牌')}，用♥️♠️改判则摸1牌`,
     'lit_yizhu_info': "每-1血或受1伤，可拿1人1牌；死时可将所有牌放牌堆顶或给他人",
 };

@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `卖血·控人·${Styled('y', "中")}`;
+export const title = `卖血·控人·${styleText('y', "中")}`;
 export const intro = `前期被防御类和爆发类克制，防御类让${B("Qb")}不容易发动${get.poptip("lit_tianna")}回血，爆发类容易让${B("Qb")}血量回不上来。后期升级后有名刀，而且有机会收残血，只要${B("Qb")}有伤害牌，回血难度会降一些。`
     + "<li>主公：建议适当屯牌，不一定回满血，只要保证不会被一套带走，就可以留牌用于在回合内造成伤害。毕竟你还可以让你的“忠臣”们自愿给你献血，前期没那么容易死的"
     + "<li>反贼：血量上限更低，回合外要尽可能保证满血。多与队友配合，最好间隔一轮卖血控不同的人，压制对面的配合"

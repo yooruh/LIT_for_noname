@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `控场·强杀·${Styled('g', "易")}`;
+export const title = `控场·强杀·${styleText('g', "易")}`;
 export const intro = `什么超级吕布，摸牌白罢了。不过${B("庞建龙")}比较适合新手，乱打也容易出伤害，尤其针对不清楚技能出两张牌机制的人`
     + "<li>主公、内奸：适当决斗控场，对有杀但是杀不多的人，记得让自己来决斗"
     + "<li>忠臣：放AOE前先看看主公状态，可千万不能坑主公"

@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `追击·连杀·${Styled('o', "较难")}`;
+export const title = `追击·连杀·${styleText('o', "较难")}`;
 export const intro = `${B("孙楠")}通过${get.poptip("lit_jiaoshui")}从他人处获取资源，配合${get.poptip("lit_zhishu")}将回合外获得的牌转化为"枝"牌进行输出。${get.poptip("lit_gonghuo")}能为敌人施加负面标记，在合适的时机造成额外伤害。`
     + "<li>主公：利用浇水收集资源，枝疏提供持续输出，注意保持攻击范围以触发枝疏的配合效果"
     + "<li>忠臣、反贼：通过拱火为关键敌人施加烂根标记，配合队友的出杀打爆发伤害，自己可利用枝疏②在回合外连续出杀"

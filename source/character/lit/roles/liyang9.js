@@ -1,4 +1,4 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'jbs';
 
@@ -108,7 +108,7 @@ export const translate = {
     'lit_liyang9李洋': "9李洋",
     'lit_liyang9李洋_prefix': "9",
     'lit_xiuer': "秀儿",
-    'lit_xiuer_info': `你每使用一张非转化的普通锦囊牌，可以摸一张牌，若你体力值为1，则摸牌数+1；锁定技，${Styled('g', '你使用锦囊牌无距离限制')}`,
+    'lit_xiuer_info': `你每使用一张非转化的普通锦囊牌，可以摸一张牌，若你体力值为1，则摸牌数+1；锁定技，${styleText('g', '你使用锦囊牌无距离限制')}`,
     'lit_xiuer_faq': "关于非转化",
     'lit_xiuer_faq_info': "一般来说，只有通过转换技能来使用的牌才是转化牌，如：把A当做B使用。通过其他方法使用的牌，如：通过弃置、扣血、判定等条件来视为使用，或直接视为使用（如你的A视为B）等，即使是虚拟的，无实体的牌，也不视为转化牌。但是本扩展之外的不敢保证",
     'lit_huangse': "黄色",
@@ -116,6 +116,6 @@ export const translate = {
 };
 
 export const simpleTranslate = {
-    'lit_xiuer_info': `每用1非转锦囊可摸1牌，体为1则+1；锁；${Styled('g', '使用锦囊无距离限制')}`,
-    'lit_huangse_info': `锁；对${Styled('r', '异性')}伤害+1，伤害${Styled('g', '同性')}后摸1牌`,
+    'lit_xiuer_info': `每用1非转锦囊可摸1牌，体为1则+1；锁；${styleText('g', '使用锦囊无距离限制')}`,
+    'lit_huangse_info': `锁；对${styleText('r', '异性')}伤害+1，伤害${styleText('g', '同性')}后摸1牌`,
 };

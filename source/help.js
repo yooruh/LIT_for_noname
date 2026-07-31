@@ -2,17 +2,17 @@ import { lib, game, ui, get, ai, _status } from '../../../noname.js'
 import { lib_lit } from './precontent.js';
 import { updateContent } from './content.js';
 import { translate as dkTranslate } from './card/lit_cardTranslate.js';
-import { Lit_dialog } from './tool/extraUI.js'
-import basic from './tool/basic.js'
+import { dialogManager } from './tool/ui/dialogManager.js'
+import { extensionPath } from './tool/utils/paths.js'
 
 // 事件处理函数
 const changelogOnclick = () => {
-	const updateURL = `${basic.path}/style/html/update.html`.replace(/'/g, "\\'");
+	const updateURL = `${extensionPath}/style/html/update.html`.replace(/'/g, "\\'");
 	const version = game.getExtensionConfig('叁岛世界', 'version') || '未知版本';
 	const dataProcessor = (content) => content.replace("{{version}}", version);
 
-	Lit_dialog.closeAll();
-	Lit_dialog.showDocModal(updateURL, '更新日志', dataProcessor);
+	dialogManager.closeAll();
+	dialogManager.showDocModal(updateURL, '更新日志', dataProcessor);
 };
 
 if (!window.lit) window.lit = {};

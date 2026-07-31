@@ -1,8 +1,8 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js';
-import { Lit_dialog } from './tool/extraUI.js'
-import { Lit_update } from './tool/update.js';
-import { Lit_configSetter } from './tool/configSetter.js'
-import basic from './tool/basic.js'
+import { dialogManager } from './tool/ui/dialogManager.js'
+import { extensionUpdateManager } from './tool/update/index.js';
+import { configManager } from './tool/configuration/configManager.js'
+import { extensionPath } from './tool/utils/paths.js'
 
 // 本体菜单更新，未来可期
 // update(config, map) {
@@ -53,8 +53,8 @@ export const config = {
 		clear: true,
 		async onclick() {
 			try {
-				await Lit_dialog.showDocModal(
-					`${basic.path}/style/html/help.html`,
+				await dialogManager.showDocModal(
+					`${extensionPath}/style/html/help.html`,
 					'帮助文档'
 				);
 			} catch (error) {
@@ -68,7 +68,7 @@ export const config = {
 		intro: "从GitHub/Gitee在线获取扩展并更新",
 		clear: true,
 		async onclick() {
-			await Lit_update.showUI();
+			await extensionUpdateManager.showUI();
 		}
 	},
 	lit_recommendConfig: {
@@ -76,7 +76,7 @@ export const config = {
 		intro: "载入相对适配《叁岛世界》的“无名杀全局设置”，同时可备份当前配置到files目录",
 		clear: true,
 		async onclick() {
-			await Lit_configSetter.showUI();
+			await configManager.showUI();
 		}
 	},
 	lit_dkwsl: {

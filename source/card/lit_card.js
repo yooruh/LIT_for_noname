@@ -2,6 +2,11 @@ import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
 import { card, skill } from './lit_cardSkills.js';
 import { translate, dynamicTranslate, pinyins } from './lit_cardTranslate.js';
 
+export const packConfig = {
+	displayName: '叁岛世界',
+	defaultEnabled: true,
+};
+
 export let info = {
 	name: 'lit_card',
 	connect: true,

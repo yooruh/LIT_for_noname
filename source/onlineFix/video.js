@@ -1,5 +1,5 @@
 import { game, ui, _status, ai, lib, get } from "../../../../noname.js";
-import { suiSet } from "../tool/suiSet.js";
+import { characterSelectionRuntime } from './runtime.js';
 game.videoContent.addStyle = function ({ style, globalSkills }) {
 	const system = ui.create.system('<span style="color:skyblue;">录像暂停</span>', () => {
 		if (system.innerText === '录像暂停') {
@@ -99,7 +99,7 @@ game.videoContent.danmu = function ({ prefix, name, str }) {
 }
 game.videoContent.initAvatar = function ({ avatar, nickname, playerid }) {
 	nickname = nickname.replace('※', '')
-	suiSet.copyCharacter({
+	characterSelectionRuntime.copyCharacter({
 		character: avatar,
 		hp: 4,
 		skills: [],
@@ -110,7 +110,7 @@ game.videoContent.initAvatar = function ({ avatar, nickname, playerid }) {
 game.videoContent.flashAvatar = function (player, { avatar, skills }) {
 	const nickname = player.nickname.replace('※', '')
 	const id = nickname + player.playerid
-	suiSet.copyCharacter({
+	characterSelectionRuntime.copyCharacter({
 		character: avatar,
 		hp: 4,
 		skills: [],

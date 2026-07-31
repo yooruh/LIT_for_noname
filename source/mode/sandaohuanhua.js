@@ -1,6 +1,7 @@
 import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
-import { Lit_dialog } from '../tool/extraUI.js';
-import basic, { poptipInit } from '../tool/basic.js'
+import { dialogManager } from '../tool/ui/dialogManager.js';
+import { extensionPath } from '../tool/utils/paths.js'
+import { registerPoptips } from '../tool/ui/poptips.js'
 export const type = "mode";
 
 // ==================== 常量定义区 ====================
@@ -196,8 +197,8 @@ export default () => {
 				clear: true,
 				async onclick() {
 					try {
-						Lit_dialog.showDocModal(
-							`${basic.path}/style/html/sandaohuanhua.html`,
+						dialogManager.showDocModal(
+							`${extensionPath}/style/html/sandaohuanhua.html`,
 							'叁岛幻化完整介绍'
 						);
 					} catch (error) {
@@ -963,7 +964,7 @@ export default () => {
 		get: {
 			// 全局初始化
 			sdhhInit() {
-				poptipInit();
+				registerPoptips();
 				lib.inpile.addArray(["sdhh_fudichouxin", "sdhh_toulianghuanzhu"]);
 				if (!lib.sandaohuanhua) lib.sandaohuanhua = {};
 

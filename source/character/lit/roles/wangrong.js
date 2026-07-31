@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `过牌·控人·强杀·${Styled('y', "中")}`;
+export const title = `过牌·控人·强杀·${styleText('y', "中")}`;
 export const intro = `${B("王荣")}集"控场""过牌""输出"为一身，虽然在特定环境下才能发挥出最大的威力，但其综合能力并不弱。对付他时要谨慎使用判定技能，优先拆他的武器和-1马`
     + `<li>主公：开场几乎一定要转移${get.poptip("lit_diaogui")}，然后可以对攻击范围内嘲讽较高的角色使用${get.poptip("lit_qixu")}来换牌。如果因此判闪电劈到忠臣了，那就当是"吊诡"发力了吧`
     + `<li>忠臣、反贼、内奸：控人拿牌，拿到${get.poptip("lit_zhijian")}之后就有输出了`;

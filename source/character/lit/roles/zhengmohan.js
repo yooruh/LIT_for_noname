@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `过牌·回血·爆发·${Styled('b', "较易")}`;
+export const title = `过牌·回血·爆发·${styleText('b', "较易")}`;
 export const intro = `每回合群体回血+制衡的收益很恐怖，因此跟${B("郑墨翰")}打消耗战很不现实，留点属性牌利用铁索打暴击通常比较好。对${B("郑墨翰")}自己而言，`
     + `专门控状态打爆发收益不一定高，${get.poptip("lit_jianren")}更多是个保下限的技能`
     + "<li>主公：利用加血活命，即便拖到主内对决都不慌，只要对面不是强命斩杀将，单挑问题不大"

@@ -1,4 +1,4 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'jbs';
 
@@ -273,14 +273,14 @@ export const translate = {
     'lit_lizhi': "励志",
     'lit_lizhi_info': `锁定技，摸牌阶段，你多摸${X}张牌（${X}为你已失去的体力值）`,
     'lit_shenjie': "肾竭",
-    'lit_shenjie_info': `锁定技，当你${Styled('g', '进入/脱离')}濒死状态时，你${Styled('g', '摸2/1')}张牌；你的手牌上限基数为你的体力上限+2`,
+    'lit_shenjie_info': `锁定技，当你${styleText('g', '进入/脱离')}濒死状态时，你${styleText('g', '摸2/1')}张牌；你的手牌上限基数为你的体力上限+2`,
     'lit_zhewan': "折腕",
-    'lit_zhewan_info': `你可以将${Styled('g', '至多两张同花色')}的牌按以下规则使用或打出：♠️️【无懈可击】，♥️️【桃】，♣️️【闪】，♦️️火【杀】；<br>` +
+    'lit_zhewan_info': `你可以将${styleText('g', '至多两张同花色')}的牌按以下规则使用或打出：♠️️【无懈可击】，♥️️【桃】，♣️️【闪】，♦️️火【杀】；<br>` +
         `若你以此法使用了两张♥️♦️️牌，则此牌恢复的体力值或造成的伤害值+1；若你以此法使用了两张♠️♣️牌，则你弃置当前回合角色一张牌`,
 };
 
 export const simpleTranslate = {
     'lit_lizhi_info': `锁；摸牌阶段摸牌数+${X}（${X}为已失去的体力）`,
-    'lit_shenjie_info': `锁；${Styled('g', '进入/脱离')}濒死后${Styled('g', '摸2/1')}牌；手牌上限为(体力上限+2)`,
-    'lit_zhewan_info': `可将${Styled('g', '同花色1~2张')}：♠️当无懈，♥️当桃，♣️当闪，♦️当火杀使用或打出；用2张♥️/♦️则恢复/伤害值+1，用2张♠️/♣️则弃置当前回合角色1牌`,
+    'lit_shenjie_info': `锁；${styleText('g', '进入/脱离')}濒死后${styleText('g', '摸2/1')}牌；手牌上限为(体力上限+2)`,
+    'lit_zhewan_info': `可将${styleText('g', '同花色1~2张')}：♠️当无懈，♥️当桃，♣️当闪，♦️当火杀使用或打出；用2张♥️/♦️则恢复/伤害值+1，用2张♠️/♣️则弃置当前回合角色1牌`,
 };

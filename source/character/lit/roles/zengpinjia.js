@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `凑牌·追击·${Styled('y', "中")}`;
+export const title = `凑牌·追击·${styleText('y', "中")}`;
 export const intro = `${B("曾品嘉")}想要玩得舒服，又要牌运又要计算，联机时浪费时间，伤害高而慢……什么，铁索连环？只要没有${get.poptip("lit_zigaodebeixin")}`
     + `${get.poptip("lit_qbzhimao")}之类的技能，完全有可能"五连·诸天灭地"！`
     + `<li>主公：非常不建议当主公，在写此info的当前环境下（26.2.11）一轮下来的存活率不超过1成，除非队友特别合适。硬要玩的话记得多留防御牌，不要奢求打伤害`
@@ -438,7 +438,7 @@ export const dynamicTranslate = {
         let str = `已用和打出${get.poptip("lit_exDelayEquipCard")}可置于角色上。出牌阶段可：<li>将2张点数和≥13的牌当闪电</li>`;
         if (player.hasSkill('lit_saohuaV2')) str = `V2 已用和打出${get.poptip("lit_exDelayEquipCard")}可置于角色上，技能期间点数<7的牌点数+7。出牌阶段可：<li>将2张点数和≥13的牌当闪电</li>`;
 
-        if (player.hasSkill('lit_saohua_pi')) str += Styled('O', "<li>弃3张点数和=33的牌造成3点雷伤（此项每回合限1次）</li>");
+        if (player.hasSkill('lit_saohua_pi')) str += styleText('O', "<li>弃3张点数和=33的牌造成3点雷伤（此项每回合限1次）</li>");
         else str += "<li>弃3张点数和=33的牌造成3点雷伤（此项每回合限1次）</li>";
         return str;
     },

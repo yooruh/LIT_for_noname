@@ -41,7 +41,7 @@ const positionalArgs = args.filter(arg => !arg.startsWith('-'));
 function printBanner() {
   console.log(`
 \x1b[35m╔══════════════════════════════════╗
-║   叁岛世界 统一分发版本脚本 v2.0   ║
+║  叁岛世界 统一分发版本脚本 v2.0  ║
 ╚══════════════════════════════════╝\x1b[0m
 `);
 }

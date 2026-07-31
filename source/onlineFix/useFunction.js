@@ -1,4 +1,4 @@
-import { suiSet } from '../tool/suiSet.js';
+import { lobbyRuntime } from './runtime.js';
 
-export const canIn = suiSet.canIn.bind(suiSet)
-export const getPlayer = suiSet.getPlayer.bind(suiSet)
+export const canIn = lobbyRuntime.canIn.bind(lobbyRuntime)
+export const getPlayer = lobbyRuntime.getPlayer.bind(lobbyRuntime)

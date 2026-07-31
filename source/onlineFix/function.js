@@ -2,7 +2,7 @@ import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
 //这个文件是写给主机执行的代码
 
 import { config } from '../config.js'
-import { suiSet } from "../tool/suiSet.js";
+import { characterSelectionRuntime, lobbyRuntime } from './runtime.js';
 const functions = {
 	audio() {
 		const playerAudio = () => {
@@ -116,7 +116,7 @@ const functions = {
 				this.say(str);
 				game.broadcast(
 					function (id, str) {
-						const player = suiSet.getPlayer(id)
+						const player = lobbyRuntime.getPlayer(id)
 						if (player) {
 							player.say(str);
 						}
@@ -460,4 +460,4 @@ Object.keys(config).forEach(s => {
 		}
 	}
 });
-for (const s in suiSet.globalSkills) lib.skill[s] = suiSet.globalSkills[s];
+for (const s in lobbyRuntime.globalSkills) lib.skill[s] = lobbyRuntime.globalSkills[s];

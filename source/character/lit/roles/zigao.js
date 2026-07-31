@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `补牌·辅助·${Styled('o', "较难")}`;
+export const title = `补牌·辅助·${styleText('o', "较难")}`;
 export const intro = `如果没人理${B("自高")}，而他又打不出伤害，那很可能被活活拖死。他自带两种模式：牌少回血拿对手牌，牌多扣血送队友牌；对于缺牌的对手和牌多的队友有奇效，`
     + `不过有一定风险。`
     + `<li>主公：回合外的防御牌随便出，压低手牌方便回血。但是回合内的伤害牌不要乱用，尤其是AOE，通过${get.poptip("lit_xinren")}给队友开很关键。不仅可以联动队友的技能，而且队友造成的伤害也能防止回合内的崩血`

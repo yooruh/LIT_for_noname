@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `改判·爆发·强杀·${Styled('b', "较易")}`;
+export const title = `改判·爆发·强杀·${styleText('b', "较易")}`;
 export const intro = `判定控制与卖血结合的强命高伤害角色。${B("胡峻玮")}的${get.poptip("lit_wutong")}可拿体力或手牌换护甲来强制修改场上判定结果，配合${get.poptip("lit_biaoxian")}；`
     + `能做到刀刀暴击命中。此外的改判还能为团队解除延时锦囊威胁或强化自身输出，是兼具辅助与爆发的核心角色。`
     + "<li>主公：要留点血来作为手牌上限，不是收人头的时候不用那么激进地进攻，可惜回血和过牌不够，比较吃忠臣选将"

@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `扒牌·顺风压制·${Styled('g', "易")}`;
+export const title = `扒牌·顺风压制·${styleText('g', "易")}`;
 export const intro = `多拿AOE，杀藤甲和仁王盾仍能触发技能，以此可维持血量和手牌优势。因此限制${B("兰柏勋")}的方法也很简单，在升级前不击杀就别管，升级后只需要压血`
     + `拆牌就好了`
     + "<li>主公、内奸：适当杀人，放AOE来巩固自身地位。升级时相当于触发半个复活技，可以利用此机会爆发"

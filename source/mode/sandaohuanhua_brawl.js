@@ -1,6 +1,6 @@
 import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
-import { Lit_dialog } from '../tool/extraUI.js';
-import basic from '../tool/basic.js';
+import { dialogManager } from '../tool/ui/dialogManager.js';
+import { extensionPath } from '../tool/utils/paths.js';
 
 function sdhhResetMissionUI() {
     if (!ui.sandaohuanhua) return;
@@ -191,8 +191,8 @@ export let info = {
         introLink.innerText = "点击查看【叁岛幻化】完整介绍及玩法建议";
         introLink.onclick = () => {
             try {
-                Lit_dialog.showDocModal(
-                    `${basic.path}/style/html/sandaohuanhua.html`,
+                dialogManager.showDocModal(
+                    `${extensionPath}/style/html/sandaohuanhua.html`,
                     '叁岛幻化完整介绍'
                 );
             } catch (error) {

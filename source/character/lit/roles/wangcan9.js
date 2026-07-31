@@ -1,4 +1,4 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'jbs';
 
@@ -148,11 +148,11 @@ export const translate = {
     'lit_huoshan': "火山",
     'lit_huoshan_info': `锁定技，结束阶段，你进行判定，若结果为♥️，你获得1枚"爆"。准备阶段，你可以移去所有"爆"，摸${X}张牌，然后你选择一项：<br>（1）本回合造成的伤害+${X}；<br>（2）恢复${X}点体力（${X}为你移去的"爆"数）`,
     'lit_renxiao': "人小",
-    'lit_renxiao_info': `当你使用或打出牌后，你可判定，若结果为♥️，你从弃牌堆中获得此牌；${Styled('r', '以此法获得牌后，本回合不能再发动此技能')}`,
+    'lit_renxiao_info': `当你使用或打出牌后，你可判定，若结果为♥️，你从弃牌堆中获得此牌；${styleText('r', '以此法获得牌后，本回合不能再发动此技能')}`,
 };
 
 export const simpleTranslate = {
     'lit_xiaoqiao_info': "锁；♠️牌视作♥️牌",
     'lit_huoshan_info': `锁；结束判定为♥️获1"爆"。准备可移去所有"爆"，+${X}牌并选一项：（1）本回合伤害+${X}；（2）恢复${X}血（${X}为移去"爆"数）`,
-    'lit_renxiao_info': `用牌后可判定，为♥️从弃牌堆获之；${Styled('r', '以此法获得牌后，本回合不能再发动此技能')}`,
+    'lit_renxiao_info': `用牌后可判定，为♥️从弃牌堆获之；${styleText('r', '以此法获得牌后，本回合不能再发动此技能')}`,
 };

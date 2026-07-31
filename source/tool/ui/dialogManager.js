@@ -1,5 +1,5 @@
-import { lib, game, ui, get, ai, _status } from '../../../../noname.js';
-import basic from './basic.js'
+import { lib, game, ui, get, ai, _status } from '../../../../../noname.js';
+import { extensionPath } from '../utils/paths.js'
 
 /**
  * 样式隔离的对话框组件 - 重构版
@@ -31,7 +31,7 @@ const DialogManager = (() => {
         if (_cssLoaded) return;
         try {
             await new Promise((resolve, reject) => {
-                lib.init.css(`${basic.path}/style/css`, 'extraUI', () => {
+                lib.init.css(`${extensionPath}/style/css`, 'dialogManager', () => {
                     _cssLoaded = true;
                     resolve();
                 });
@@ -1110,4 +1110,4 @@ const DialogManager = (() => {
 })();
 
 // 导出UI模块
-export const Lit_dialog = DialogManager;
+export const dialogManager = DialogManager;

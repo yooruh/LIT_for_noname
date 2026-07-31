@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `控血·爆发·${Styled('b', "较易")}`;
+export const title = `控血·爆发·${styleText('b', "较易")}`;
 export const intro = `卖血？？白银狮子？！遇到他们不要怕，只要${B("张钦奕")}2血，薄纱！全部薄纱！`
     + `<li>主公：在真人局，开场几乎就能逼其他人跳身份了，但这似乎是唯一的优点，不然遇到带有${get.poptip("lit_shichou")}的家伙，直接天崩开局`
     + "<li>忠臣：辅助卖血主公有奇效，除此之外可以挑对面的玻璃大炮来打"

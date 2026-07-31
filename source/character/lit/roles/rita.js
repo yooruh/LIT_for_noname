@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `装备·补牌·爆发·${Styled('g', "易")}`;
+export const title = `装备·补牌·爆发·${styleText('g', "易")}`;
 export const intro = `${B("Rita")}是装备驱动的辅助型主公。${get.poptip("lit_nuoruo")}在中期能依靠其他角色顶装备来获取较多装备牌，供给${get.poptip("lit_hengshuiti")}`
     + `连续冰杀输出。作为主公技或升级技的${get.poptip("lit_dafang")}则是能给高输出队友补牌，或是以多手牌队友为跳板给自己回血，兼具团队续航与个人能力。`
     + "<li>主公：必要时让忠臣拆装备配合补牌，后期自身装备≈1张杀+半个桃，不急着拿人头可以不着急装备"

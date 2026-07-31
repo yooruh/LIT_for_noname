@@ -1,9 +1,9 @@
 import { lib,game,ui,get,ai,_status } from '../../../../noname.js';
-import { suiSet } from '../tool/suiSet.js';
-lib.config.extensionsCopy = suiSet.getEnabledExtensionsCopy()
+import { lobbyRuntime, onlineUtils, playerControlRuntime } from './runtime.js';
+lib.config.extensionsCopy = lobbyRuntime.getEnabledExtensionsCopy()
 
 //身份场
-suiSet.comboObject(lib.mode.identity.connect,{
+onlineUtils.comboObject(lib.mode.identity.connect,{
     connect_identity_Selects:{
         name: '<span style="color:red;">玩家选将框</span>',
         frequent: true,
@@ -102,7 +102,7 @@ suiSet.comboObject(lib.mode.identity.connect,{
 })
 
 //对决
-suiSet.comboObject(lib.mode.versus.connect,{
+onlineUtils.comboObject(lib.mode.versus.connect,{
      connect_versus_mode:{
          item:{
 			 "2v2": '<span style="color:red;">2v2</span>',
@@ -150,7 +150,7 @@ suiSet.comboObject(lib.mode.versus.connect,{
 
 
 //斗地主
-suiSet.comboObject(lib.mode.doudizhu.connect,{
+onlineUtils.comboObject(lib.mode.doudizhu.connect,{
     connect_doudizhu_select:{
         name: '<span style="color:red;">玩家选将框</span>',
         frequent: true,
@@ -177,7 +177,7 @@ suiSet.comboObject(lib.mode.doudizhu.connect,{
 
 //其他方法
 const lmsi = lib.message.server.init
-suiSet.comboObject(lib.message.server,{
+onlineUtils.comboObject(lib.message.server,{
     initAvatar(id,avatar){
         game.broadcastAll((player,avatar,nickname)=>{
             const character = lib.character[avatar]||['male','qun',4,[],[]]
@@ -198,22 +198,22 @@ suiSet.comboObject(lib.message.server,{
     init(version, config, banned_info){
         this.nickname = config.nickname
         this.gameOptions = {}
-        if(!suiSet.canIn.call(this, config)){
+        if(!lobbyRuntime.canIn.call(this, config)){
             return false
         }
-        suiSet.executeConnect({player:this,version, config, banned_info});
-        suiSet.modeCharacter({player:this,version, config, banned_info});
+        lobbyRuntime.executeConnect({player:this,version, config, banned_info});
+        lobbyRuntime.modeCharacter({player:this,version, config, banned_info});
         return lmsi.call(this,version, config, banned_info)
     },
     chat(id, str){
-        const player = suiSet.getPlayer(id)
+        const player = lobbyRuntime.getPlayer(id)
         if (player) {
             if(player===game.me&&this.mainHost!=='mainHost'){
                 lib.element.player.chat.call(player,str)
             }else {
                 player.chat(str)
             }
-        }else if(lib.node.observing.includes(this)||suiSet.observingId.includes(this)) {
+        }else if(lib.node.observing.includes(this)||playerControlRuntime.observingId.includes(this)) {
             const name = this.nickname||arguments[arguments.length-1]
             if(lib.config['extension_叁岛世界_main_cdown']){
                 const prefix = lib.node.observing.includes(this)?'<span style="color:blue;">（旁观）</span>':'<span style="color:red;">（被控制）</span>'
@@ -228,10 +228,10 @@ suiSet.comboObject(lib.message.server,{
         }
     },
     emotion(id, pack, emotion,name) {
-        const player = suiSet.getPlayer(id)
+        const player = lobbyRuntime.getPlayer(id)
         if (player) {
             player.emotion(pack, emotion)
-        }else if (lib.node.observing.includes(this)||suiSet.observingId.includes(this)) {
+        }else if (lib.node.observing.includes(this)||playerControlRuntime.observingId.includes(this)) {
             const str  = '<img src="##assetURL##image/emotion/' + pack + '/' + emotion + '.gif" width="50" height="50">';
             lib.message.server.chat.call(this,this.id,str,name)
         }

@@ -1,75 +1,50 @@
 import { lib, game, ui, get, ai, _status } from '../../../../../noname.js';
+import { createRolePack } from '../../tool/pack/rolePack.js';
 
-const ROLE_FILES = ["9hupan","9zengpinjia","9zhengmohan","9zhongyutong","pengliying","wangsiyuan"];
+// rebuild.mjs 自动扫描 roles/ 目录并更新此数组
+const ROLE_FILES = ["hupan9","pengliying","wangsiyuan","zengpinjia9","zhengmohan9","zhongyutong9"];
+const modules = await Promise.all(ROLE_FILES.map(fileName => import(`./roles/${fileName}.js`)));
+const roles = createRolePack(ROLE_FILES, modules, 'lit_test');
 
-const _modules = await Promise.all(ROLE_FILES.map(name =>
-    import(`./roles/${name}.js`)
-));
+// 由每个角色模块的 sort、title、intro 和 perfectPair 声明自动生成
+export const characterSort = roles.createCharacterSort();
+export const characterTitle = roles.collect('title');
+export const characterIntro = roles.collect('intro');
+export const perfectPair = roles.collect('perfectPair');
+export const resourceNames = roles.createResourceNames();
 
-const _roles = {};
-ROLE_FILES.forEach((name, i) => { _roles[name] = _modules[i]; });
-
-const _merge = (prop) => {
-    const result = {};
-    for (const name of ROLE_FILES) if (_roles[name][prop]) Object.assign(result, _roles[name][prop]);
-    return result;
-};
-
-// ── 自动聚合角色元数据 ──
-
-// 角色全名映射：filename → 'lit_xxx'
-const _charNames = {};
-for (const name of ROLE_FILES) {
-    if (_roles[name].character) {
-        _charNames[name] = Object.keys(_roles[name].character)[0];
-    }
-}
-
-// characterSort：按 sort 导出分组，组内按 ROLE_FILES 顺序
-const _characterSort = { 'lit_test': {} };
-for (const name of ROLE_FILES) {
-    const sortGroup = _roles[name].sort;
-    const charName = _charNames[name];
-    if (sortGroup && charName) {
-        const key = `lit_${sortGroup}`;
-        if (!_characterSort['lit_test'][key]) _characterSort['lit_test'][key] = [];
-        _characterSort['lit_test'][key].push(charName);
-    }
-}
-export const characterSort = _characterSort;
-
-// characterTitle：{ 角色全名 → 标题 }
-const _characterTitle = {};
-for (const name of ROLE_FILES) {
-    if (_roles[name].title && _charNames[name]) {
-        _characterTitle[_charNames[name]] = _roles[name].title;
-    }
-}
-export const characterTitle = _characterTitle;
-
-// characterIntro：{ 角色全名 → 攻略 }
-const _characterIntro = {};
-for (const name of ROLE_FILES) {
-    if (_roles[name].intro && _charNames[name]) {
-        _characterIntro[_charNames[name]] = _roles[name].intro;
-    }
-}
-export const characterIntro = _characterIntro;
-
-// characterReplace / perfectPair：直接从 role 文件合并
-export const characterReplace = _merge('characterReplace');
-export const perfectPair = _merge('perfectPair');
-
-// ── 包级别全局配置 ──
+// 无名杀角色包元数据：加载时分别合并到同名的 lib 字段。
+// connectBanned：联机禁用角色；characterFilter：角色可用条件；
+// characterSubstitute：角色的替身或特殊形态。空值表示当前未配置，保留为角色模块扩展点。
 export const connectBanned = [];
-export const characterFilter = {};
-export const characterSubstitute = {};
+export const characterFilter = roles.merge('characterFilter');
+export const characterSubstitute = roles.merge('characterSubstitute');
+export const characterReplace = roles.merge('characterReplace');
 
-// ── 角色定义、技能、翻译 ──
-import { translate as _metaTranslate, dynamicTranslate as _metaDynamicTranslate, pinyins as _metaPinyins } from './_meta.js';
+import { translate as metaTranslate, dynamicTranslate as metaDynamicTranslate, pinyins as metaPinyins } from './_meta.js';
 
-export const character = _merge('character');
-export const skill = _merge('skill');
-export const translate = { ..._metaTranslate, ..._merge('translate') };
-export const dynamicTranslate = { ..._metaDynamicTranslate, ..._merge('dynamicTranslate') };
-export const pinyins = { ..._metaPinyins, ..._merge('pinyins') };
+export const character = roles.merge('character');
+export const skill = roles.merge('skill');
+export const translate = { ...metaTranslate, ...roles.merge('translate') };
+export const dynamicTranslate = { ...metaDynamicTranslate, ...roles.merge('dynamicTranslate') };
+export const pinyins = { ...metaPinyins, ...roles.merge('pinyins') };
+
+export const packConfig = { defaultEnabled: false };
+
+export const info = {
+    name: 'lit_test',
+    connect: false,
+    connectBanned,
+    characterSort,
+    character,
+    characterTitle,
+    characterIntro,
+    characterReplace,
+    characterFilter,
+    characterSubstitute,
+    perfectPair,
+    skill,
+    translate,
+    dynamicTranslate,
+    pinyins,
+};

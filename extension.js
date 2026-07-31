@@ -3,7 +3,7 @@ import { config } from './source/config.js'
 import { precontent } from './source/precontent.js'
 import { content } from './source/content.js'
 import help from './source/help.js'
-import basic from './source/tool/basic.js'
+import { extensionPath } from './source/tool/utils/paths.js'
 export let type = 'extension';
 
 export default async function () {
@@ -59,7 +59,7 @@ export default async function () {
 	// 于info.json配置中获取当前版本信息并记录于配置内
 	let extensionInfo;
 	try {
-		extensionInfo = await lib.init.promises.json(`${basic.path}/info.json`);
+		extensionInfo = await lib.init.promises.json(`${extensionPath}/info.json`);
 		// info版本和代码版本不一致时使用代码版本
 		let versionIndex = extensionInfo.intro.lastIndexOf('版本：') + 3;
 		if (versionIndex > 3) {
@@ -67,7 +67,7 @@ export default async function () {
 			if (litVersion != infoVersion) {
 				extensionInfo.intro = extensionInfo.intro.replace(infoVersion, litVersion);
 				const jsonStr = JSON.stringify(extensionInfo, null, 2);
-				game.writeFile(jsonStr, basic.path, 'info.json', (writeError) => {
+				game.writeFile(jsonStr, extensionPath, 'info.json', (writeError) => {
 					if (writeError) console.error(`创建info.json时发生错误:`, writeError);
 				});
 			}
@@ -79,7 +79,7 @@ export default async function () {
 		extensionInfo = { name: "叁岛世界", author: "一个月惹", intro: `<li>版本：${litVersion}` };
 		if (e && e.message?.includes("Not Found")) {
 			const jsonStr = JSON.stringify(extensionInfo, null, 2);
-			game.writeFile(jsonStr, basic.path, 'info.json', (writeError) => {
+			game.writeFile(jsonStr, extensionPath, 'info.json', (writeError) => {
 				if (writeError) console.error(`创建info.json时发生错误:`, writeError);
 			});
 		}

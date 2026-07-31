@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `控人·斩杀·连破·${Styled('o', "较难")}`;
+export const title = `控人·斩杀·连破·${styleText('o', "较难")}`;
 export const intro = `前期约等于没有技能，想杀${B("杨湘铃")}要趁早，就算是队友也可能被AOE误伤。一旦${B("杨湘铃")}到了后期，可以显著提高敌方的斩杀线，对手的血量变化完全可能为5→4→3→2→-2→-3→-4……非常适合打消耗战`
     + `<li>主公：前期只考虑活下来，及时翻面高嘲讽敌方。后期可以亲自下场，利用${get.poptip("lit_dongjie")}掉血效果杀到忠臣也不怕`
     + "<li>忠臣、反贼：及时补刀残血，可以造成双倍伤害，不过很多时候人头不会是你的，人头算的是「使其从正常状态进入濒死状态并在最终死亡」的伤害源"
@@ -315,8 +315,8 @@ export const dynamicTranslate = {
     lit_xiaosa(player) {
         let str1 = "<li>场上有人受伤濒死时，可令1人翻面并获得其装备区的牌</li>",
             str2 = "<li>场上有人失去体力濒死时，可将1张装备牌作无次数限制的杀使用，不可被响应</li>";
-        if (player.storage.lit_xiaosa[0]) str1 = Styled('O', str1);
-        if (player.storage.lit_xiaosa[1]) str2 = Styled('O', str2);
+        if (player.storage.lit_xiaosa[0]) str1 = styleText('O', str1);
+        if (player.storage.lit_xiaosa[1]) str2 = styleText('O', str2);
         return "每回合每种情况限1次" + str1 + str2;
     },
 };

@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `群伤·爆发·${Styled('b', "较易")}`;
+export const title = `群伤·爆发·${styleText('b', "较易")}`;
 export const intro = `锦囊特化的多目标多刀输出角色。${B("钱保灿")}一旦${get.poptip("lit_chushou")}就能跳过摸牌阶段直接声明使用普通锦囊，不可被无懈；再通过${get.poptip("lit_zhixun")}来控场或是追刀，升级后还能增加杀的目标数，配合${get.poptip("lit_male")}能做到跳过摸牌阶段，但比其他人的摸牌阶段能摸更多牌。`
     + "<li>主公、忠臣：第一回合建议留牌，看清身份后到次轮再爆发。队友如果能为牌多添目标，那爆发力度会几何倍数增长"
     + "<li>反贼：南蛮+万箭后可乱杀主公，一轮残是常有的事，主公的一轮生存率就是这么被拉低的"

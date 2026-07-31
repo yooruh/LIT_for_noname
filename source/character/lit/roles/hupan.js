@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
-export const title = `反击·续航·${Styled('o', "较难")}`;
+export const title = `反击·续航·${styleText('o', "较难")}`;
 export const intro = `低血线但不吃桃的负嘲讽型狂战士，但被光着脚的1血角色，爆发和卖血类克制。${get.poptip("lit_cuiruo")}的${B("胡畔")}在回合内看似1血，实则差1血满血，`
     + `能配合${get.poptip("lit_shichou")}加强负嘲讽效果。升级后，降防御来换取${get.poptip("lit_yigou")}体系，能给吃上限的队友极大加成，自身也会演变为彻底的卖血杀杀杀角色。`
     + "<li>主公：负责活着，等到升级后再乱爆发。忠臣记得留桃，只要能活到下个回合，状态一下子就回来了"

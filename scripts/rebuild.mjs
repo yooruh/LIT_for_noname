@@ -3,15 +3,15 @@
 /**
  * 叁岛世界 重建脚本
  *
- * 自动扫描 roles/ 目录，生成 index.js 中的 ROLE_FILES 数组，
- * 以及更新 Directory.json 文件清单（供在线更新系统使用）。
+ * 自动扫描 roles/ 目录和角色/卡牌包入口，生成 ROLE_FILES 与包注册清单，
+ * 校验角色文件命名，并更新 Directory.json（供在线更新系统使用）。
  *
  * 用法:
  *   node scripts/rebuild.mjs           扫描并更新所有
  *   node scripts/rebuild.mjs --check   仅检查，不写入（CI 模式）
  */
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve, dirname, relative, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { writeFile, readFile } from './lib/shared.mjs';
@@ -50,6 +50,131 @@ export function scanRoles(dirPath) {
   } catch {
     return [];
   }
+}
+
+const readObjectKeys = (source, exportName) => {
+  const declaration = new RegExp(`export\\s+const\\s+${exportName}\\s*=`, 'g').exec(source);
+  if (!declaration) return [];
+  const start = declaration.index;
+  const open = source.indexOf('{', start + declaration[0].length);
+  if (open < 0) return [];
+
+  const keys = [];
+  let depth = 1;
+  let quote = '';
+  let escaped = false;
+  for (let index = open + 1; index < source.length && depth > 0; index++) {
+    const char = source[index];
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === quote) quote = '';
+      continue;
+    }
+    if (char === '`') {
+      quote = char;
+      continue;
+    }
+    if (depth === 1 && (char === '"' || char === "'")) {
+      const keyStart = index + 1;
+      quote = char;
+      escaped = false;
+      while (++index < source.length) {
+        const keyChar = source[index];
+        if (escaped) escaped = false;
+        else if (keyChar === '\\') escaped = true;
+        else if (keyChar === quote) break;
+      }
+      quote = '';
+      let colon = index + 1;
+      while (/\s/.test(source[colon])) colon++;
+      if (source[colon] === ':') keys.push(source.slice(keyStart, index));
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === '{') depth++;
+    else if (char === '}') depth--;
+  }
+  return keys;
+};
+
+const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export function validateRoleNames(rolesDir, roleNames) {
+  const errors = [];
+  for (const fileName of roleNames) {
+    const filePath = resolve(rolesDir, `${fileName}.js`);
+    const source = readFileSync(filePath, 'utf-8');
+    const characterIds = readObjectKeys(source, 'character');
+    if (characterIds.length !== 1) {
+      errors.push(`${relative(ROOT, filePath)} 必须且只能导出一个 character`);
+      continue;
+    }
+
+    const characterId = characterIds[0];
+    const translateKeys = readObjectKeys(source, 'translate');
+    if (!translateKeys.includes(characterId)) {
+      errors.push(`${relative(ROOT, filePath)} 缺少角色翻译 ${characterId}`);
+      continue;
+    }
+
+    const namespaceEnd = characterId.indexOf('_') + 1;
+    const namespace = characterId.slice(0, namespaceEnd);
+    const idWithoutNamespace = characterId.slice(namespaceEnd);
+    if (!idWithoutNamespace.startsWith(fileName)) {
+      errors.push(`${relative(ROOT, filePath)} 文件名应为角色 ID 的资源主名：期望 ${idWithoutNamespace} 以 ${fileName} 开头`);
+      continue;
+    }
+
+    const escapedId = escapeRegExp(characterId);
+    const translatedName = source.match(new RegExp(`["']${escapedId}["']\\s*:\\s*["']([^"']*)["']`))?.[1];
+    const prefix = source.match(new RegExp(`["']${escapedId}_prefix["']\\s*:\\s*["']([^"']*)["']`))?.[1] || '';
+    const roleName = translatedName?.startsWith(prefix) ? translatedName.slice(prefix.length) : translatedName;
+    const expectedId = `${namespace}${fileName}${roleName || ''}`;
+    if (characterId !== expectedId) {
+      errors.push(`${relative(ROOT, filePath)} 角色 ID 不符合命名规则：期望 ${expectedId}，实际 ${characterId}`);
+    }
+
+    const imagePath = resolve(ROOT, 'image', 'character', `${namespace}${fileName}.png`);
+    if (!existsSync(imagePath)) {
+      errors.push(`${relative(ROOT, filePath)} 缺少对应角色图片 ${relative(ROOT, imagePath)}`);
+    }
+  }
+  return errors;
+}
+
+export function scanPackEntries(dirPath, nestedIndexes = false) {
+  if (!nestedIndexes) {
+    return readdirSync(dirPath)
+      .filter(file => file.endsWith('.js'))
+      .filter(file => /export\s+(?:const|let)\s+info\s*=/.test(readFileSync(resolve(dirPath, file), 'utf-8')))
+      .map(file => basename(file, '.js'))
+      .sort();
+  }
+
+  return readdirSync(dirPath, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .map(entry => `${entry.name}/index`)
+    .filter(modulePath => {
+      const filePath = resolve(dirPath, `${modulePath}.js`);
+      return existsSync(filePath)
+        && /export\s+(?:const|let)\s+info\s*=/.test(readFileSync(filePath, 'utf-8'));
+    })
+    .sort();
+}
+
+export function updatePackManifest(characterPacks, cardPacks, checkOnly = false) {
+  const filePath = resolve(ROOT, 'source', 'tool', 'pack', 'manifest.js');
+  const oldContent = readFileSync(filePath, 'utf-8');
+  const newContent = oldContent
+    .replace(/(CHARACTER_PACK_FILES\s*=\s*)\[[^\]]*\]/, `$1${JSON.stringify(characterPacks)}`)
+    .replace(/(CARD_PACK_FILES\s*=\s*)\[[^\]]*\]/, `$1${JSON.stringify(cardPacks)}`);
+  const changed = newContent !== oldContent;
+  if (!checkOnly && changed) writeFile(filePath, newContent);
+  return { file: relative(ROOT, filePath), changed, characterCount: characterPacks.length, cardCount: cardPacks.length };
 }
 
 export function updateIndexFile(indexPath, roleNames, checkOnly = false) {
@@ -126,31 +251,37 @@ export function rebuildProject(options = {}) {
   }
 
   const results = [];
+  const rolePacks = [
+    { name: 'lit', validate: true },
+    { name: 'test', validate: true },
+    { name: 'lit_gz', validate: false },
+  ];
+  const roleErrors = [];
 
-  const litRolesDir = resolve(ROOT, 'source', 'character', 'lit', 'roles');
-  const litIndexPath = resolve(ROOT, 'source', 'character', 'lit', 'index.js');
-  const litRoles = scanRoles(litRolesDir);
-  if (litRoles.length > 0) {
-    const result = updateIndexFile(litIndexPath, litRoles, checkOnly);
+  for (const pack of rolePacks) {
+    const rolesDir = resolve(ROOT, 'source', 'character', pack.name, 'roles');
+    const indexPath = resolve(ROOT, 'source', 'character', pack.name, 'index.js');
+    const roles = scanRoles(rolesDir);
+    if (pack.validate) roleErrors.push(...validateRoleNames(rolesDir, roles));
+    if (!existsSync(indexPath)) continue;
+
+    const result = updateIndexFile(indexPath, roles, checkOnly);
     results.push(result);
     if (!silent) {
-      log.ok(`lit/index.js — ${litRoles.length} 个角色${result.changed ? '（需同步）' : ''}`);
+      log.ok(`${pack.name}/index.js — ${roles.length} 个角色${result.changed ? '（需同步）' : ''}`);
     }
-  } else if (!silent) {
-    log.warn('未找到 lit 角色文件');
   }
 
-  const testRolesDir = resolve(ROOT, 'source', 'character', 'test', 'roles');
-  const testIndexPath = resolve(ROOT, 'source', 'character', 'test', 'index.js');
-  const testRoles = scanRoles(testRolesDir);
-  if (testRoles.length > 0) {
-    const result = updateIndexFile(testIndexPath, testRoles, checkOnly);
-    results.push(result);
-    if (!silent) {
-      log.ok(`test/index.js — ${testRoles.length} 个角色${result.changed ? '（需同步）' : ''}`);
-    }
-  } else if (!silent) {
-    log.warn('未找到 test 角色文件');
+  if (roleErrors.length > 0) {
+    throw new Error(`角色文件命名校验失败：\n- ${roleErrors.join('\n- ')}`);
+  }
+
+  const characterPacks = scanPackEntries(resolve(ROOT, 'source', 'character'), true);
+  const cardPacks = scanPackEntries(resolve(ROOT, 'source', 'card'));
+  const manifestResult = updatePackManifest(characterPacks, cardPacks, checkOnly);
+  results.push(manifestResult);
+  if (!silent) {
+    log.ok(`tool/pack/manifest.js — ${characterPacks.length} 个角色包，${cardPacks.length} 个卡牌包${manifestResult.changed ? '（需同步）' : ''}`);
   }
 
   const directoryResult = updateDirectoryJson(checkOnly);

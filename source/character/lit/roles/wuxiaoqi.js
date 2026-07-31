@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'sdp';
-export const title = `换牌·复活·亡语·${Styled('b', "较易")}`;
+export const title = `换牌·复活·亡语·${styleText('b', "较易")}`;
 export const intro = `天呐，他真恶心！甚至能复活！赶快留点垃圾牌恶心他！要是${B("伍小戚")}费尽心思换来的牌全是废牌，他才能真正体会到${get.poptip("lit_xiaochou")}`
     + `的滋味！`
     + `<li>主公：别急着用牌，等没血或者输出型队友没牌的时候再发动技能，千万别提前把${get.poptip("lit_mianju")}用完了，不然少一个复活`

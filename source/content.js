@@ -1,5 +1,6 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js';
-import { poptipInit } from './tool/basic.js';
+import { registerPoptips } from './tool/ui/poptips.js';
+import { registerCharacterPack } from './tool/pack/registry.js';
 
 // 记得改help.html
 export const updateContent = [
@@ -22,41 +23,14 @@ export async function content(config, pack) {
 	game.showExtensionChangeLog(updateContent, '叁岛世界');
 
 	// 注册自定义poptip
-	poptipInit();
+	registerPoptips();
 
 	// 将角色加入国战模式
 	if (get.mode() === 'guozhan' && game.getExtensionConfig('叁岛世界', 'lit_guozhanAllowed')) {
-		// 导入菜单栏
-		let pack = lib.lit.infopack['lit_gz'];
-		for (const name in pack) {
-			const content = pack[name];
-			switch (name) {
-				case "character":
-					for (const charname in content) {
-						const character = content[charname];
-						// 将武将技能加入技能列表
-						for (const skill of character.skills) {
-							lib.skilllist.add(skill);
-						}
-						if (lib.character[charname] != null) continue;
-						lib.character[charname] = character;
-					}
-					break;
-				case "skill":
-					for (const skillname in content) {
-						const skill = content[skillname];
-						lib.skill[skillname] ??= skill;
-					}
-					break;
-				default:
-					if (typeof content !== 'object' || Array.isArray(content)) break;
-					for (const key in content) {
-						lib[name][key] ??= content[key];
-					}
-			}
-		}
-		lib.characterPack[pack.name] = pack.character;
-		lib.translate[`${pack.name}_character_config`] = '叁岛国战';
+		const entry = lib.lit.deferredCharacterPacks.lit_gz;
+		if (!entry) throw new Error('叁岛国战角色包未完成预加载');
+		const pack = entry.info;
+		registerCharacterPack(pack, entry.displayName);
 		// 在国战模式中启用
 		if (lib.config.characters.includes('lit_gz')) {
 			_status.forceKey = true; // 启用键势力
@@ -92,6 +66,7 @@ export async function content(config, pack) {
 		let { info } = await import(`./mode/sandaohuanhua_brawl.js`);
 		if (info) lib.brawl.sandaohuanhua = info;
 	}
-	// 无论是否载入，删掉公开接口
+	// 角色提示与延迟国战包完成消费后，删除仅供加载阶段使用的数据。
 	delete lib.lit.infopack;
+	delete lib.lit.deferredCharacterPacks;
 }

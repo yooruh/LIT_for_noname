@@ -1,7 +1,7 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, Styled, B } from '../shared.js';
+﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'sdp';
-export const title = `辅助·反伤·过牌·${Styled('o', "较难")}`;
+export const title = `辅助·反伤·过牌·${styleText('o', "较难")}`;
 export const intro = `依赖${get.poptip("lit_guimi")}联动的爆发型角色。闺蜜在场时${B("菠树")}${get.poptip("lit_yisui")}锁定手牌数为3，且闺蜜满血时免疫伤害，防御和攻击能力没有看起来的那么不堪。通过合理选择闺蜜并控制手牌状态，菠树能通过连续摸牌来达到爆发的效果。升级后闺蜜死亡不再导致体力流失，能些微提高容错率。`
     + "<li>主公：完全不推荐，闺蜜给到反贼就废了一半。唯一能想到的打法是利用闺蜜+易碎摸7张初始牌的性质，用手气卡刷出AK突突全场"
     + "<li>忠臣：建议选主公为闺蜜，第一轮有闺蜜回血，主公牌满血相对容易。前期不用留太多防御牌，但后期要打输出必须先发育好装备"
