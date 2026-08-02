@@ -1,8 +1,6 @@
 ﻿import { lib, game, ui, get, ai, _status } from '../shared.js';
 
 export const sort = 'jbs';
-export const characterReplace = { 'lit_zengpinjia': ['lit_zengpinjia曾品嘉', 'lit_zengpinjia9曾品嘉'] };
-
 export const character = {
     'lit_zengpinjia9曾品嘉': {
         sex: "male",
@@ -12,6 +10,8 @@ export const character = {
         groupInGuozhan: "nine",
     },
 };
+
+export const characterReplace = { 'lit_zengpinjia': ['lit_zengpinjia曾品嘉', 'lit_zengpinjia9曾品嘉'] };
 
 export const skill = {
     lit_yingjun: {

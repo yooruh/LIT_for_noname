@@ -7,8 +7,6 @@ export const intro = `以延时锦囊为核心构筑的爆发型角色。${B("�
     + "<li>主公：发育相对较快，觉醒后可以不着急输出，凑多一点延时锦囊牌输出便指数上升。前后期都亟需保护，建议优先拿装备牌发育再觉醒"
     + "<li>忠臣、反贼：可以捡队友判定区的垃圾来发育，觉醒后一波心痕爆发可以收割残血或压制核心敌方"
     + "<li>内奸：前期低调积累延时锦囊，觉醒后利用高爆发清理战场，注意保留关键延时锦囊以备最终决战";
-export const characterReplace = { 'lit_zhangshengjie': ['lit_zhangshengjie张盛杰', 'lit_zhangshengjie9张盛杰'] };
-
 export const character = {
     'lit_zhangshengjie张盛杰': {
         sex: "male",
@@ -17,6 +15,8 @@ export const character = {
         skills: ["lit_shengjizsj", "lit_wutou", "lit_youxia", "lit_xinyi"],
     },
 };
+
+export const characterReplace = { 'lit_zhangshengjie': ['lit_zhangshengjie张盛杰', 'lit_zhangshengjie9张盛杰'] };
 
 export const skill = {
     // 张盛杰

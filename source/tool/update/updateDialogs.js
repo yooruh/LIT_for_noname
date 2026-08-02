@@ -3,6 +3,27 @@ import { UPDATE_CONFIG as CONFIG } from './config.js';
 import { updateUtils as utils } from './utils.js';
 import { updateEnvironment as Environment } from './repository.js';
 
+// 将更新内容中的轻量 HTML 转为对话框可显示的纯文本（对话框使用 textContent，HTML 会被转义）
+function plainText(html) {
+	return String(html ?? '')
+		.replace(/<br\s*\/?>/gi, '\n')
+		.replace(/<\/li>/gi, '\n')
+		.replace(/<li[^>]*>/gi, '')
+		.replace(/\{\{poptip:([^}]+)\}\}/g, (_, token) => {
+			const [arg, label] = token.split('|');
+			return label || String(arg).replace(/^[a-z0-9_]+/i, '') || arg;
+		})
+		.replace(/<[^>]+>/g, '')
+		.replace(/&nbsp;/gi, ' ')
+		.replace(/&gt;/gi, '>')
+		.replace(/&lt;/gi, '<')
+		.replace(/&quot;/gi, '"')
+		.replace(/&#39;/g, "'")
+		.replace(/&amp;/gi, '&')
+		.replace(/\n{3,}/g, '\n\n')
+		.trim();
+}
+
 // ==================== UI 管理器 ====================
 class UIManager {
     constructor() {
@@ -308,8 +329,70 @@ class UIManager {
         }
     }
 
+    // 自选更新版本：单选列表，返回选中的版本对象或 null
+    async showVersionSelect(versions) {
+        let selected = 0;
+
+        return await this.dialog.createBaseDialog({
+            title: '选择更新版本',
+            message: null,
+            dialogOptions: {
+                width: 'min(560px, 92vw)',
+                maxHeight: '85vh'
+            },
+            buildContent: (dialog) => {
+                const msgEl = document.createElement('div');
+                msgEl.className = 'lit-ui-content lit-ui-message';
+                msgEl.style.marginBottom = '10px';
+                msgEl.textContent = versions.some(v => !v.compatible)
+                    ? '没有与当前无名杀版本匹配的版本，以下版本可能不兼容：'
+                    : '当前无名杀版本可选以下更新版本：';
+                dialog.appendChild(msgEl);
+
+                const list = document.createElement('div');
+                list.className = 'lit-ui-content lit-ui-scrollable lit-ui-list';
+                list.style.maxHeight = '360px';
+
+                const highlight = (el, on) => {
+                    el.style.background = on ? '#e8f4ff' : '';
+                };
+
+                versions.forEach((v, i) => {
+                    const item = document.createElement('div');
+                    item.className = 'lit-ui-list-item';
+                    item.style.cursor = 'pointer';
+
+                    const text = document.createElement('span');
+                    text.className = 'lit-ui-list-text';
+                    text.textContent = `${v.extensionVersion}${v.compatible ? '' : '（不兼容）'} — ${v.description || ''}`;
+                    text.style.flex = '1';
+                    item.appendChild(text);
+
+                    if (i === 0) highlight(item, true);
+                    item.addEventListener('click', () => {
+                        selected = i;
+                        list.querySelectorAll('.lit-ui-list-item').forEach(el => highlight(el, false));
+                        highlight(item, true);
+                    });
+                    list.appendChild(item);
+                });
+
+                dialog.appendChild(list);
+            },
+            defaultResult: null,
+            buttons: [
+                { text: '取消', result: null },
+                {
+                    text: '使用此版本更新',
+                    isPrimary: true,
+                    result: () => versions[selected]
+                }
+            ]
+        });
+    }
+
     async confirmStart(info) {
-        const { version, branch, platform, mode, fileCount, skipCount, totalSize, envType } = info;
+        const { version, description, highlights, branch, platform, mode, fileCount, skipCount, totalSize, envType } = info;
 
         const modeText = mode === 'simple' ? '简易（仅文本）' : mode === 'retry_failed' ? '失败重试' : '全局（完整覆盖）';
         const platformText = platform === 'gitee' ? 'Gitee（国内）' : 'GitHub（国际）';
@@ -321,8 +404,9 @@ class UIManager {
                     ? 'Electron 本体下载'
                     : '浏览器文件接口';
 
-        let message = `📋 更新详情确认\n\n` +
-            `版本分支: ${branch}\n` +
+        let message = `📋 更新详情确认\n\n`;
+        if (version) message += `目标版本: ${version}\n`;
+        message += `版本分支: ${branch}\n` +
             `更新平台: ${platformText}\n` +
             `运行环境: ${envText}\n` +
             `更新模式: ${modeText}\n` +
@@ -332,6 +416,11 @@ class UIManager {
         message += `\n预估大小: ${totalSize || '未知'}\n\n` +
             `💾 自动备份: 更新前将创建完整备份\n` +
             `🔄 断点续传: 支持中断后恢复下载`;
+
+        if (Array.isArray(highlights) && highlights.length > 0) {
+            message += `\n\n—— 本次更新内容 ——\n` +
+                highlights.map(h => `・ ${plainText(h)}`).join('\n');
+        }
 
         if (envType === 'browser' && platform === 'gitee') {
             message += `\n\n⚠️ 注意：浏览器环境访问 Gitee 可能受限，如遇失败请改用客户端或切换更新源`;

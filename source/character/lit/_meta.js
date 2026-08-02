@@ -5,4 +5,5 @@ export const translate = {
     'lit_ybs': "一班杀",
     'lit_sdp': "叁岛篇",
     'lit_jbs': "九班杀",
+    'lit_xgm': "虚构幻梦",
 };

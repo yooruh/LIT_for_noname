@@ -4,18 +4,15 @@ import { extensionPath } from './tool/utils/paths.js';
 import { loadPackRegistry } from './tool/pack/registry.js';
 import { CHARACTER_PACK_FILES, CARD_PACK_FILES } from './tool/pack/manifest.js';
 
-export const charPack = {};
-export const cardPack = {};
-
 export const lib_lit = {
 	sdhh_connectName: '../extension/叁岛世界/source/mode/sandaohuanhua',
-	infopack: {},
-	deferredCharacterPacks: {},
+	// precontent 创建、content 消费并删除的角色包注册表。
+	// 同时服务角色提示和需要延后注册的国战角色包，避免维护多个派生索引。
+	characterPacks: {},
 	effLock: {},
 	// lit_neg为1：不可叠层；2：可叠层；3：可叠层且需要手动触发更新
-	negSkills: ['lit_jiqing', 'lit_qianfan', 'lit_shouji', 'lit_mengying', 'lit_dongjie'],
-	dkSkills: ['lit_zigaodebeixin', 'lit_zenggedeshouzhou', 'lit_qianlaoshidejialian', 'lit_pandejianpan', 'lit_zhongyutongdebiji', 'lit_liyangdeziyou',
-		'lit_zhangxuandemp5', 'lit_yibandelajitong', 'lit_xiaohongtanver', 'lit_qbzhimao', 'lit_jiegededifengfenger', 'lit_caichendekuangre', 'lit_rongshaodejian'],
+	negSkills: ["lit_diaogui","lit_dongjie","lit_jiqing","lit_langen","lit_mengying","lit_qianfan","lit_shouji"],
+	dkSkills: ["lit_zigaodebeixin","lit_zenggedeshouzhou","lit_qianlaoshidejialian","lit_pandejianpan","lit_zhongyutongdebiji","lit_liyangdeziyou","lit_zhangxuandemp5","lit_yibandelajitong","lit_xiaohongtanver","lit_qbzhimao","lit_jiegededifengfenger","lit_caichendekuangre","lit_rongshaodejian"],
 	dkCheck(skill) {
 		const count = this.getPlayers();
 		switch (skill) {
@@ -50,24 +47,14 @@ export const lib_lit = {
 	},
 };
 
-async function registerSandaohuanhua() {
-	if (game.getExtensionConfig('叁岛世界', 'lit_sdhhBanned')) return;
-	const { default: sandaohuanhuaMode } = await import('./mode/sandaohuanhua.js');
-	const modeConfig = sandaohuanhuaMode();
-	game.addMode(lib.lit.sdhh_connectName, modeConfig, {
-		translate: '叁岛幻化',
-		extension: '叁岛世界',
-	});
-	lib.mode[lib.lit.sdhh_connectName].config = modeConfig.config || {};
-	lib.mode[lib.lit.sdhh_connectName].connect = modeConfig.connect || {};
-}
-
 function registerGroups() {
 	lib.init.css(`${extensionPath}/style/css`, 'extension');
 	game.addGroup('nine', '九', '九班', {});
 	game.addGroup('three', '叁', '叁岛', {});
+	game.addGroup('one', '一', '一班', {});
 	lib.groupnature.nine = 'nine';
 	lib.groupnature.three = 'three';
+	lib.groupnature.one = 'one';
 	lib.namePrefix.set('9', {
 		getSpan: () => {
 			const span = document.createElement('span');
@@ -80,6 +67,18 @@ function registerGroups() {
 			return span.outerHTML;
 		},
 	});
+}
+
+async function registerSandaohuanhua() {
+	if (game.getExtensionConfig('叁岛世界', 'lit_sdhhBanned')) return;
+	const { default: sandaohuanhuaMode } = await import('./mode/sandaohuanhua.js');
+	const modeConfig = sandaohuanhuaMode();
+	game.addMode(lib.lit.sdhh_connectName, modeConfig, {
+		translate: '叁岛幻化',
+		extension: '叁岛世界',
+	});
+	lib.mode[lib.lit.sdhh_connectName].config = modeConfig.config || {};
+	lib.mode[lib.lit.sdhh_connectName].connect = modeConfig.connect || {};
 }
 
 function registerOnlineFix(context) {
@@ -97,11 +96,13 @@ export async function precontent(config, pack) {
 	lib.config.mimaList ??= [];
 	lib.lit = lib_lit;
 
-	await registerSandaohuanhua();
 	registerGroups();
+	await registerSandaohuanhua();
 
-	await loadPackRegistry('character', CHARACTER_PACK_FILES, charPack, lib.lit.deferredCharacterPacks, lib.lit.infopack);
-	await loadPackRegistry('card', CARD_PACK_FILES, cardPack, {}, {});
+	// 角色包支持延迟注册
+	lib.lit.characterPacks = await loadPackRegistry(CHARACTER_PACK_FILES);
+	// 卡牌包立即注册
+	await loadPackRegistry(CARD_PACK_FILES, 'card');
 
 	registerOnlineFix(this);
 }

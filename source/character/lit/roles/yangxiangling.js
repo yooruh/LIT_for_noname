@@ -6,8 +6,6 @@ export const intro = `前期约等于没有技能，想杀${B("杨湘铃")}要�
     + `<li>主公：前期只考虑活下来，及时翻面高嘲讽敌方。后期可以亲自下场，利用${get.poptip("lit_dongjie")}掉血效果杀到忠臣也不怕`
     + "<li>忠臣、反贼：及时补刀残血，可以造成双倍伤害，不过很多时候人头不会是你的，人头算的是「使其从正常状态进入濒死状态并在最终死亡」的伤害源"
     + "<li>内奸：比较容易发死人财，找准机会连破定胜";
-export const perfectPair = ['lit_linmiao林淼'];
-
 export const character = {
     'lit_yangxiangling杨湘铃': {
         sex: "female",
@@ -16,6 +14,8 @@ export const character = {
         skills: ["lit_shengjiyxl", "lit_lenmo", "lit_xiaosa"],
     },
 };
+
+export const perfectPair = ['lit_linmiao林淼'];
 
 export const skill = {
     lit_lenmo: {

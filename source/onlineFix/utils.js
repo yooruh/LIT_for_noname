@@ -51,14 +51,14 @@ export function createOnlineUtils(suiSet) {
 		return anothSkill
 	},
 	initList(func = () => { }, unforbidai) {
-		let letItBand = c => {
+		let letItBanned = c => {
 			if (lib.config.forbidai.includes(c)) return true
 			if (lib.config.banned.includes(c)) return true
-			// if (lib.characterFilter[c] && !lib.characterFilter[c](get.mode())) return true;
+			if (lib.characterFilter[c] && !lib.characterFilter[c](get.mode())) return true;
 			if (lib.configOL.banned.includes(c) || lib.connectBanned.includes(c)) return true;
 		}
 		if (unforbidai) {
-			letItBand = c => {
+			letItBanned = c => {
 				if (lib.config.banned.includes(c)) return true
 				if (lib.configOL.banned.includes(c) || lib.connectBanned.includes(c)) return true;
 			}
@@ -69,7 +69,7 @@ export function createOnlineUtils(suiSet) {
 			const pack = lib.characterPack[p]
 			for (const c in pack) {
 				func(c, p)
-				if (!lib.configOL.banned.includes(c) && !letItBand(c)) {
+				if (!lib.configOL.banned.includes(c) && !letItBanned(c)) {
 					if (lib.character[c]) libCharacter[c] = pack[c];
 				}
 			}

@@ -1,7 +1,7 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js'
 import { lib_lit } from './precontent.js';
 import { updateContent } from './content.js';
-import { translate as dkTranslate } from './card/lit_cardTranslate.js';
+import { translate as dkTranslate } from './card/lit_card/translate.js';
 import { dialogManager } from './tool/ui/dialogManager.js'
 import { extensionPath } from './tool/utils/paths.js'
 
@@ -34,7 +34,7 @@ const helpSections = {
 	get upgrade() {
 		return `升级（仅"叁"势力拥有）<br>
 <li>升级条件：
-<ul>场上每有1名角色死亡全体获得1点经验，击杀者额外获得1点经验，经验达到3或全场人数不足5时升级</ul>
+<ul>击杀1名角色后升级；全场人数不足5时，开局立即升级</ul>
 <li>升级效果：
 <ul>升级将会明置对应角色，同时获得强力增益，重置相关技能次数，若未拥有升级前的技能，则会获得升级后的技能</ul>`;
 	},

@@ -1,8 +1,6 @@
 ﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'jbs';
-export const perfectPair = ['lit_zhangchi张驰', 'lit_liyang9李洋'];
-
 export const character = {
     'lit_zhangchi9张驰': {
         sex: "male",
@@ -13,6 +11,8 @@ export const character = {
         groupInGuozhan: "three",
     },
 };
+
+export const perfectPair = ['lit_zhangchi张驰', 'lit_liyang9李洋'];
 
 export const skill = {
     // 9张驰

@@ -13,7 +13,8 @@ class VersionChecker {
         this.downloader = new SmartDownloader(repo, tokens);
     }
 
-    async check(gameVersion) {
+    // 下载并解析 version.json，返回全部版本（含兼容标记与更新内容）
+    async list(gameVersion) {
         try {
             const task = new DownloadTask({
                 remote: CONFIG.files.version,
@@ -30,37 +31,39 @@ class VersionChecker {
 
             const info = JSON.parse(content);
 
-            if (!info.versions || !Array.isArray(info.versions)) {
-                return { branch: this.repo.branch, compatible: true };
-            }
+            if (!info.versions || !Array.isArray(info.versions)) return [];
 
-            const sorted = info.versions
+            return info.versions
                 .filter(v => v.extensionVersion && v.gameVersion)
-                .sort((a, b) => utils.compareVersion(b.extensionVersion, a.extensionVersion));
-
-            for (const v of sorted) {
-                if (utils.matchVersion(gameVersion, v.gameVersion)) {
-                    return {
-                        extensionVersion: v.extensionVersion,
-                        gameVersion: v.gameVersion,
-                        branch: v.branch || info.defaultBranch || this.repo.branch,
-                        description: v.description || `兼容游戏版本 ${v.gameVersion}`,
-                        compatible: true
-                    };
-                }
-            }
-
-            const latest = sorted[0];
-            return {
-                extensionVersion: latest?.extensionVersion,
-                branch: latest?.branch || info.defaultBranch || this.repo.branch,
-                description: '使用最新版本',
-                compatible: false
-            };
+                .sort((a, b) => utils.compareVersion(b.extensionVersion, a.extensionVersion))
+                .map(v => ({
+                    extensionVersion: v.extensionVersion,
+                    gameVersion: v.gameVersion,
+                    branch: v.branch || info.defaultBranch || this.repo.branch,
+                    description: v.description || `兼容游戏版本 ${v.gameVersion}`,
+                    highlights: Array.isArray(v.highlights) ? v.highlights : [],
+                    compatible: utils.matchVersion(gameVersion, v.gameVersion)
+                }));
         } catch (e) {
             console.warn('[版本检查] 失败:', e.message);
+            return [];
+        }
+    }
+
+    // 选择首个兼容当前游戏版本的版本，无兼容时取最新
+    async check(gameVersion) {
+        const versions = await this.list(gameVersion);
+        if (versions.length === 0) {
             return { branch: this.repo.branch, compatible: true };
         }
+        const matched = versions.find(v => v.compatible) || versions[0];
+        return {
+            extensionVersion: matched.extensionVersion,
+            gameVersion: matched.gameVersion,
+            branch: matched.branch,
+            description: matched.description,
+            compatible: matched.compatible
+        };
     }
 }
 

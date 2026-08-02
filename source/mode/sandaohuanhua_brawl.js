@@ -383,11 +383,11 @@ export let info = {
                                     }
 
                                     const canRefresh = player.storage._lingli >= baseCost + 1 && candidateOffset + candidates.length < availableSkills.length;
-                                    const choices = canRefresh ? [...candidates, "刷新"] : candidates;
+                                    const choices = canRefresh ? [...candidates, "refresh"] : candidates;
 
                                     const chooseSkill = function (player, choicesList, skillsList) {
                                         const next = player.chooseControl(choicesList, 'cancel2');
-                                        next.set("ai", () => get.max(skillsList.filter(e => e != "刷新"), get.skillRank, "item"));
+                                        next.set("ai", () => get.max(skillsList.filter(e => e != "refresh"), get.skillRank, "item"));
                                         next.set("dialog", game.getSkillDialog(choicesList, "选择获得一个技能"));
                                         return next;
                                     };
@@ -401,7 +401,7 @@ export let info = {
                                     }
                                     const control = result ? result.control : "cancel2";
 
-                                    if (control === "刷新") {
+                                    if (control === "refresh") {
                                         player.changeLingli(-1);
                                         candidateOffset += numCandidates;
                                         continue;
@@ -684,7 +684,8 @@ export let info = {
                         sdhh_fudichouxin: "釜底抽薪",
                         sdhh_toulianghuanzhu_info: "出牌阶段，对一名角色使用，随机更换其一个技能。可重铸。",
                         sdhh_fudichouxin_info: "出牌阶段，对一名角色使用，随机弃置其一个技能。",
-                        刷新_info: "消耗1点灵力值，刷新上述技能。",
+                        refresh‌: "刷新",
+                        refresh‌_info: "消耗1点灵力值，刷新上述技能",
                     },
                 },
                 get: {
@@ -1331,7 +1332,8 @@ export let info = {
                                     sdhh_fudichouxin: "釜底抽薪",
                                     sdhh_toulianghuanzhu_info: "出牌阶段，对一名角色使用，随机更换其一个技能。可重铸。",
                                     sdhh_fudichouxin_info: "出牌阶段，对一名角色使用，随机弃置其一个技能。",
-                                    刷新_info: "消耗1点灵力值，刷新上述技能。",
+                                    refresh‌: "刷新",
+                                    refresh‌_info: "消耗1点灵力值，刷新上述技能",
                                 },
                             });
                         });

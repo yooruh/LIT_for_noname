@@ -37,7 +37,6 @@ const EXCLUDES = [
   'package.json',
   'package-lock.json',
   '.update_state.json',
-  'Directory.json',
   'version.json',
 ];
 
@@ -99,6 +98,100 @@ const readObjectKeys = (source, exportName) => {
     else if (char === '}') depth--;
   }
   return keys;
+};
+
+// 与 readObjectKeys 相同的 tokenizer，但额外支持深度 1 处的裸标识符 key（如 skill 导出），
+// 并返回「值块内含 markerRegex 命中的文本」的顶层 key，按声明顺序排列。
+const readMarkedKeys = (source, exportName, marker) => {
+  const declaration = new RegExp(`export\\s+const\\s+${exportName}\\s*=`, 'g').exec(source);
+  if (!declaration) return [];
+  const start = declaration.index;
+  const open = source.indexOf('{', start + declaration[0].length);
+  if (open < 0) return [];
+
+  const result = [];
+  let depth = 1;
+  let quote = '';
+  let escaped = false;
+  let key = null;
+  let valueStart = -1;
+
+  const finalize = (end) => {
+    if (key !== null) {
+      if (marker.test(source.slice(valueStart, end))) result.push(key);
+      key = null;
+    }
+  };
+
+  for (let index = open + 1; index < source.length && depth > 0; index++) {
+    const char = source[index];
+
+    // 跳过注释（注释里可能含引号，如 boshu.js 的「// 结交"闺蜜"」）
+    if (char === '/' && source[index + 1] === '/') {
+      while (index < source.length && source[index] !== '\n') index++;
+      continue;
+    }
+    if (char === '/' && source[index + 1] === '*') {
+      const close = source.indexOf('*/', index + 2);
+      index = close < 0 ? source.length : close + 1;
+      continue;
+    }
+
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === quote) quote = '';
+      continue;
+    }
+    if (char === '`') {
+      quote = char;
+      continue;
+    }
+
+    if (depth === 1 && (char === '"' || char === "'")) {
+      const keyStart = index + 1;
+      quote = char;
+      escaped = false;
+      while (++index < source.length) {
+        const keyChar = source[index];
+        if (escaped) escaped = false;
+        else if (keyChar === '\\') escaped = true;
+        else if (keyChar === quote) break;
+      }
+      quote = '';
+      let colon = index + 1;
+      while (/\s/.test(source[colon])) colon++;
+      if (source[colon] === ':') {
+        finalize(colon);
+        key = source.slice(keyStart, index);
+        valueStart = colon + 1;
+      }
+      continue;
+    }
+
+    // 深度 1 处的裸标识符 key
+    if (depth === 1 && /[A-Za-z0-9_$]/.test(char)) {
+      const keyStart = index;
+      while (/[A-Za-z0-9_$]/.test(source[index])) index++;
+      let colon = index;
+      while (/\s/.test(source[colon])) colon++;
+      if (source[colon] === ':') {
+        finalize(colon);
+        key = source.slice(keyStart, index);
+        valueStart = colon + 1;
+      }
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === '{') depth++;
+    else if (char === '}') depth--;
+  }
+  finalize(source.length);
+  return result;
 };
 
 const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -177,6 +270,39 @@ export function updatePackManifest(characterPacks, cardPacks, checkOnly = false)
   return { file: relative(ROOT, filePath), changed, characterCount: characterPacks.length, cardCount: cardPacks.length };
 }
 
+// 自动填充 precontent.js 的 negSkills / dkSkills：
+// - dkSkills：card/lit_card/skills.js 的 export const skill 中带 lit_dk: true 的顶层技能（声明顺序）
+// - negSkills：所有角色包 roles/*.js 的 export const skill 中带 lit_neg: 的顶层技能（按文件名排序）
+export function updateSkillLists(checkOnly = false) {
+  const cardSkillsPath = resolve(ROOT, 'source', 'card', 'lit_card', 'skills.js');
+  const dkSkills = readMarkedKeys(readFileSync(cardSkillsPath, 'utf-8'), 'skill', /lit_dk:\s*true/);
+
+  const negSet = [];
+  const rolesBase = resolve(ROOT, 'source', 'character');
+  for (const entry of readdirSync(rolesBase, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const rolesDir = resolve(rolesBase, entry.name, 'roles');
+    if (!existsSync(rolesDir)) continue;
+    const roleFiles = readdirSync(rolesDir).filter(file => file.endsWith('.js')).sort();
+    for (const file of roleFiles) {
+      const keys = readMarkedKeys(readFileSync(resolve(rolesDir, file), 'utf-8'), 'skill', /lit_neg:/);
+      for (const key of keys) {
+        if (!negSet.includes(key)) negSet.push(key);
+      }
+    }
+  }
+  negSet.sort();
+
+  const filePath = resolve(ROOT, 'source', 'precontent.js');
+  const oldContent = readFileSync(filePath, 'utf-8');
+  const newContent = oldContent
+    .replace(/(negSkills:\s*)\[[^\]]*\]/, `$1${JSON.stringify(negSet)}`)
+    .replace(/(dkSkills:\s*)\[[^\]]*\]/, `$1${JSON.stringify(dkSkills)}`);
+  const changed = newContent !== oldContent;
+  if (!checkOnly && changed) writeFile(filePath, newContent);
+  return { file: relative(ROOT, filePath), changed, negCount: negSet.length, dkCount: dkSkills.length };
+}
+
 export function updateIndexFile(indexPath, roleNames, checkOnly = false) {
   const oldContent = readFileSync(indexPath, 'utf-8');
   const arrayStr = JSON.stringify(roleNames);
@@ -228,7 +354,16 @@ export function walkDir(dir, baseDir) {
 
 export function updateDirectoryJson(checkOnly = false) {
   const manifest = walkDir(ROOT, ROOT);
-  const newContent = JSON.stringify(manifest, null, 2) + '\n';
+  let newContent = JSON.stringify(manifest, null, 2) + '\n';
+  // 回填 Directory.json 自身的大小，使其与真实写入大小一致（否则每次重建都会触发"需同步"）
+  if (manifest['Directory.json'] && typeof manifest['Directory.json'].size === 'number') {
+    for (let i = 0; i < 8; i++) {
+      const bytes = Buffer.byteLength(newContent, 'utf8');
+      if (manifest['Directory.json'].size === bytes) break;
+      manifest['Directory.json'].size = bytes;
+      newContent = JSON.stringify(manifest, null, 2) + '\n';
+    }
+  }
   const filePath = resolve(ROOT, 'Directory.json');
   const oldContent = readFile(filePath);
   const changed = oldContent !== newContent;
@@ -277,11 +412,17 @@ export function rebuildProject(options = {}) {
   }
 
   const characterPacks = scanPackEntries(resolve(ROOT, 'source', 'character'), true);
-  const cardPacks = scanPackEntries(resolve(ROOT, 'source', 'card'));
+  const cardPacks = scanPackEntries(resolve(ROOT, 'source', 'card'), true);
   const manifestResult = updatePackManifest(characterPacks, cardPacks, checkOnly);
   results.push(manifestResult);
   if (!silent) {
     log.ok(`tool/pack/manifest.js — ${characterPacks.length} 个角色包，${cardPacks.length} 个卡牌包${manifestResult.changed ? '（需同步）' : ''}`);
+  }
+
+  const skillListsResult = updateSkillLists(checkOnly);
+  results.push(skillListsResult);
+  if (!silent) {
+    log.ok(`precontent.js — ${skillListsResult.negCount} 个负面技能，${skillListsResult.dkCount} 个吊卡技能${skillListsResult.changed ? '（需同步）' : ''}`);
   }
 
   const directoryResult = updateDirectoryJson(checkOnly);

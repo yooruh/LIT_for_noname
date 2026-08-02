@@ -1576,7 +1576,7 @@ export default () => {
 						}
 
 						const canRefresh = player.storage._lingli >= baseCost + 1 && candidateOffset + candidates.length < availableSkills.length;
-						const choices = canRefresh ? [...candidates, "刷新"] : candidates;
+						const choices = canRefresh ? [...candidates, "refresh"] : candidates;
 
 						const chooseSkill = function (current, controls, skills) {
 							return current.chooseControl(controls, 'cancel2')
@@ -1592,7 +1592,7 @@ export default () => {
 						}
 						const control = result?.control || "cancel2";
 
-						if (control === "刷新") {
+						if (control === "refresh") {
 							player.changeLingli(-1);
 							candidateOffset += numCandidates;
 							continue;
@@ -1897,7 +1897,8 @@ export default () => {
 			sdhh_fudichouxin_info: "出牌阶段，对一名角色使用，随机弃置其一个技能。",
 			nei: " ",
 			nei2: " ",
-			刷新_info: "消耗1点灵力值，刷新上述技能。",
+			refresh‌: "刷新",
+			refresh‌_info: "消耗1点灵力值，刷新上述技能",
 		},
 	};
 	return mode;

@@ -24,7 +24,7 @@ export const card = {
         },
         async content(event, trigger, player) {
             const target = event.target;
-            const allSkills = lib.lit.dkSkills.concat('lit_xiaohongtanver');
+            const allSkills = lib.lit.dkSkills;
 
             // 收集被移除的技能（系统移除或已觉醒）
             const removedSkills = [];

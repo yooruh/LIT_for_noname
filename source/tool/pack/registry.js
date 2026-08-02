@@ -2,6 +2,44 @@ import { lib, game } from '../../../../../noname.js';
 import { extensionPath } from '../utils/paths.js';
 
 const EXTENSION_NAME = '叁岛世界';
+const PACK_TYPES = ['character', 'card'];
+const REGISTRATION_POLICIES = ['immediate', 'deferred'];
+
+/**
+ * 已完成配置检查与资源补全、可供后续阶段消费的包条目。
+ *
+ * @typedef {Object} PackEntry
+ * @property {string} modulePath 相对于角色或卡牌目录、不含 `.js` 的入口路径。
+ * @property {Object} info 无名杀角色包或卡牌包定义。
+ * @property {string|undefined} loadConfig 默认通过，若制定扩展配置项，则根据此配置选择是否加载。
+ * @property {string} displayName 包管理菜单显示名。
+ * @property {Record<string, string>} resourceNames 角色完整 ID 到资源主名的映射；卡牌包为空对象。
+ * @property {boolean} [defaultEnabled=true] 首次加载时是否自动加入用户的已启用包列表。
+ * @property {'immediate'|'deferred'} [registration='immediate'] 包准备完成后的注册策略。
+ * `immediate` 会在 precontent 阶段交给 `game.import`；`deferred` 仅准备数据，由 content 阶段显式注册。
+ */
+
+function normalizePackMeta(packMeta) {
+    const registration = packMeta.registration || 'immediate';
+    if (!REGISTRATION_POLICIES.includes(registration)) {
+        throw new Error(`registration 无效：${registration}`);
+    }
+    return {
+        resourceNames: {},
+        ...packMeta,
+        registration,
+    };
+}
+
+function shouldLoad(meta) {
+    return !meta.loadConfig || Boolean(game.getExtensionConfig(EXTENSION_NAME, meta.loadConfig));
+}
+
+function getDisplayName(info, meta) {
+    return meta.displayName
+        || info.translate?.[info.name]
+        || info.name;
+}
 
 function fillSkillAudio(info) {
     for (const skill of Object.values(info.skill || {})) {
@@ -25,18 +63,8 @@ function fillCharacterResources(info, resourceNames) {
     }
 }
 
-function getDisplayName(info, config) {
-    return config.displayName
-        || info.translate?.[info.name]
-        || info.name;
-}
-
-function shouldLoad(config) {
-    return !config.extensionConfig || Boolean(game.getExtensionConfig(EXTENSION_NAME, config.extensionConfig));
-}
-
-function enablePack(type, info, config) {
-    if (config.defaultEnabled === false) return;
+function enablePack(type, info, meta) {
+    if (meta.defaultEnabled === false) return;
     const configKey = `${info.name}_${type}_pack`;
     if (game.getExtensionConfig(EXTENSION_NAME, configKey)) return;
 
@@ -46,40 +74,64 @@ function enablePack(type, info, config) {
     game.saveExtensionConfig(EXTENSION_NAME, configKey, true);
 }
 
-export async function loadPackRegistry(type, fileNames, registry, deferredPacks, infoPacks) {
-    const baseDir = type === 'character' ? '../character' : '../card';
-    for (const modulePath of fileNames) {
+/**
+ * 导入并准备一组角色包或卡牌包，返回唯一的包注册表。
+ *
+ * 加载流程分为四步：
+ * 1. 动态导入入口模块，并验证 `info.name` 与包名唯一性；
+ * 2. 根据 `packMeta.loadConfig` 排除本次不应准备的包；
+ * 3. 补全技能音频、角色资源、菜单翻译及首次默认启用状态；
+ * 4. 按 `registration` 立即调用 `game.import`，或把已准备条目留给 content 阶段注册。
+ *
+ * @param {string[]} modulePaths 相对于 `source/character` 或 `source/card`、不含 `.js` 的入口路径。
+ * @param {'character'|'card'} [type='character'] 包类型；角色包为默认类型。
+ * @returns {Promise<Record<string, PackEntry>>} 以 `info.name` 为键的已准备包注册表。
+ */
+export async function loadPackRegistry(modulePaths, type = 'character') {
+    if (!PACK_TYPES.includes(type)) throw new Error(`不支持的包类型：${type}`);
+
+    const registry = {};
+    const discoveredNames = new Set();
+    const baseDir = type === 'character' ? '../../character' : '../../card';
+
+    for (const modulePath of modulePaths) {
         const module = await import(`${baseDir}/${modulePath}.js`);
-        const { info, resourceNames, packConfig = {} } = module;
+        const { info, packMeta = {} } = module;
         if (!info?.name) throw new Error(`${baseDir}/${modulePath}.js 未导出有效的 info`);
-        if (registry[info.name]) throw new Error(`重复的${type === 'character' ? '角色' : '卡牌'}包名称：${info.name}`);
+        if (discoveredNames.has(info.name)) {
+            throw new Error(`重复的${type === 'character' ? '角色' : '卡牌'}包名称：${info.name}`);
+        }
+        discoveredNames.add(info.name);
+
+        const meta = normalizePackMeta(packMeta);
+        if (!shouldLoad(meta)) continue;
 
         const entry = {
+            displayName: getDisplayName(info, meta),
             modulePath,
-            displayName: getDisplayName(info, packConfig),
             info,
-            resourceNames: resourceNames || {},
-            ...packConfig,
+            ...meta,
         };
         registry[info.name] = entry;
-        if (!shouldLoad(entry)) continue;
+        lib.translate[`${info.name}_${type}_config`] = entry.displayName;
 
         fillSkillAudio(info);
-        if (type === 'character') {
-            fillCharacterResources(info, resourceNames);
-            infoPacks[info.name] = info;
-        }
-        lib.translate[`${info.name}_${type}_config`] = entry.displayName;
+        if (type === 'character') fillCharacterResources(info, meta.resourceNames);
+        
         enablePack(type, info, entry);
-
-        if (entry.deferred) {
-            deferredPacks[info.name] = entry;
-        } else {
+        if (entry.registration === 'immediate') {
             game.import(type, () => info);
         }
     }
+    return registry;
 }
 
+/**
+ * 在 content 阶段注册已经由 loadPackRegistry 准备好的延迟角色包。
+ *
+ * @param {Object} info 角色包定义。
+ * @param {string} displayName 角色包菜单显示名。
+ */
 export function registerCharacterPack(info, displayName) {
     for (const [sectionName, section] of Object.entries(info)) {
         switch (sectionName) {

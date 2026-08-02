@@ -8,8 +8,6 @@ export const intro = `低血线但不吃桃的负嘲讽型狂战士，但被光�
     + "<li>忠臣：适当故意不闪承受伤害，但注意防御主公AOE，尤其是某个不可言说的主公，当他的忠臣比内奸还反贼"
     + "<li>反贼：碰瓷主公，升级后利用异构体系可以终结残血"
     + "<li>内奸：利用负嘲讽囤牌成为不动白，最后再爆发";
-export const perfectPair = ['lit_zhengmohan郑墨翰'];
-
 export const character = {
     'lit_hupan胡畔': {
         sex: "male",
@@ -18,6 +16,8 @@ export const character = {
         skills: ["lit_shengjihp", "lit_cuiruo", "lit_shichou"],
     },
 };
+
+export const perfectPair = ['lit_zhengmohan郑墨翰'];
 
 export const skill = {
     // 胡畔

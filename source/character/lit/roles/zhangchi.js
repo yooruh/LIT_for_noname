@@ -7,8 +7,6 @@ export const intro = `与${B("氹")}诡辩之时，你会怀念仁王盾和藤�
     + "<li>忠臣：诡辩反贼的伤害牌，吸引火力以便进行消耗战"
     + "<li>反贼：诡辩酒、闪、无懈可击，或满血诡辩桃100%成功。可以显著干扰对面关键人物的牌型"
     + "<li>内奸：有竖心在很容易苟到最后，苟吧";
-export const characterReplace = { 'lit_zhangchi': ['lit_zhangchi张驰', 'lit_zhangchi9张驰'] };
-
 export const character = {
     'lit_zhangchi张驰': {
         sex: "male",
@@ -17,6 +15,8 @@ export const character = {
         skills: ["lit_shengjizc", "lit_guibian", "lit_shuxin"],
     },
 };
+
+export const characterReplace = { 'lit_zhangchi': ['lit_zhangchi张驰', 'lit_zhangchi9张驰'] };
 
 export const skill = {
     // 张驰
@@ -235,7 +235,7 @@ export const skill = {
 export const translate = {
     'lit_zhangchi张驰': "张驰",
     'lit_guibian': "诡辩",
-    'lit_guibian_info': `出牌阶段限一次，你可以令一名其他角色展示所有手牌，你选择其中一张令其对你使用（无视距离），若其不使用或无法使用，则其交给你所有与之${get.poptip("lit_sameName")}的牌`,
+    'lit_guibian_info': `出牌阶段限一次，你可以令一名其他角色展示所有手牌，你选择其中一张令其对你使用（无视距离），若其不使用或无法使用，则其交给你所有与之${get.poptip("lit_sameCardName")}的牌`,
     'lit_shuxin': "竖心",
     'lit_shuxin_info': `锁定技，当你成为其他角色使用的${get.poptip("lit_basicTrickCard")}的目标后，你令使用者对其自己使用此牌`,
     'lit_shuxinV2': "竖心V2",
@@ -245,7 +245,7 @@ export const translate = {
 };
 
 export const simpleTranslate = {
-    'lit_guibian_info': `出牌限1次，令1人展示所有牌你选择其中1张令其对你使用（无视距离），若其不使用或无法使用则交付所有${get.poptip("lit_sameName")}牌`,
+    'lit_guibian_info': `出牌限1次，令1人展示所有牌你选择其中1张令其对你使用（无视距离），若其不使用或无法使用则交付所有${get.poptip("lit_sameCardName")}牌`,
     'lit_shuxin_info': `锁；成为他人${get.poptip("lit_basicTrickCard")}的目标后令使用者对他自己使用此牌`,
     'lit_shuxinV2_info': `V2 成为他人${get.poptip("lit_basicTrickCard")}的目标后可令使用者对他自己使用此牌`,
     'lit_shengjizc_info': `${get.poptip('lit_shuxinV2')} 获得并修改“竖心”：不再为锁定技`,

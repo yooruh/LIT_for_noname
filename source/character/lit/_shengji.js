@@ -11,7 +11,7 @@ export const skill = {
         marktext: "级",
         intro: {
             name: "升级",
-            content: (storage, player) => `距离升级还差${3 - player.countMark('lit_shengji')}点经验`,
+            content: () => "击杀1名角色后升级",
         },
 
         onremove(player) {
@@ -24,7 +24,6 @@ export const skill = {
             } else {
                 player.addSkill("lit_shengji_markAfterShow");
             }
-            player.setStorage("lit_shengji", 0);
             if (lib.lit.getPlayers() < 5) {
                 player.useSkill('lit_shengji');
             }
@@ -32,16 +31,11 @@ export const skill = {
 
         trigger: { global: 'dieAfter' },
         async content(event, trigger, player) {
+            // 击杀1名角色后升级；开局人数不足5时由 init 强制触发（trigger 非 die 事件）
             if (trigger?.name === 'die') {
-                const expGain = (trigger.source === player && trigger.source.isAlive() ? 1 : 0) + 1;
-                if (player.skills.some(e => lib.lit.isShengjiSkill(e))) {
-                    player.addMark('lit_shengji', expGain);
-                } else {
-                    let exp = player.getStorage("lit_shengji", 0);
-                    player.setStorage("lit_shengji", exp + expGain);
-                }
+                if (trigger.source !== player || !trigger.source.isAlive()) return;
+                if (!player.skills.some(e => lib.lit.isShengjiSkill(e))) return;
             }
-            if (player.countMark('lit_shengji') < 3 && lib.lit.getPlayers() >= 5) return;
 
             player.clearMark('lit_shengji', false);
             await player.logSkill('lit_shengji');
@@ -98,7 +92,10 @@ export const skill = {
                 'jhx': 'lit_shanliangV2',
                 'qbc': 'lit_chushouV2',
                 'zc': 'lit_shuxinV2',
-                'yxl': 'lit_juji'
+                'yxl': 'lit_juji',
+                'sn': 'lit_jiaoshuiV2',
+                'yt': 'lit_chixin',
+                'zyt': 'lit_chixin'
             };
 
             const mainAllSkills = lib.character[player.name1]?.skills || [];
@@ -259,9 +256,21 @@ export const skill = {
         inherit: 'lit_sj',
         derivation: 'lit_juji',
     },
+    lit_shengjisn: {
+        inherit: 'lit_sj',
+        derivation: 'lit_jiaoshuiV2',
+    },
+    lit_shengjiyt: {
+        inherit: 'lit_sj',
+        derivation: 'lit_chixin',
+    },
+    lit_shengjizyt: {
+        inherit: 'lit_sj',
+        derivation: 'lit_chixin',
+    },
 };
 
 export const translate = {
     'lit_shengji': "升级",
-    'lit_shengji_info': "场上每有一名角色死亡，所有角色获得1点经验，击杀者额外获得1点经验，当经验值达到3或全场角色数小于5时升级",
+    'lit_shengji_info': "当你击杀1名角色后升级；全场角色数小于5时，开局立即升级",
 };

@@ -9,6 +9,10 @@ import { VersionChecker } from './versionChecker.js';
 import { UpdateDialogs as UIManager } from './updateDialogs.js';
 import { BackupManager } from './backupManager.js';
 
+// 更新时需保护、绝不删除/清理的目录与文件
+const PROTECTED_DIRS = new Set(['_temp_downloading', '.git', '.vscode', 'node_modules']);
+const PROTECTED_FILES = new Set(['Directory.json', 'version.json']);
+
 // ==================== 主更新器 ====================
 class ExtensionUpdater {
     constructor() {
@@ -23,6 +27,7 @@ class ExtensionUpdater {
         this.downloader = null;
         this.tasks = []; // DownloadTask 数组
         this.mode = 'simple';
+        this.versionSelect = false; // 交互路径是否允许自选更新版本
         this.startTime = 0;
         this.shouldCleanup = true;
         this.totalBytes = 0;
@@ -379,13 +384,128 @@ class ExtensionUpdater {
         }
         try {
             await this.state.setPhase('moving', true);
+            // 更新前读取本地（旧）文件清单，用于清理新版本已移除的文件
+            const oldFileList = await this.readLocalDirectoryJson();
             await this.applyDownloadedFiles();
+            await this.removeObsoleteFiles(oldFileList);
+            // 将新版本文件清单写回本地，保持后续更新的差集准确
+            await this.refreshLocalDirectoryJson();
             await this.cleanup();
         } catch (error) {
             console.error('[应用更新] 失败:', error);
             await this.state.setPhase('downloading', true);
             if (!error.updateStage) error.updateStage = 'apply';
             throw error;
+        }
+    }
+
+    // 读取本地（旧）Directory.json 的文件路径列表；缺失或解析失败返回 null
+    async readLocalDirectoryJson() {
+        try {
+            const exists = await game.promises.checkFile(`${this.targetDir}/${CONFIG.files.directory}`);
+            if (exists !== 1) return null;
+            const content = await game.promises.readFileAsText(`${this.targetDir}/${CONFIG.files.directory}`);
+            return Object.keys(JSON.parse(content));
+        } catch (e) {
+            console.warn('[清理] 读取本地文件清单失败:', e.message);
+            return null;
+        }
+    }
+
+    // 删除新版本已移除的本地文件，并清理空目录
+    // 正常路径按「旧清单 − 新清单」差集删除；本地缺少 Directory.json 无法对比时，
+    // 回退为清空式清理：删除本地所有不在新清单中的文件（等效"全部删除再重下"）
+    async removeObsoleteFiles(oldFileList) {
+        const newSet = new Set(this.state.data.files.map(f => f.path));
+        if (newSet.size === 0) {
+            console.warn('[清理] 新版本文件清单为空，跳过清理');
+            return;
+        }
+
+        let candidates;
+        if (oldFileList && oldFileList.length > 0) {
+            // 正常路径：仅清理旧清单中有、新清单中没有的文件
+            candidates = oldFileList.filter(p => !newSet.has(p));
+        } else {
+            // 回退路径：无本地清单可对比，删除本地所有不在新清单中的文件
+            const localFiles = await this.walkLocalFiles();
+            candidates = localFiles.filter(p => !newSet.has(p));
+        }
+
+        for (const relPath of candidates) {
+            const target = `${this.targetDir}/${relPath}`;
+            try {
+                const exists = await game.promises.checkFile(target);
+                if (exists === 1) {
+                    await game.promises.removeFile(target);
+                    console.log(`[更新] 清理失效文件: ${relPath}`);
+                }
+            } catch (e) {
+                console.warn(`[清理] 删除失败: ${relPath}`, e);
+            }
+        }
+        await this.pruneEmptyDirs();
+    }
+
+    // 递归收集扩展目录下所有文件的相对路径（跳过保护目录/文件）
+    async walkLocalFiles() {
+        const result = [];
+        const prefix = this.targetDir.length + 1;
+        const walk = async (dir) => {
+            let folders = [], files = [];
+            try {
+                [folders, files] = await game.promises.getFileList(dir);
+            } catch (e) {
+                return;
+            }
+            for (const f of files) {
+                if (PROTECTED_FILES.has(f)) continue;
+                result.push(`${dir}/${f}`.slice(prefix));
+            }
+            for (const f of folders) {
+                if (PROTECTED_DIRS.has(f)) continue;
+                await walk(`${dir}/${f}`);
+            }
+        };
+        await walk(this.targetDir);
+        return result;
+    }
+
+    // 自底向上删除扩展目录下的空目录（保护系统目录）
+    async pruneEmptyDirs() {
+        const walk = async (dir) => {
+            let isEmpty = false;
+            try {
+                const [folders, files] = await game.promises.getFileList(dir);
+                const removable = [];
+                for (const f of folders) {
+                    if (PROTECTED_DIRS.has(f)) continue;
+                    const sub = `${dir}/${f}`;
+                    if (await walk(sub)) removable.push(f);
+                }
+                for (const f of removable) {
+                    await game.promises.removeDir(`${dir}/${f}`);
+                }
+                const [folders2, files2] = await game.promises.getFileList(dir);
+                isEmpty = folders2.filter(f => !PROTECTED_DIRS.has(f)).length === 0 && files2.length === 0;
+            } catch (e) { }
+            return isEmpty;
+        };
+        await walk(this.targetDir);
+    }
+
+    // 将新版本的文件清单写回本地，保持后续更新的差集准确
+    // 新版本清单已包含 Directory.json 时会随下载应用；此处仅兜底旧分支等未分发清单的情况
+    async refreshLocalDirectoryJson() {
+        try {
+            if (this.state.data.files.some(f => f.path === CONFIG.files.directory)) return;
+            const exists = await game.promises.checkFile(`${this.tempDir}/${CONFIG.files.directory}`);
+            if (exists !== 1) return;
+            const content = await game.promises.readFileAsText(`${this.tempDir}/${CONFIG.files.directory}`);
+            await game.promises.writeFile(content, this.targetDir, CONFIG.files.directory);
+            console.log('[更新] 已更新本地文件清单 Directory.json');
+        } catch (e) {
+            console.warn('[更新] 更新本地文件清单失败:', e.message);
         }
     }
 
@@ -489,6 +609,54 @@ class ExtensionUpdater {
         }
     }
 
+    // 全新下载：版本检查、自选版本、文件列表准备与确认
+    async prepareFreshDownload() {
+        const gameVer = lib.version || '1.0.0';
+        const versions = await new VersionChecker(this.repo, this.tokens, this.envType).list(gameVer);
+        let verInfo = null;
+
+        if (versions.length > 0) {
+            let candidates = versions.filter(v => v.compatible);
+            if (candidates.length === 0) candidates = versions; // 无兼容版本时列出全部
+            verInfo = candidates[0]; // 默认选最新兼容版本
+
+            // 交互路径且存在多个候选时允许自选版本
+            if (this.versionSelect && candidates.length > 1) {
+                const picked = await this.ui.showVersionSelect(candidates);
+                if (!picked) {
+                    await this.cleanup();
+                    return { cancelled: true };
+                }
+                verInfo = picked;
+            }
+        }
+
+        if (verInfo && verInfo.branch && verInfo.branch !== this.repo.branch) {
+            this.repo.switchBranch(verInfo.branch);
+        }
+
+        const { fileCount, skipCount, totalBytes } = await this.prepareFileList();
+
+        const confirmed = await this.ui.confirmStart({
+            version: verInfo?.extensionVersion,
+            description: verInfo?.description,
+            highlights: verInfo?.highlights,
+            branch: this.repo.branch,
+            platform: this.repo.platform,
+            mode: this.mode,
+            fileCount,
+            skipCount,
+            totalSize: utils.parseSize(totalBytes),
+            envType: this.envType
+        });
+
+        if (!confirmed) {
+            await this.cleanup();
+            return { cancelled: true };
+        }
+        return {};
+    }
+
     // 主更新流程
     async update(force = false, resumeMode = false, retryMode = false) {
         this.startTime = Date.now();
@@ -545,58 +713,13 @@ class ExtensionUpdater {
                         this.tasks = [];
                         this.totalBytes = 0;
 
-                        // 全新下载：版本检查与文件列表准备
-                        const gameVer = lib.version || '1.0.0';
-                        const verInfo = await new VersionChecker(this.repo, this.tokens, this.envType).check(gameVer);
-
-                        if (verInfo.branch !== this.repo.branch) {
-                            this.repo.switchBranch(verInfo.branch);
-                        }
-
-                        const { fileCount, skipCount, totalBytes } = await this.prepareFileList();
-
-                        const confirmed = await this.ui.confirmStart({
-                            version: verInfo.extensionVersion,
-                            branch: this.repo.branch,
-                            platform: this.repo.platform,
-                            mode: this.mode,
-                            fileCount,
-                            skipCount,
-                            totalSize: utils.parseSize(totalBytes),
-                            envType: this.envType
-                        });
-
-                        if (!confirmed) {
-                            await this.cleanup();
-                            return { cancelled: true };
-                        }
+                        const prepared = await this.prepareFreshDownload();
+                        if (prepared.cancelled) return prepared;
                     }
                 } else {
-                    // 全新下载：版本检查与文件列表准备
-                    const gameVer = lib.version || '1.0.0';
-                    const verInfo = await new VersionChecker(this.repo, this.tokens, this.envType).check(gameVer);
-
-                    if (verInfo.branch !== this.repo.branch) {
-                        this.repo.switchBranch(verInfo.branch);
-                    }
-
-                    const { fileCount, skipCount, totalBytes } = await this.prepareFileList();
-
-                    const confirmed = await this.ui.confirmStart({
-                        version: verInfo.extensionVersion,
-                        branch: this.repo.branch,
-                        platform: this.repo.platform,
-                        mode: this.mode,
-                        fileCount,
-                        skipCount,
-                        totalSize: utils.parseSize(totalBytes),
-                        envType: this.envType
-                    });
-
-                    if (!confirmed) {
-                        await this.cleanup();
-                        return { cancelled: true };
-                    }
+                    // 全新下载：版本检查、自选版本、文件列表准备与确认
+                    const prepared = await this.prepareFreshDownload();
+                    if (prepared.cancelled) return prepared;
                 }
             }
 

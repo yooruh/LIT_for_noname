@@ -134,6 +134,7 @@ export function manifestToVersionJson(manifest) {
         gameVersion: release.gameVersion,
         branch: release.branch || (stripV(release.version) === getCurrentReleaseVersion(manifest) ? (manifest.defaultBranch || 'main') : `v${stripV(release.version)}`),
         description: release.description || `支持无名杀${release.gameVersion}版本`,
+        highlights: Array.isArray(release.highlights) ? release.highlights : [],
       })),
   };
 }

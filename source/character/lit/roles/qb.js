@@ -6,8 +6,6 @@ export const intro = `前期被防御类和爆发类克制，防御类让${B("Qb
     + "<li>主公：建议适当屯牌，不一定回满血，只要保证不会被一套带走，就可以留牌用于在回合内造成伤害。毕竟你还可以让你的“忠臣”们自愿给你献血，前期没那么容易死的"
     + "<li>反贼：血量上限更低，回合外要尽可能保证满血。多与队友配合，最好间隔一轮卖血控不同的人，压制对面的配合"
     + "<li>忠臣、内奸：跟主公和反贼差不多，不过要优先针对威胁最大的敌方，保证主公生存要紧";
-export const perfectPair = ['lit_zigao自高', 'lit_hujunwei胡峻玮'];
-
 export const character = {
     'lit_qbQb': {
         sex: "male",
@@ -17,6 +15,8 @@ export const character = {
         isZhugong: true,
     },
 };
+
+export const perfectPair = ['lit_zigao自高', 'lit_hujunwei胡峻玮'];
 
 export const skill = {
     lit_33: {

@@ -4,15 +4,21 @@ import {
     mapCharacterTranslate, prefixCharacterId,
 } from '../../tool/pack/guozhanPack.js';
 import { createRolePack } from '../../tool/pack/rolePack.js';
-import { info as litInfo, resourceNames as litResourceNames } from '../lit/index.js';
+import { info as litInfo, packMeta as litPackMeta } from '../lit/index.js';
+
+// 角色包设置
+const PACK_NAME = 'lit_gz';
+const connectAllowed = true;
 
 // rebuild.mjs 自动扫描 roles/ 目录并更新此数组；这里只放国战专属差异角色。
 const ROLE_FILES = [];
 const modules = await Promise.all(ROLE_FILES.map(fileName => import(`./roles/${fileName}.js`)));
-const roles = createRolePack(ROLE_FILES, modules, 'lit_gz');
+const roles = createRolePack(ROLE_FILES, modules, PACK_NAME);
+
 const merge = (base, override) => ({ ...(base || {}), ...(override || {}) });
 const guozhanOnly = mode => mode === 'guozhan';
 
+// 国战专属角色模块的同名对象覆盖继承自叁岛角色包的数据。
 const overrides = {
     character: roles.merge('character'),
     skill: roles.merge('skill'),
@@ -27,6 +33,7 @@ const overrides = {
     pinyins: roles.merge('pinyins'),
 };
 
+// 继承叁岛角色包，并为国战角色 ID 添加 gz_ 前缀及专属模式限制。
 const characterIds = Object.keys(litInfo.character || {});
 const character = mapCharacterKeys(litInfo.character, value => ({
     ...value,
@@ -37,24 +44,27 @@ const inheritedFilters = mapCharacterKeys(litInfo.characterFilter, filter => mod
 ));
 const modeFilters = Object.fromEntries(characterIds.map(id => [prefixCharacterId(id), guozhanOnly]));
 
-export const resourceNames = Object.fromEntries(Object.entries(litResourceNames).map(([id, resourceName]) => [
+const resourceNames = Object.fromEntries(Object.entries(litPackMeta.resourceNames).map(([id, resourceName]) => [
     prefixCharacterId(id),
     resourceName,
 ]));
 
-export const packConfig = {
+// 加载角色包时的设置
+export const packMeta = {
+    loadConfig: 'lit_guozhanAllowed',
+    resourceNames,
     defaultEnabled: true,
-    deferred: true,
-    extensionConfig: 'lit_guozhanAllowed',
+    // 模块和资源仍在 precontent 准备；角色包延至国战 content 阶段注册
+    registration: 'deferred',
 };
 
 export const info = {
-    name: 'lit_gz',
+    name: PACK_NAME,
     mode: 'guozhan',
-    connect: true,
+    connect: connectAllowed,
     connectBanned: litInfo.connectBanned || [],
-    characterSort: mapCharacterSort(litInfo.characterSort),
     character: merge(character, overrides.character),
+    characterSort: mapCharacterSort(litInfo.characterSort),
     characterTitle: merge(mapCharacterKeys(litInfo.characterTitle), overrides.characterTitle),
     characterIntro: merge(mapCharacterKeys(litInfo.characterIntro), overrides.characterIntro),
     characterReplace: merge(mapCharacterLists(litInfo.characterReplace), overrides.characterReplace),

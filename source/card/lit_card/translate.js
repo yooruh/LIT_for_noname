@@ -1,5 +1,5 @@
 import { lib, game, ui, get, ai, _status } from '../../../../../noname.js';
-import { lib_lit } from '../precontent.js';
+import { lib_lit } from '../../precontent.js';
 
 function getDKListTranslate() {
     let str = '';

@@ -1,31 +1,40 @@
 import { lib, game, ui, get, ai, _status } from '../../../../../noname.js';
 import { createRolePack } from '../../tool/pack/rolePack.js';
 
-// rebuild.mjs 自动扫描 roles/ 目录并更新此数组
-const ROLE_FILES = ["boshu","chenke","hujunwei","hupan","huxinyu","jianghaixu","lanboxun","linmiao","liuchenmu","liyang9","pangjianlong","qb","qianbaocan","rita","sunnan","wangcan9","wangrong","wuxiaoqi","yangxiangling","zengpinjia","zhangchi","zhangchi9","zhangqinyi","zhangshengjie","zhangshengjie9","zhengmohan","zigao"];
-const modules = await Promise.all(ROLE_FILES.map(fileName => import(`./roles/${fileName}.js`)));
-const roles = createRolePack(ROLE_FILES, modules, 'lit');
+// 角色包设置
+const PACK_NAME = 'lit';
+const connectAllowed = true;
+export const connectBanned = []; // 联机模式下禁用的角色
 
-// 由每个角色模块的 sort、title、intro 和 perfectPair 声明自动生成
+// rebuild.mjs 自动扫描 roles/ 目录并更新此数组
+const ROLE_FILES = ["boshu","chenke","hujunwei","hupan","huxinyu","jianghaixu","lanboxun","linmiao","liuchenmu","liyang9","pangjianlong","qb","qianbaocan","rita","sunnan","wangcan9","wangrong","wuxiaoqi","yangxiangling","yutong","zengpinjia","zhangchi","zhangchi9","zhangqinyi","zhangshengjie","zhangshengjie9","zhengmohan","zhongyutong","zigao"];
+const modules = await Promise.all(ROLE_FILES.map(fileName => import(`./roles/${fileName}.js`)));
+const roles = createRolePack(ROLE_FILES, modules, PACK_NAME);
+
+// 加载角色包时的设置
+export const packMeta = {
+    resourceNames: roles.createResourceNames(),
+    defaultEnabled: true,
+};
+
+// 由每个角色模块的 sort、title、intro 等声明自动生成
 export const characterSort = roles.createCharacterSort();
 export const characterTitle = roles.collect('title');
 export const characterIntro = roles.collect('intro');
-export const perfectPair = roles.collect('perfectPair');
-export const resourceNames = roles.createResourceNames();
 
 // 无名杀角色包元数据：加载时分别合并到同名的 lib 字段。
-// connectBanned：联机禁用角色；characterFilter：角色可用条件；
-// characterSubstitute：角色的替身或特殊形态。空值表示当前未配置，保留为角色模块扩展点。
-export const connectBanned = [];
-export const characterFilter = roles.merge('characterFilter');
-export const characterSubstitute = roles.merge('characterSubstitute');
+export const character = roles.merge('character');
 export const characterReplace = roles.merge('characterReplace');
+// 按角色 ID 声明模式过滤函数；函数接收 mode，返回角色是否在该模式启用。
+export const characterFilter = roles.merge('characterFilter');
+// 按角色 ID 声明替代形态，供角色技能在特殊时机切换皮肤或形态。
+export const characterSubstitute = roles.merge('characterSubstitute');
+export const perfectPair = roles.collect('perfectPair');
 
 import { skill as negClear, translate as negClearTranslate } from './_negClear.js';
 import { skill as shengji, translate as shengjiTranslate } from './_shengji.js';
 import { translate as metaTranslate } from './_meta.js';
 
-export const character = roles.merge('character');
 export const skill = { ...negClear, ...shengji, ...roles.merge('skill') };
 export const fullTranslate = {
     ...metaTranslate,
@@ -43,14 +52,12 @@ for (const [key, infoText] of Object.entries(simpleTranslate)) {
     dynamicTranslate[key.slice(0, -5)] ??= () => infoText;
 }
 
-export const packConfig = { defaultEnabled: true };
-
 export const info = {
-    name: 'lit',
-    connect: true,
+    name: PACK_NAME,
+    connect: connectAllowed,
     connectBanned,
-    characterSort,
     character,
+    characterSort,
     characterTitle,
     characterIntro,
     characterReplace,

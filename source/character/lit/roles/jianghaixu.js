@@ -1,11 +1,17 @@
 ﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
+// 启用 characterSubstitute 示例时同时取消下一行的注释。
+// import { extensionPath } from '../../../tool/utils/paths.js';
 
+// 角色分组：值对应角色包 characterSort 中的分组后缀。
 export const sort = 'ybs';
+// 角色称号：显示在角色资料中的定位与难度标签。
 export const title = `防拆·补牌·复活·${styleText('y', "中")}`;
+// 角色介绍：支持 HTML 与 poptip，用于角色资料和选将提示。
 export const intro = `如果己方队友是${B("蒋海旭")}，那每回合都相当于有一次卖血技。而且${B("蒋海旭")}的补牌技能在濒死之前触发，对能转化桃的队友很友好。还能防止队友弃牌，不过对${get.poptip("lit_boshu菠树")}、${get.poptip("lit_huxinyu胡馨予")}之类的得考虑考虑。`
     + `<li>主公、反贼：除非受到巨额爆伤，否则前期几乎死不掉，而且队友在有${get.poptip("lit_yuanzhu")}的情况下，对${B("蒋海旭")}的桃相当于能用两次.可多补牌，援助容易蓄牌的队友`
     + "<li>忠臣、内奸：辅助主公，但有可能把主公的桃抢了……因此在主公血量危急的时候尽量别被打进濒死了";
 
+// 角色定义：键为完整角色 ID；每个角色模块必须且只能实际导出一个角色。
 export const character = {
     'lit_jianghaixu蒋海旭': {
         sex: "male",
@@ -15,6 +21,27 @@ export const character = {
     },
 };
 
+// 角色替换：键为替换组 ID，值为可供选择的完整角色 ID。
+// export const characterReplace = {
+//     'lit_jianghaixu': ['lit_jianghaixu蒋海旭', 'lit_kunxu昆旭'],
+// };
+
+// 角色过滤：键为完整角色 ID，函数接收当前模式名并返回是否启用该角色。
+// export const characterFilter = {
+//     'lit_jianghaixu蒋海旭': mode => mode !== 'guozhan',
+// };
+
+// 特殊形态：键为完整角色 ID；每项依次为形态 ID 和角色附加配置。
+// export const characterSubstitute = {
+//     'lit_jianghaixu蒋海旭': [
+//         ['lit_jianghaixu_azure', [`img:${extensionPath}/image/skin/lit_jianghaixu/lit_jianghaixu_azure.png`]],
+//     ],
+// };
+
+// 珠联璧合：值为与当前角色形成珠联璧合的完整角色 ID。
+// export const perfectPair = ['lit_zhangchi张驰'];
+
+// 技能定义：键为技能 ID，值为无名杀技能配置。
 export const skill = {
     // 蒋海旭
     lit_yuanzhu: {
@@ -309,6 +336,7 @@ export const skill = {
     },
 };
 
+// 完整翻译：角色 ID、技能 ID 及其 _info 等键均在此声明。
 export const translate = {
     'lit_jianghaixu蒋海旭': "蒋海旭",
     'lit_jianghaixu_azure': "蔚蓝色",
@@ -326,6 +354,7 @@ export const translate = {
     'lit_shengjijhx_info': `${get.poptip('lit_shanliangV2')} 获得并于〖善良〗末尾增加：若恢复的体力值溢出，则增加等溢出量的体力上限后恢复体力至上限`,
 };
 
+// 简化翻译：只覆盖需要精简的 _info，其他键沿用完整翻译。
 export const simpleTranslate = {
     'lit_yuanzhu_info': "他人回合开始前，若其没有“援”，你可弃置1~2牌，其+等量“援”。锁；有“援”者弃牌时取消弃牌并-1“援”（仅限手牌和装备区的弃牌）",
     'lit_chenshui_info': "每回合限1次，有人扣血瞬间你可翻面并令其+2牌",
@@ -333,3 +362,18 @@ export const simpleTranslate = {
     'lit_shanliangV2_info': "V2 锁；濒死时全场展示手牌并弃置其中的桃和字面意义上的桃，你+等弃置量的血；若恢复量溢出则加等溢出量上限后回满血",
     'lit_shengjijhx_info': `${get.poptip('lit_shanliangV2')} 获得并于“善良”末尾增加：若恢复量溢出，增加等溢出量的上限后回满血`,
 };
+
+// 动态翻译：键为技能 ID，函数接收技能拥有者并返回当前技能描述。
+// export const dynamicTranslate = {
+//     lit_yuanzhu(player) {
+//         return player.countMark('lit_yuanzhu') > 0
+//             ? '当前拥有“援”标记时显示的技能描述'
+//             : simpleTranslate.lit_yuanzhu_info;
+//     },
+// };
+
+// 拼音覆盖：键为需要覆盖的角色名或文本，值为逐字拼音。
+// export const pinyins = {
+//     '蒋海旭': ['jiǎng', 'hǎi', 'xù'],
+//     '升级·蒋海旭': ['shēng', 'jí', '·', 'jiǎng', 'hǎi', 'xù'],
+// };

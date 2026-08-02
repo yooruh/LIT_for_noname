@@ -77,6 +77,7 @@ export const extensionUpdateManager = {
                 await updater.init(config.platform, config.mode);
             }
 
+            updater.versionSelect = true; // 交互路径允许自选更新版本
             const result = await updater.update(false, isResumeMode, isRetryMode);
 
             if (result.cancelled) {

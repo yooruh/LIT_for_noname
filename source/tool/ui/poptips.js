@@ -1,16 +1,12 @@
 import { lib } from '../../../../../noname.js';
 
-export function registerPoptips() {
-	for (const packName in lib.lit.infopack) {
-		if (!lib.lit.infopack) continue;
-		const pack = lib.lit.infopack[packName];
+export function registerPoptips(characterPacks) {
+	for (const entry of Object.values(characterPacks || {})) {
+		const pack = entry.info;
 		const characterList = Object.keys(pack.character);
 		for (const charName of characterList) {
 			const translatedName = pack.translate?.[charName] || lib.translate[charName];
-			const prefix = pack.translate?.[`${charName}_prefix`] || lib.translate[`${charName}_prefix`] || '';
-			const shownName = translatedName?.startsWith(prefix)
-				? translatedName.slice(prefix.length)
-				: translatedName || charName;
+			const shownName = translatedName || charName;
 			lib.poptip.add({
 				id: charName,
 				name: shownName,
@@ -20,7 +16,7 @@ export function registerPoptips() {
 		}
 	}
 	lib.poptip.add({
-		id: "lit_sameName",
+		id: "lit_sameCardName",
 		name: "同名",
 		type: "character",
 		info: `所有杀算同一种名字`,

@@ -12,7 +12,7 @@ export const character = {
         sex: "male",
         group: "three",
         hp: 4,
-        skills: ["lit_jiaoshui", "lit_gonghuo", "lit_zhishu"],
+        skills: ["lit_shengjisn", "lit_jiaoshui", "lit_gonghuo", "lit_zhishu"],
     },
 };
 
@@ -22,6 +22,7 @@ export const skill = {
             global: ["phaseDiscardBegin", "useCardAfter"],
         },
         filter(event, player) {
+            if (!player.inRange(event.player)) return false;
             if (event.name === "phaseDiscard") return event.player !== player;
             if (event.name === "useCardAfter") return event.player !== player && event.card && event.card.name === "jiu";
             return false;
@@ -46,6 +47,17 @@ export const skill = {
             } else if (target.countCards("h") > 0) {
                 await player.gainPlayerCard(target, "h", "visible");
             }
+        },
+    },
+    lit_jiaoshuiV2: {
+        inherit: 'lit_jiaoshui',
+        init: (player) => {
+            if (player.hasSkill('lit_jiaoshui')) player.removeSkill('lit_jiaoshui');
+        },
+        filter(event, player) {
+            if (event.name === "phaseDiscard") return event.player !== player;
+            if (event.name === "useCardAfter") return event.player !== player && event.card && event.card.name === "jiu";
+            return false;
         },
     },
     lit_gonghuo: {
@@ -351,18 +363,24 @@ export const translate = {
     'lit_sunnan孙楠': "孙楠",
     'lit_sunnan_dark': "暗面",
     'lit_jiaoshui': "浇水",
-    'lit_jiaoshui_info': "他人使用【酒】后，或其弃牌阶段开始时，其可令你摸1张牌，若其不选择或忘记了选择，你可观看并获得其1张牌",
+    'lit_jiaoshui_info': "在你攻击范围内，他人使用【酒】后，或其弃牌阶段开始时，其可令你摸1张牌，若其不选择或忘记了选择，你可观看并获得其1张牌",
+    'lit_jiaoshuiV2': "浇水V2",
+    'lit_jiaoshuiV2_info': "他人使用【酒】后，或其弃牌阶段开始时，其可令你摸1张牌，若其不选择或忘记了选择，你可观看并获得其1张牌",
     'lit_gonghuo': "拱火",
     'lit_gonghuo_info': `你的回合内有人受伤后，若伤害源不为你，则你可令其获得1层${get.poptip('lit_langen')}`,
     'lit_langen': "烂根",
     'lit_langen_info': "负面效果，生效后失去1层。当你受到大于1的伤害时，令此伤害+1",
     'lit_zhishu': "枝疏",
     'lit_zhishu_info': "锁定技，你于回合外获得的「不来自你区域内的牌」不进入你的手牌区，而是放置在你的角色牌上称为“枝”<br>①出牌阶段限一次，你可选择3张“枝”，将其中第一张视为【酒】，后两张视为【杀】，询问1人是否喝酒后对其攻击范围内的1人使用杀；若其不使用，你获得这些牌<br>②你或你攻击范围内的角色使用【杀】后，你可使用1张“枝”，或将其置入手牌区",
+    'lit_shengjisn': "升级·孙楠",
+    'lit_shengjisn_info': "获得并修改〖浇水〗：去掉开头的「在你攻击范围内」限制",
 };
 
 export const simpleTranslate = {
-    'lit_jiaoshui_info': "他人弃牌阶段或使用酒后，其可令你+1牌；否则你观看并获得其1张牌",
+    'lit_jiaoshui_info': "你攻击范围内的他人弃牌阶段或使用酒后，其可令你+1牌；否则你观看并获得其1张牌",
+    'lit_jiaoshuiV2_info': "他人弃牌阶段或使用酒后，其可令你+1牌；否则你观看并获得其1张牌",
     'lit_gonghuo_info': `回合内有人受伤后，若伤害源不为你，则可令其获得1层${get.poptip('lit_langen')}`,
     'lit_langen_info': "负面；生效后失去1层。受到大于1的伤害时，令此伤害+1",
     'lit_zhishu_info': "锁；回合外获得非你的区域内的牌置为“枝”<br>①出牌限1次，选3张“枝”：第1张作酒，后2张作杀，令1人选择是否酒杀攻击范围内的1人；不杀，你获得这些牌<br>②你或攻击范围内的人使用杀后，你可使用1张“枝”或将其置入手牌区",
+    'lit_shengjisn_info': "获得并修改“浇水”：不受攻击范围限制",
 };
