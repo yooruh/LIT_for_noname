@@ -129,8 +129,10 @@ export const skill = {
                     }
                     let strArray = [];
                     skills.forEach(s => {
-                        player.addSkill(s);
-                        strArray.push(get.translation(s));
+                        if (!player.hasSkill(s)) {
+                            player.addSkill(s);
+                            strArray.push(get.translation(s));
+                        }
                     });
                     if (strArray.length > 0) player.popup(strArray.join('<br>'));
                 }

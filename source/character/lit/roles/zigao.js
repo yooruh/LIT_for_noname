@@ -76,6 +76,7 @@ export const skill = {
             threaten: 1.1,
             result: {
                 player: (player, target, card) => {
+                    if (!card) return;
                     if (get.tag(card, "damage") && target) {
                         let res = 0;
                         const user = target;

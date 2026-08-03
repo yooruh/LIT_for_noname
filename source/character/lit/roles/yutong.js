@@ -1,23 +1,24 @@
 import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'sdp';
-export const title = `双形态·${styleText('o', "破而后立")}`;
-export const intro = `${B("雨桐")}通过${get.poptip("lit_qiwei")}互换体力、以${get.poptip("lit_qiongyin")}换取体力上限与手牌，死亡时由${get.poptip("lit_pobi")}破壁化身为隐藏形态「${get.poptip("lit_zhongyutong钟雨桐")}」。`
-    + "<li>主公：优先用跫音喂大上限、赤心保持全场最高，濒死破壁后转为隐藏形态提供全场上限收益"
-    + "<li>忠臣、反贼：歧威可替濒死队友承伤，破壁作为保命底牌，注意保留到关键时刻"
-    + "<li>内奸：破壁的变身与耀变核弹是后期单挑的翻盘资本";
+export const title = `复活·双形态·${styleText('o', "较难")}`;
+export const intro = `${B("雨桐")}通过${get.poptip("lit_qiqi")}互换体力保队友，再利用队友通过${get.poptip("lit_qiongyin")}换取体力上限，死亡时由${get.poptip("lit_pobi")}化身为隐藏形态「${get.poptip("lit_zhongyutong钟雨桐")}」。`
+    + "<li>主公：优先用跫音喂大上限，维持高血量状态，破壁不期望打核爆，主要用于复活甲"
+    + "<li>忠臣：歧戚可替濒死队友承伤，触发破壁后影响力减半，但能辅助队友的护甲"
+    + "<li>反贼：自身嘲讽视情况而定，如果条件允许，可以和队友配合打破壁核爆"
+    + `<li>内奸：破壁的变身能帮助你活到后期，耀变核弹能收割残血，最后利用${get.poptip("lit_chuanshuoV2")}的多回合进行单挑`;
 
 export const character = {
     'lit_yutong雨桐': {
         sex: "female",
         group: "three",
         hp: 4,
-        skills: ["lit_shengjiyt", "lit_qiwei", "lit_qiongyin", "lit_pobi"],
+        skills: ["lit_shengjiyt", "lit_qiqi", "lit_qiongyin", "lit_pobi"],
     },
 };
 
 export const skill = {
-    lit_qiwei: {
+    lit_qiqi: {
         trigger: {
             global: ['loseHpAfter', 'dying'],
         },
@@ -25,14 +26,15 @@ export const skill = {
             const target = event.player;
             if (target === player || !target.isIn()) return false;
             if (player.hp === target.hp) return false;
-            if (event.name === 'dying') return !target.hasSkill('lit_qiwei_used');
+            if (event.name === 'dying') return !target.hasSkill('lit_qiqi_used');
             return target.hp > 0;
         },
         async cost(event, trigger, player) {
             const target = trigger.player;
             const dying = trigger.name === 'dying';
             const result = await player.chooseBool(
-                `歧威：${get.translation(target)}${dying ? '正在濒死' : '失去体力后'}，是否将体力值（${player.hp}↔${target.hp}）与其互换？${dying ? '' : '（若你因此回血将失去1点体力上限）'}`
+                `歧戚：${get.translation(target)}${dying ? '正在濒死' : '失去体力'}，是否将体力值与其互换？${player.hp > target.hp ? '' : '（你将失去1点体力上限）'}`
+                + `<li>你的体力值（${player.hp}↔${target.hp}）</li><li>${get.translation(target)}的体力值（${target.hp}↔${player.hp}）</li>`
             ).set('ai', () => {
                 if (dying) return get.attitude(player, target) > 0;
                 if (get.attitude(player, target) < 0) return target.hp > player.hp;
@@ -44,10 +46,22 @@ export const skill = {
             const target = trigger.player;
             if (!target.isIn()) return;
             const delta = target.hp - player.hp;
-            await target.changeHp(-delta);
-            await player.changeHp(delta);
-            if (trigger.name === 'dying') target.addTempSkill('lit_qiwei_used', 'roundStart');
-            if (delta > 0) await player.loseMaxHp();
+            if (delta > 0) {
+                await target.loseHp(delta);
+                await player.recover(delta);
+                await player.loseMaxHp();
+            } else if (delta < 0) {
+                await target.recover(-delta);
+                await player.loseHp(-delta);
+            }
+            if (trigger.name === 'dying') target.addTempSkill('lit_qiqi_used', 'roundStart');
+        },
+        subSkill: {
+            used: {
+                charlotte: true,
+                sub: true,
+                sourceSkill: 'lit_qiqi',
+            },
         },
     },
     lit_qiongyin: {
@@ -104,8 +118,10 @@ export const skill = {
             const targetName = (get.mode() === 'guozhan' && lib.character['gz_lit_zhongyutong钟雨桐'])
                 ? 'gz_lit_zhongyutong钟雨桐' : 'lit_zhongyutong钟雨桐';
             await player.reinit(player.name, targetName, [Math.min(3, player.maxHp), player.maxHp]);
-            if (player.hasSkill('lit_chixin')) player.addSkill('lit_chixin');
-            if (!player.hasSkill('lit_chixin') && player.skills.some(e => lib.lit.isShengjiSkill(e)) && !player.hasSkill('lit_shengji')) {
+            if (player.hasSkill('lit_chixin')) {
+                player.addSkill('lit_chixin');
+                player.removeSkill('lit_shengjizyt');
+            } else if (player.skills.some(e => lib.lit.isShengjiSkill(e)) && !player.hasSkill('lit_shengji')) {
                 player.addSkill('lit_shengji');
             }
         },
@@ -114,8 +130,10 @@ export const skill = {
 
 export const translate = {
     'lit_yutong雨桐': "雨桐",
-    'lit_qiwei': "歧威",
-    'lit_qiwei_info': "他人失去体力后，或其每回合第一次进入濒死状态时，若你的体力值与其不同，你可以将体力值与其互换。若你因此回血，你失去一点体力上限",
+    'lit_shengjiyt': "升级·雨桐",
+    'lit_shengjiyt_info': "击杀1名角色后升级获得【赤心】；全场角色数小于5时开局立即升级",
+    'lit_qiqi': "歧戚",
+    'lit_qiqi_info': "他人失去体力后，或其每回合第一次进入濒死状态时，若你的体力值与其不同，你可以将体力值与其互换。若你因此回血，你失去一点体力上限",
     'lit_qiongyin': "跫音",
     'lit_qiongyin_info': "他人的结束阶段，其可失去体力至一点，然后令你判定：①为红，你+x点体力上限并摸x张牌；②为黑，你+x点体力（x为其因此失去的体力）",
     'lit_pobi': "破壁",
@@ -123,7 +141,7 @@ export const translate = {
 };
 
 export const simpleTranslate = {
-    'lit_qiwei_info': "他人失去体力后/每回合首次濒死时，可互换体力；你回血则-1上限",
+    'lit_qiqi_info': "他人失去体力后/每回合首次濒死时，可互换体力；你回血则-1上限",
     'lit_qiongyin_info': "他人结束阶段可-体力至1，令你判定：红+上限+摸牌；黑回血",
     'lit_pobi_info': "觉醒；死亡前全员判定区置遣返，取消死亡，换牌为“钟雨桐”，保留上限",
 };

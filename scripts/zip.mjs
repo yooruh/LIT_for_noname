@@ -5,24 +5,34 @@
  *
  * 将项目根目录（与在线更新系统分发的文件集一致）打包为
  * `{版本}叁岛世界(一班杀).zip`，输出到仓库外的 `_others` 目录。
- * 版本号取自 release/releases.json 最新 release，文件名确定性可复现。
+ * 版本号优先取自 release/releases.json 最新 release；默认在目标文件名
+ * 已存在时自动递增小版本号（最后一段），避免覆盖旧版本发布包。
  *
  * Node 无内置 zip，此处用 node:zlib(deflateRawSync) 手写 ZIP 容器：
  * local header(0x04034b50) + 中央目录(0x02014b50) + EOCD(0x06054b50)，
  * 压缩级别 6 对齐 Python zipfile.ZIP_DEFLATED 默认值。
+ *
+ * 版本号解析:
+ *   不带 --version          按发布清单版本号生成；若同名 zip 已存在，
+ *                          则在小版本号（最后一段）上 +1 直至不冲突
+ *   --version <版本号>      使用指定版本号（如 26.8.4.0）
+ *   --version（不写版本号） 强制使用发布清单版本号，不再自动递增
+ *   --check                 校验当前发布版本对应的发布包，不做自动递增
  *
  * 用法:
  *   node scripts/zip.mjs              按发布清单生成发布包
  *   node scripts/zip.mjs --dry-run    仅预览（不压缩、不写盘）
  *   node scripts/zip.mjs --check      校验现有发布包与预期文件集是否一致
  *   node scripts/zip.mjs -o <目录>    输出到指定目录（默认 ../_others）
+ *   node scripts/zip.mjs --version    强制使用发布清单版本号
+ *   node scripts/zip.mjs --version <版本号>  使用指定版本号
  */
 
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateRawSync } from 'node:zlib';
-import { log } from './lib/shared.mjs';
+import { isValidVersion, log, stripV } from './lib/shared.mjs';
 import { crc32 } from './lib/crc32.mjs';
 import { getCurrentReleaseVersion, readReleaseManifest } from './lib/release.mjs';
 import { walkDir } from './rebuild.mjs';
@@ -177,21 +187,112 @@ function buildManifest() {
 }
 
 /**
+ * 扫描输出目录中已存在的发布包，返回其文件名前缀解析出的版本号列表
+ * @param {string} outDir
+ * @returns {string[]}
+ */
+function findExistingZipVersions(outDir) {
+  if (!existsSync(outDir)) return [];
+  const versions = [];
+  for (const name of readdirSync(outDir)) {
+    if (!name.endsWith(PACK_SUFFIX)) continue;
+    const prefix = name.slice(0, -PACK_SUFFIX.length);
+    if (isValidVersion(prefix)) versions.push(stripV(prefix));
+  }
+  return versions;
+}
+
+/**
+ * 小版本号（最后一段）+1，用于避开与已有发布包同名。
+ * 如 26.8.3.0 -> 26.8.3.1
+ * @param {string} version
+ * @returns {string}
+ */
+function bumpPatchVersion(version) {
+  const parts = stripV(version).split('.').map(Number);
+  parts[parts.length - 1] += 1;
+  return parts.join('.');
+}
+
+/** 版本来源的中文描述 */
+const VERSION_SOURCE_LABELS = {
+  explicit: '命令行 --version 指定',
+  release: '发布清单（release/releases.json）',
+  auto: '自动递增（避免覆盖已有发布包）',
+};
+
+/**
+ * 解析 zip 打包版本号
+ *   - explicit（--version <版本号>）     -> 使用指定版本号
+ *   - release（仅 --version）            -> 强制使用发布清单版本号
+ *   - none（默认）                       -> 使用发布清单版本号，若同名 zip 已存在则自动递增小版本号；
+ *                                           --check 模式校验的是当前发布版本，不做自动递增
+ * @param {{kind:'none'|'release'|'explicit', value?:string}} option
+ * @param {object} manifest
+ * @param {string} outDir
+ * @param {boolean} checkOnly
+ * @returns {{version:string, source:'explicit'|'release'|'auto'}}
+ */
+function resolveZipVersion(option, manifest, outDir, checkOnly) {
+  const releaseVersion = getCurrentReleaseVersion(manifest);
+  if (option.kind === 'explicit') {
+    return { version: option.value, source: 'explicit' };
+  }
+  if (option.kind === 'release' || checkOnly) {
+    return { version: releaseVersion, source: 'release' };
+  }
+  const existing = new Set(findExistingZipVersions(outDir));
+  let version = releaseVersion;
+  let bumped = false;
+  while (existing.has(version)) {
+    version = bumpPatchVersion(version);
+    bumped = true;
+  }
+  return { version, source: bumped ? 'auto' : 'release' };
+}
+
+/**
+ * 解析命令行中的 --version 选项
+ *   --version           -> { kind: 'release' }
+ *   --version 26.8.4.0  -> { kind: 'explicit', value: '26.8.4.0' }
+ *   缺省                 -> { kind: 'none' }
+ * @param {string[]} args
+ * @returns {{kind:'none'|'release'|'explicit', value?:string}}
+ */
+function parseVersionOption(args) {
+  const index = args.indexOf('--version');
+  if (index < 0) return { kind: 'none' };
+  const value = args[index + 1];
+  if (value !== undefined && !value.startsWith('-')) {
+    if (!isValidVersion(value)) {
+      throw new Error(`无效的版本号: "${value}"，正确格式如 26.8.3.0 或 v26.8.3.0`);
+    }
+    return { kind: 'explicit', value: stripV(value) };
+  }
+  return { kind: 'release' };
+}
+
+/**
  * 打包主流程
- * @param {{checkOnly?:boolean, outDir?:string, silent?:boolean}} options
- * @returns {{file:string, changed:boolean, fileCount:number, totalSize:number, zipSize?:number, version:string}}
+ * @param {{checkOnly?:boolean, outDir?:string, silent?:boolean, versionOption?:{kind:string, value?:string}}} options
+ * @returns {{file:string, changed:boolean, fileCount:number, totalSize:number, zipSize?:number, version:string, versionSource:string}}
  */
 export function zipProject(options = {}) {
-  const { checkOnly = false, outDir = OUT_DIR, silent = false } = options;
-  const version = getCurrentReleaseVersion(readReleaseManifest());
+  const { checkOnly = false, outDir = OUT_DIR, silent = false, versionOption } = options;
+  const manifest = readReleaseManifest();
+  const { version, source } = resolveZipVersion(versionOption || { kind: 'none' }, manifest, outDir, checkOnly);
   const filename = `${version}${PACK_SUFFIX}`;
   const outPath = resolve(outDir, filename);
   const { files, fileCount, totalSize } = buildManifest();
 
+  if (!silent) {
+    log.info(`发布版本: ${version}（${VERSION_SOURCE_LABELS[source]}）`);
+  }
+
   if (checkOnly) {
     if (!existsSync(outPath)) {
       if (!silent) log.warn(`未找到 ${filename}，跳过校验`);
-      return { file: filename, changed: false, fileCount, totalSize, version };
+      return { file: filename, changed: false, fileCount, totalSize, version, versionSource: source };
     }
     const expected = new Map(files.map(f => [f.name, f.size]));
     const actual = readCentralDirectory(readFileSync(outPath));
@@ -217,7 +318,7 @@ export function zipProject(options = {}) {
         log.ok(`校验通过，${actual.length} 个文件与预期一致`);
       }
     }
-    return { file: filename, changed, fileCount, totalSize, version };
+    return { file: filename, changed, fileCount, totalSize, version, versionSource: source };
   }
 
   // 真实写入：内存组装后与既有文件比对，内容一致则不重写
@@ -235,7 +336,7 @@ export function zipProject(options = {}) {
       log.warn('内容一致，未重新写入');
     }
   }
-  return { file: filename, changed, fileCount, totalSize, zipSize: zipBuf.length, version };
+  return { file: filename, changed, fileCount, totalSize, zipSize: zipBuf.length, version, versionSource: source };
 }
 
 function printUsage() {
@@ -243,7 +344,13 @@ function printUsage() {
   node scripts/zip.mjs              生成发布包（默认输出到 ../_others）
   node scripts/zip.mjs --dry-run    预览模式（不压缩、不写盘）
   node scripts/zip.mjs --check      校验现有发布包与预期文件集是否一致
-  node scripts/zip.mjs -o <目录>    输出到指定目录`);
+  node scripts/zip.mjs -o <目录>    输出到指定目录
+  node scripts/zip.mjs --version    强制使用发布清单版本号（不自动递增）
+  node scripts/zip.mjs --version <版本号>  使用指定版本号（如 26.8.4.0）
+
+版本号说明:
+  不带 --version 时按发布清单版本号生成；若同名 zip 已存在，
+  则自动在当前小版本号（最后一段）上 +1，直至不冲突，避免覆盖旧版本发布包。`);
 }
 
 function main() {
@@ -254,12 +361,14 @@ function main() {
   const outDir = outIndex >= 0 && args[outIndex + 1] ? resolve(process.cwd(), args[outIndex + 1]) : OUT_DIR;
 
   try {
+    const versionOption = parseVersionOption(args);
     if (dryRun) {
-      const version = getCurrentReleaseVersion(readReleaseManifest());
+      const manifest = readReleaseManifest();
+      const { version, source } = resolveZipVersion(versionOption, manifest, outDir, false);
       const filename = `${version}${PACK_SUFFIX}`;
       const { files, fileCount, totalSize } = buildManifest();
       const mb = totalSize / (1024 * 1024);
-      log.info(`当前发布版本: ${version}`);
+      log.info(`发布版本:     ${version}（${VERSION_SOURCE_LABELS[source]}）`);
       log.info(`文件名:       ${filename}`);
       log.info(`输出目录:     ${outDir}`);
       log.info(`文件数:       ${fileCount}`);
@@ -269,7 +378,7 @@ function main() {
       process.exit(0);
     }
 
-    const result = zipProject({ checkOnly, outDir, silent: false });
+    const result = zipProject({ checkOnly, outDir, versionOption, silent: false });
     if (checkOnly && result.changed) {
       process.exit(1);
     }

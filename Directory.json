@@ -147,13 +147,13 @@
     "size": 710
   },
   "source/card/lit_card/skills.js": {
-    "size": 30675
+    "size": 30678
   },
   "source/card/lit_card/translate.js": {
     "size": 3791
   },
   "source/character/lit/index.js": {
-    "size": 3045
+    "size": 3116
   },
   "source/character/lit/roles/boshu.js": {
     "size": 21212
@@ -213,7 +213,7 @@
     "size": 16492
   },
   "source/character/lit/roles/yutong.js": {
-    "size": 6587
+    "size": 7423
   },
   "source/character/lit/roles/zengpinjia.js": {
     "size": 22716
@@ -237,31 +237,31 @@
     "size": 14176
   },
   "source/character/lit/roles/zhongyutong.js": {
-    "size": 9681
+    "size": 9492
   },
   "source/character/lit/roles/zigao.js": {
-    "size": 22793
+    "size": 22833
   },
   "source/character/lit/shared.js": {
     "size": 869
   },
   "source/character/lit/_meta.js": {
-    "size": 243
+    "size": 244
   },
   "source/character/lit/_negClear.js": {
     "size": 837
   },
   "source/character/lit/_shengji.js": {
-    "size": 9679
+    "size": 9766
   },
   "source/character/lit_gz/index.js": {
-    "size": 3546
+    "size": 3624
   },
   "source/character/lit_gz/roles/README.md": {
-    "size": 1413
+    "size": 1451
   },
   "source/character/test/index.js": {
-    "size": 2281
+    "size": 2339
   },
   "source/character/test/roles/hupan9.js": {
     "size": 8255
