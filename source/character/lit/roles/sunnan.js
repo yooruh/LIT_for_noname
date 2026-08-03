@@ -158,6 +158,7 @@ export const skill = {
                     return !player.hasSkill("lit_zhishu_used") && player.getExpansions("lit_zhishu").length >= 3;
                 },
                 async content(event, trigger, player) {
+                    lib.lit.aiGuard.record(player, 'lit_zhishu_use');
                     const assessment = lib.skill.lit_zhishu.subSkill.use.evaluate(player);
                     if (!assessment.shouldUse) return;
                     const huos = player.getExpansions("lit_zhishu");
@@ -272,6 +273,7 @@ export const skill = {
                 },
                 ai: {
                     order: (item, player) => {
+                        if (lib.lit.aiGuard.blocked(player, 'lit_zhishu_use')) return -1;
                         const assessment = lib.skill.lit_zhishu.subSkill.use.evaluate(player);
                         if (!assessment.shouldUse) return -1;
                         return 7 + Math.min(assessment.score, 2);
@@ -284,7 +286,9 @@ export const skill = {
                 },
                 evaluate(player) {
                     const huos = player.getExpansions("lit_zhishu");
-                    if (huos.length < 3 || player.hasSkill("lit_zhishu_used")) {
+                    // 成本校验：酒/杀两个内层选牌 AI 都拒绝“杀”名枝，故需至少 3 张非“杀”枝，AI 才可能选完
+                    if (huos.length < 3 || player.hasSkill("lit_zhishu_used") ||
+                        huos.filter(c => get.name(c, player) !== "sha").length < 3) {
                         return { shouldUse: false, score: -1 };
                     }
                     let best = -Infinity;

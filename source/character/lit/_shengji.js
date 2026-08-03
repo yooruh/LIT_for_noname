@@ -1,4 +1,4 @@
-import { lib, game, ui, get, ai, _status } from '../../../../../../noname.js';
+import { lib, game, ui, get, ai, _status } from '../../../../../noname.js';
 
 export const skill = {
     lit_shengji: {
@@ -11,7 +11,7 @@ export const skill = {
         marktext: "级",
         intro: {
             name: "升级",
-            content: () => "击杀1名角色后升级",
+            content: (storage, player) => `当前经验：${player.countMark('lit_shengji')}/3<br>击杀时全场获得1经验，击杀者额外获得1经验；经验达3、全场不足5人或为主公时升级`,
         },
 
         onremove(player) {
@@ -24,17 +24,29 @@ export const skill = {
             } else {
                 player.addSkill("lit_shengji_markAfterShow");
             }
-            if (lib.lit.getPlayers() < 5) {
-                player.useSkill('lit_shengji');
-            }
+            player.setStorage("lit_shengji", 0);
         },
 
-        trigger: { global: 'dieAfter' },
+        trigger: { global: ['dieAfter', 'gameStart'] },
         async content(event, trigger, player) {
-            // 击杀1名角色后升级；开局人数不足5时由 init 强制触发（trigger 非 die 事件）
-            if (trigger?.name === 'die') {
-                if (trigger.source !== player || !trigger.source.isAlive()) return;
-                if (!player.skills.some(e => lib.lit.isShengjiSkill(e))) return;
+            // 开局：全场不足5人 或 玩家为主公 → 升级
+            if (trigger?.name === 'gameStart') {
+                if (lib.lit.getPlayers() >= 5 && !(player.isZhu || player === game.zhu)) return;
+            }
+            // 击杀：全场+1经验，击杀者额外+1；经验≥3 或 全场不足5人 → 升级
+            else if (trigger?.name === 'die') {
+                if (!player.isAlive()) return;
+                const expGain = (trigger.source === player && trigger.source.isAlive() ? 1 : 0) + 1;
+                if (player.skills.some(e => lib.lit.isShengjiSkill(e))) {
+                    player.addMark('lit_shengji', expGain);
+                } else {
+                    player.setStorage("lit_shengji", player.getStorage("lit_shengji", 0) + expGain);
+                }
+                if (player.countMark('lit_shengji') < 3 && lib.lit.getPlayers() >= 5) return;
+            }
+            // 其它触发（防御）不升级
+            else {
+                return;
             }
 
             player.clearMark('lit_shengji', false);
@@ -274,5 +286,5 @@ export const skill = {
 
 export const translate = {
     'lit_shengji': "升级",
-    'lit_shengji_info': "当你击杀1名角色后升级；全场角色数小于5时，开局立即升级",
+    'lit_shengji_info': "击杀时全场获得1经验，击杀者额外获得1经验；经验达到3或全场角色数不足5时升级，玩家为主公时开局立即升级",
 };

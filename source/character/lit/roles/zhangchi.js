@@ -19,7 +19,6 @@ export const character = {
 export const characterReplace = { 'lit_zhangchi': ['lit_zhangchi张驰', 'lit_zhangchi9张驰'] };
 
 export const skill = {
-    // 张驰
     lit_guibian: {
         enable: "phaseUse",
         usable: 1,
@@ -30,6 +29,7 @@ export const skill = {
             return target != player && target.countCards("h");
         },
         async content(event, trigger, player) {
+            lib.lit.aiGuard.record(player, 'lit_guibian');
             const target = event.targets[0];
             const cards = target.getCards("h");
             if (cards.length === 0) return;
@@ -149,7 +149,7 @@ export const skill = {
             }
         },
         ai: {
-            order: 8,
+            order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_guibian') ? -1 : 8,
             threaten: 1.3,
             result: {
                 player: (player, target) => {

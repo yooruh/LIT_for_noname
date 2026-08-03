@@ -18,7 +18,6 @@ export const character = {
 export const perfectPair = ['lit_chenke陈可', 'lit_qianbaocan钱保灿'];
 
 export const skill = {
-    // 曾品嘉
     lit_kuaihuo: {
         popup: false,
         trigger: {
@@ -136,6 +135,7 @@ export const skill = {
             return player.hasSkill('lit_saohua_pi') ? list[0].length > 0 : (list[0].length > 0 || list[1].length > 0);
         },
         async content(event, trigger, player) {
+            lib.lit.aiGuard.record(player, 'lit_saohua');
             const skillName = player.hasSkill("lit_saohuaV2") ? "lit_saohuaV2" : "lit_saohua";
             const isPi = player.hasSkill('lit_saohua_pi');
             const { isSubset, evaluate } = lib.skill.lit_saohua_sub.utils;
@@ -236,6 +236,7 @@ export const skill = {
         },
         ai: {
             order: (item, player) => {
+                if (lib.lit.aiGuard.blocked(player, 'lit_saohua')) return -1;
                 const assessment = lib.skill.lit_saohua_sub.utils.evaluate(player);
                 if (!assessment.shouldUse) return -1;
                 return assessment.type === 3 ? 9 : 6.5;

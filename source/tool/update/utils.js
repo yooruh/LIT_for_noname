@@ -83,6 +83,16 @@ const utils = {
         return CONFIG.types.critical.some(c => filename.includes(c));
     },
 
+    // 代码路径：除 image/、audio/ 外的全部文件（随代码包整包更新）
+    isCodePath(path) {
+        return !path.startsWith('image/') && !path.startsWith('audio/');
+    },
+
+    // 媒体路径：image/、audio/ 下的文件（逐文件增量更新）
+    isMediaPath(path) {
+        return path.startsWith('image/') || path.startsWith('audio/');
+    },
+
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     },

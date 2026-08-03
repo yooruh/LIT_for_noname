@@ -17,7 +17,6 @@ export const character = {
 };
 
 export const skill = {
-    // 兰柏勋
     lit_yuqiu: {
         frequent: true,
         popup: false,

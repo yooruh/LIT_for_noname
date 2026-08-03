@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext", "dom", "dom.iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowJs": true,
+    "checkJs": false,
+    "skipLibCheck": true,
+    "paths": {
+      "noname": ["../../../../noname/resources/app/noname.js"],
+      "vue": ["../../../../noname/resources/app/game/vue.esm-browser"],
+      "pinyin-pro": ["../../../../noname/resources/app/node_modules/.pnpm/pinyin-pro@3.28.0/node_modules/pinyin-pro/dist/index"]
+    }
+  },
+  "include": [
+    "extension.js",
+    "source/**/*.js",
+    "../../../../noname/resources/app/src/typings/**/*.d.ts"
+  ]
+}

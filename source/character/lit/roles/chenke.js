@@ -13,7 +13,6 @@ export const character = {
 };
 
 export const skill = {
-    // 陈可
     lit_nitian: {
         mod: {
             aiOrder(player, card, num) {

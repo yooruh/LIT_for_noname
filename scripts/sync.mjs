@@ -4,8 +4,8 @@
  * 叁岛世界 开发↔安装目录同步脚本
  *
  * 移植自 _others/microtools/pyc/导入.py（install）与 导出.py（export）。
- * 逐文件内容比对（Buffer.equals）决定是否复制，保留真实差异报告；
- * 目录以 mkdirSync 递归合并，空目录（如 audio/die）也会被创建。
+ * 以源目录的 Directory.json 为唯一同步依据：只逐文件同步清单中列出的文件，
+ * 逐字节比对（Buffer.equals）决定是否复制；清单外的文件一律不同步。
  *
  * 用法:
  *   node scripts/sync.mjs install         dev → 两个已安装目录
@@ -13,85 +13,94 @@
  *   node scripts/sync.mjs <cmd> --dry-run 仅预览将更新的文件
  */
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { log } from './lib/shared.mjs';
-import { devRoot, installed, SYNC_ENTRIES } from './lib/dev-config.mjs';
+import { devRoot, installed } from './lib/dev-config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SELF_PATH = fileURLToPath(import.meta.url);
 
-/** 递归复制目录树：逐文件内容比对，仅复制有差异的文件；空目录保留 */
-function syncTree(srcDir, destDir, dryRun) {
-  let copied = 0;
-  let unchanged = 0;
-  for (const entry of readdirSync(srcDir, { withFileTypes: true })) {
-    const src = join(srcDir, entry.name);
-    const dest = join(destDir, entry.name);
-    if (entry.isDirectory()) {
-      if (!dryRun) mkdirSync(dest, { recursive: true });
-      const sub = syncTree(src, dest, dryRun);
-      copied += sub.copied;
-      unchanged += sub.unchanged;
-    } else if (entry.isFile()) {
-      const srcBuf = readFileSync(src);
-      const same = existsSync(dest) && readFileSync(dest).equals(srcBuf);
-      if (same) {
-        unchanged++;
-      } else {
-        if (!dryRun) writeFileSync(dest, srcBuf);
-        copied++;
-      }
-    }
+/** 读取源目录的 Directory.json，返回文件相对路径（正斜杠）列表；缺失/解析失败返回 null */
+function readManifest(srcRoot) {
+  const manifestPath = join(srcRoot, 'Directory.json');
+  if (!existsSync(manifestPath)) return null;
+  try {
+    return Object.keys(JSON.parse(readFileSync(manifestPath, 'utf-8'))).sort();
+  } catch {
+    return null;
   }
-  return { copied, unchanged };
 }
 
-/** 同步单个顶层条目（文件或目录） */
-function syncEntry(srcPath, destPath, dryRun) {
-  if (!existsSync(srcPath)) return { copied: 0, unchanged: 0, missing: true };
-  const st = statSync(srcPath);
-  if (st.isDirectory()) {
-    if (!dryRun) mkdirSync(destPath, { recursive: true });
-    return syncTree(srcPath, destPath, dryRun);
-  }
-  const srcBuf = readFileSync(srcPath);
-  const same = existsSync(destPath) && readFileSync(destPath).equals(srcBuf);
-  if (same) return { copied: 0, unchanged: 1 };
+/** 同步单个清单文件：有差异才写；返回 'changed' | 'same' | 'missing' */
+function syncManifestFile(src, dest, dryRun) {
+  if (!existsSync(src)) return 'missing';
+  const srcBuf = readFileSync(src);
+  const same = existsSync(dest) && readFileSync(dest).equals(srcBuf);
+  if (same) return 'same';
   if (!dryRun) {
-    mkdirSync(dirname(destPath), { recursive: true });
-    writeFileSync(destPath, srcBuf);
+    mkdirSync(dirname(dest), { recursive: true });
+    writeFileSync(dest, srcBuf);
   }
-  return { copied: 1, unchanged: 0 };
+  return 'changed';
 }
 
-/** 同步一组 SYNC_ENTRIES */
-function syncEntries(srcRoot, destRoot, dryRun) {
-  const results = [];
-  for (const entry of SYNC_ENTRIES) {
-    const srcPath = join(srcRoot, entry);
-    if (!existsSync(srcPath)) {
-      results.push({ file: entry, changed: false, skipped: true });
-      continue;
-    }
-    const { copied, unchanged } = syncEntry(srcPath, join(destRoot, entry), dryRun);
-    results.push({ file: entry, changed: copied > 0, fileCount: copied + unchanged });
+/**
+ * 按 Directory.json 清单同步 srcRoot → destRoot：只同步清单中存在的文件。
+ * 结果按顶层段聚合，返回 {file, changed, fileCount, missingCount}[]。
+ */
+function syncByManifest(srcRoot, destRoot, manifest, dryRun) {
+  const buckets = new Map(); // 顶层段 -> {changed, total, missing}
+  for (const relPath of manifest) {
+    const top = relPath.includes('/') ? relPath.slice(0, relPath.indexOf('/')) : relPath;
+    const bucket = buckets.get(top) || { changed: 0, total: 0, missing: 0 };
+    const result = syncManifestFile(join(srcRoot, relPath), join(destRoot, relPath), dryRun);
+    bucket.total++;
+    if (result === 'changed') bucket.changed++;
+    else if (result === 'missing') bucket.missing++;
+    buckets.set(top, bucket);
   }
-  return results;
+  return [...buckets.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([top, { changed, total, missing }]) => ({
+      file: top,
+      changed: changed > 0,
+      fileCount: total,
+      missingCount: missing,
+    }));
 }
 
 /** 打印单个目标的同步结果 */
 function reportResults(dest, results, dryRun) {
   for (const r of results) {
-    if (r.skipped) {
-      log.warn(`  ${r.file} — 源不存在，跳过`);
-      continue;
-    }
     const verb = dryRun ? '将更新' : '已更新';
-    if (r.changed) log.ok(`  ${r.file} — ${verb} ${r.fileCount} 个文件`);
+    const missing = r.missingCount > 0 ? `（另有 ${r.missingCount} 个清单文件源缺失）` : '';
+    if (r.changed) log.ok(`  ${r.file} — ${verb} ${r.fileCount} 个文件${missing}`);
+    else if (r.missingCount > 0) log.warn(`  ${r.file} — 清单中 ${r.missingCount} 个文件源缺失`);
     else log.info(`  ${r.file} — 已同步（${r.fileCount} 个文件未变化）`);
   }
+}
+
+/** 用同一源清单同步一组目标目录 */
+function syncToTargets(srcRoot, dests, dryRun) {
+  const manifest = readManifest(srcRoot);
+  if (!manifest) {
+    log.warn(`未找到 ${join(srcRoot, 'Directory.json')}，请先运行 node scripts/rebuild.mjs`);
+    return [];
+  }
+  const all = [];
+  for (const dest of dests) {
+    if (!existsSync(dest)) {
+      log.warn(`目标目录不存在，跳过: ${dest}`);
+      continue;
+    }
+    log.info(`同步到: ${dest}`);
+    const results = syncByManifest(srcRoot, dest, manifest, dryRun);
+    reportResults(dest, results, dryRun);
+    all.push({ dest, results });
+  }
+  return all;
 }
 
 /**
@@ -99,22 +108,11 @@ function reportResults(dest, results, dryRun) {
  * @returns {Array<{dest:string, results:object[]}>}
  */
 export function syncInstall({ dryRun = false } = {}) {
-  const all = [];
   if (installed.length === 0) {
     log.warn('未配置本机安装路径：请创建 scripts/lib/dev-config.local.json（参照 dev-config.local.example.json）');
-    return all;
+    return [];
   }
-  for (const dest of installed) {
-    if (!existsSync(dest)) {
-      log.warn(`目标目录不存在，跳过: ${dest}`);
-      continue;
-    }
-    log.info(`同步到: ${dest}`);
-    const results = syncEntries(devRoot, dest, dryRun);
-    reportResults(dest, results, dryRun);
-    all.push({ dest, results });
-  }
-  return all;
+  return syncToTargets(devRoot, installed, dryRun);
 }
 
 /**
@@ -130,19 +128,7 @@ export function syncExport({ dryRun = false } = {}) {
   if (!existsSync(source)) {
     throw new Error(`未找到导出源: ${source}`);
   }
-  const all = [];
-  const dests = [devRoot, installed[1]];
-  for (const dest of dests) {
-    if (!existsSync(dest)) {
-      log.warn(`目标目录不存在，跳过: ${dest}`);
-      continue;
-    }
-    log.info(`导出到: ${dest}`);
-    const results = syncEntries(source, dest, dryRun);
-    reportResults(dest, results, dryRun);
-    all.push({ dest, results });
-  }
-  return all;
+  return syncToTargets(source, [devRoot, installed[1]], dryRun);
 }
 
 function printUsage() {

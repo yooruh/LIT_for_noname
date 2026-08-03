@@ -153,9 +153,11 @@ class UIManager {
         if (platIndex === -1) return null;
         const selectedPlatform = platIndex === 0 ? 'gitee' : 'github';
 
-        let modeMessage = '简易模式：仅更新文本文件，保留已有媒体文件（省流量）\n' +
-            '全局模式：完整覆盖所有文件（适合首次安装）';
-        let modeButtons = ['简易模式', '全局模式'];
+        let modeMessage =
+            '自动选择：代码整包校验后更新；媒体按 MD5 比对，未改动的媒体跳过下载（省流量）\n' +
+            '仅代码：只更新代码文件，媒体文件完全不动\n' +
+            '完整覆写：代码 + 全部媒体无条件覆盖（适合首次安装/修复损坏）';
+        let modeButtons = ['自动选择', '仅代码', '完整覆写'];
 
         if (hasFailed) {
             modeMessage = '⚠️ 发现上次有失败的下载\n\n仅重试失败：只下载上次失败的文件\n' + modeMessage;
@@ -167,12 +169,12 @@ class UIManager {
         const modeIndex = await this.dialog.choice('选择更新模式', modeMessage, modeButtons);
         if (modeIndex === -1) return null;
 
-        let mode = 'simple';
+        let mode = 'auto';
         if (hasFailed && modeIndex === 0) {
             mode = 'retry_failed';
         } else {
             const offset = hasFailed ? 1 : 0;
-            mode = modeIndex === offset ? 'simple' : 'full';
+            mode = modeIndex === offset ? 'auto' : modeIndex === offset + 1 ? 'code' : 'full';
         }
 
         return { platform: selectedPlatform, mode };
@@ -288,7 +290,7 @@ class UIManager {
         let message = `⏱️ 耗时: ${elapsed}秒\n` +
             `✅ 成功: ${stats.success} 个文件 (${totalSize})\n`;
 
-        if (stats.skipped > 0) message += `⏭️ 跳过: ${stats.skipped} 个（已存在）\n`;
+        if (stats.skipped > 0) message += `⏭️ 跳过: ${stats.skipped} 个（未改动）\n`;
         if (isPartialSuccess) message += `❌ 失败: ${stats.failed} 个文件\n\n`;
 
         // 针对性提示
@@ -394,7 +396,10 @@ class UIManager {
     async confirmStart(info) {
         const { version, description, highlights, branch, platform, mode, fileCount, skipCount, totalSize, envType } = info;
 
-        const modeText = mode === 'simple' ? '简易（仅文本）' : mode === 'retry_failed' ? '失败重试' : '全局（完整覆盖）';
+        const modeText = mode === 'auto' ? '自动选择（代码整包 + 媒体按需）'
+            : mode === 'code' ? '仅代码（媒体不动）'
+            : mode === 'retry_failed' ? '失败重试'
+            : '完整覆写（全部覆盖）';
         const platformText = platform === 'gitee' ? 'Gitee（国内）' : 'GitHub（国际）';
         const envText = envType === 'node'
             ? 'Node.js 本体下载'
@@ -409,10 +414,11 @@ class UIManager {
         message += `版本分支: ${branch}\n` +
             `更新平台: ${platformText}\n` +
             `运行环境: ${envText}\n` +
-            `更新模式: ${modeText}\n` +
-            `文件总数: ${fileCount}个`;
+            `更新模式: ${modeText}\n`;
+        if (info.zipSize) message += `代码包: ${utils.parseSize(info.zipSize)}（整包校验后原子更新）\n`;
+        message += `文件总数: ${fileCount}个`;
 
-        if (skipCount > 0) message += `（将跳过${skipCount}个媒体文件）`;
+        if (skipCount > 0) message += `（将跳过${skipCount}个未改动的媒体文件）`;
         message += `\n预估大小: ${totalSize || '未知'}\n\n` +
             `💾 自动备份: 更新前将创建完整备份\n` +
             `🔄 断点续传: 支持中断后恢复下载`;

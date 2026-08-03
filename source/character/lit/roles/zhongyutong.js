@@ -199,7 +199,7 @@ export const skill = {
 export const translate = {
     'lit_zhongyutong钟雨桐': "钟雨桐",
     'lit_shengjizyt': "升级·钟雨桐",
-    'lit_shengjizyt_info': "击杀1名角色后升级获得【赤心】；全场角色数小于5时开局立即升级",
+    'lit_shengjizyt_info': "击杀时全场获得1经验，击杀者额外获得1经验；经验达3或全场不足5人时升级，主公开局即升级；升级获得【赤心】",
     'lit_chixin': "赤心",
     'lit_chixin_info': "你的体力上限始终为全场最多，你的体力上限低于此值时，增加到此值",
     'lit_chuanshuo': "传说",
@@ -207,12 +207,12 @@ export const translate = {
     'lit_chuanshuoV2': "传说V2",
     'lit_chuanshuoV2_info': "①你进入游戏时（含因更换角色牌进入游戏时）翻至背面。②你受到伤害后，若处于正面，翻至背面。③每轮限1次，你翻至正面时，于此回合之后获得3个额外回合",
     'lit_yaobian': "耀变",
-    'lit_yaobian_info': `限定技，你增加体力上限后，若你的体力上限超过全场人数，你可指定1人A。全场角色依次对A造成x点伤害（x为其与A体力上限差值的绝对值），随后获得{get.poptip("lit_chuanshuoV2")}`,
+    'lit_yaobian_info': `限定技，你增加体力上限后，若你的体力上限超过全场人数，你可指定1人A。全场角色依次对A造成x点伤害（x为其与A体力上限差值的绝对值），随后获得${get.poptip("lit_chuanshuoV2")}`,
 };
 
 export const simpleTranslate = {
     'lit_chixin_info': "锁；上限始终为全场最多，低于时增至该值",
     'lit_chuanshuo_info': "锁；进场翻背面，翻至正面立即翻至背面；扣血翻面；每次翻面令1人+2护甲；全局：护甲≥3者-3护甲至<3，每-3其+1上限",
     'lit_chuanshuoV2_info': "锁；进场翻背面；在正面受伤则翻至背面；每轮限1次，翻至正面后获得3个额外回合",
-    'lit_yaobian_info': `限；增加体力上限后，若上限>人数，可指定1人A，全场角色依次对A造成 |上限差| 的伤害，随后获得{get.poptip("lit_chuanshuoV2")}`,
+    'lit_yaobian_info': `限；增加体力上限后，若上限>人数，可指定1人A，全场角色依次对A造成 |上限差| 的伤害，随后获得${get.poptip("lit_chuanshuoV2")}`,
 };

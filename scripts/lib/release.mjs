@@ -127,8 +127,11 @@ export function validateManifest(manifest) {
 export function manifestToVersionJson(manifest) {
   return {
     defaultBranch: manifest.defaultBranch || 'main',
+    // 只保留当前版本（releases[0]，与 getLatestRelease 约定一致）：
+    // 新版更新器只支持带代码包 zip 的目标，旧版本不再在 version.json 中宣告；
+    // 旧版本更新器从 main 读到此单条目仍可逐文件升到新版。releases.json 保留完整历史。
     versions: manifest.releases
-      .filter(release => release.gameVersion)
+      .filter((release, index) => index === 0 && release.gameVersion)
       .map(release => ({
         extensionVersion: stripV(release.version),
         gameVersion: release.gameVersion,
@@ -275,8 +278,51 @@ export function syncVersionFiles(version, dryRun = false) {
 }
 
 export function writeVersionJson(manifest, dryRun = false) {
-  const newContent = JSON.stringify(manifestToVersionJson(manifest), null, 2) + '\n';
+  // 回填旧 version.json 中各版本的 zip 元数据，避免 build.mjs 重建时把 zip 信息冲掉
+  const zipByVersion = readZipMetaMap();
+  const versionJson = manifestToVersionJson(manifest);
+  for (const entry of versionJson.versions) {
+    if (zipByVersion.has(entry.extensionVersion)) {
+      entry.zip = zipByVersion.get(entry.extensionVersion);
+    }
+  }
+  const newContent = JSON.stringify(versionJson, null, 2) + '\n';
   return writeWholeFile(PATHS.versionJson, newContent, dryRun);
+}
+
+/** 读取磁盘上旧 version.json 的 extensionVersion → zip 映射；缺失/解析失败返回空 Map */
+function readZipMetaMap() {
+  try {
+    const current = JSON.parse(readFile(PATHS.versionJson));
+    const map = new Map();
+    for (const entry of current.versions || []) {
+      if (entry.zip && entry.zip.filename) map.set(stripV(entry.extensionVersion), entry.zip);
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
+/**
+ * 把某个版本的代码包元数据写入 version.json 的 zip 字段（客户端据此构造下载地址）。
+ * @param {string} version 版本号（可带 v 前缀）
+ * @param {{filename:string, size:number, md5:string, branch:string, tag:string}} zipInfo
+ * @returns {object} 写入的 zip 元数据
+ */
+export function patchVersionJsonZip(version, zipInfo) {
+  const current = JSON.parse(readFile(PATHS.versionJson));
+  const entry = current.versions.find(v => stripV(v.extensionVersion) === stripV(version));
+  if (!entry) throw new Error(`version.json 中未找到版本 ${version}，无法写入 zip 元数据`);
+  entry.zip = {
+    filename: zipInfo.filename,
+    size: zipInfo.size,
+    md5: zipInfo.md5,
+    branch: zipInfo.branch,
+    tag: zipInfo.tag,
+  };
+  writeFile(PATHS.versionJson, `${JSON.stringify(current, null, 2)}\n`);
+  return entry.zip;
 }
 
 export function writeUpdateHtml(manifest, dryRun = false) {

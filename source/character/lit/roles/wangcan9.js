@@ -14,7 +14,6 @@ export const character = {
 };
 
 export const skill = {
-    // 9王灿
     lit_xiaoqiao: {
         mod: {
             suit: function (card, suit) {

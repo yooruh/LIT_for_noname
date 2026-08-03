@@ -18,7 +18,6 @@ export const character = {
 };
 
 export const skill = {
-    // 胡峻玮
     lit_biaoxian: {
         trigger: {
             player: "useCardToPlayered",

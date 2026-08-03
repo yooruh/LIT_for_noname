@@ -17,14 +17,12 @@ export const character = {
 };
 
 export const skill = {
-    // 庞建龙
     lit_qiangjian: {
-        group: ['lit_qiangjian_juedou', 'lit_qiangjian_use'],
+        direct: true,
         preHidden: true,
         trigger: {
             player: "useCardToPlayered",
         },
-        direct: true,
         filter: (event, player) => {
             return ["sha", "nanman", "wanjian"].includes(event.card.name) && !event.getParent().directHit.includes(event.target);
         },
@@ -59,6 +57,7 @@ export const skill = {
                 return false;
             },
         },
+        group: ['lit_qiangjian_juedou', 'lit_qiangjian_use'],
         subSkill: {
             juedou: {
                 trigger: {
@@ -154,6 +153,7 @@ export const skill = {
             return `(${Math.floor((ui.selected.targets.length + 1) / 2)})后出杀`;
         },
         async content(event, trigger, player) {
+            lib.lit.aiGuard.record(player, 'lit_duilian');
             if (event.targets.length % 2 === 1) event.targets.pop();
             for (let i = 0; i < event.targets.length / 2; i++) {
                 event.targets[2 * i + 1].line(event.targets[2 * i], "fire");
@@ -162,7 +162,7 @@ export const skill = {
             }
         },
         ai: {
-            order: 8,
+            order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_duilian') ? -1 : 8,
             result: {
                 target: (player, target) => {
                     let i = ui.selected.targets.length;
@@ -192,7 +192,7 @@ export const skill = {
         filterCard: false,
         position: undefined,
         ai: {
-            order: 8,
+            order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_duilian') ? -1 : 8,
             result: {
                 target: (player, target) => {
                     let i = ui.selected.targets.length;

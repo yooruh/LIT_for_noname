@@ -20,7 +20,6 @@ export const character = {
 export const perfectPair = ['lit_huxinyu胡馨予', 'lit_yangxiangling杨湘铃'];
 
 export const skill = {
-    // Rita
     lit_dafang: {
         zhuSkill: true,
         preHidden: true,

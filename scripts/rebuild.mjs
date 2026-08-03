@@ -12,6 +12,7 @@
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve, dirname, relative, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { writeFile, readFile } from './lib/shared.mjs';
@@ -38,6 +39,7 @@ const EXCLUDES = [
   'package-lock.json',
   '.update_state.json',
   'version.json',
+  'jsconfig.json',
 ];
 
 export function scanRoles(dirPath) {
@@ -340,9 +342,12 @@ export function walkDir(dir, baseDir) {
       } else if (entry.isFile()) {
         try {
           const stat = statSync(fullPath);
-          result[relPath] = { size: stat.size };
+          result[relPath] = {
+            size: stat.size,
+            md5: createHash('md5').update(readFileSync(fullPath)).digest('hex'),
+          };
         } catch {
-          result[relPath] = { size: 0 };
+          result[relPath] = { size: 0, md5: null };
         }
       }
     }
@@ -354,6 +359,10 @@ export function walkDir(dir, baseDir) {
 
 export function updateDirectoryJson(checkOnly = false) {
   const manifest = walkDir(ROOT, ROOT);
+  // Directory.json 自身的内容包含自身的 md5，无法自洽，置 null（客户端对 null 跳过校验）
+  if (manifest['Directory.json']) {
+    manifest['Directory.json'].md5 = null;
+  }
   let newContent = JSON.stringify(manifest, null, 2) + '\n';
   // 回填 Directory.json 自身的大小，使其与真实写入大小一致（否则每次重建都会触发"需同步"）
   if (manifest['Directory.json'] && typeof manifest['Directory.json'].size === 'number') {

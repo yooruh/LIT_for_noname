@@ -2,6 +2,7 @@ import { game } from '../../../../../noname.js';
 import { UPDATE_CONFIG as CONFIG } from './config.js';
 import { updateUtils as utils } from './utils.js';
 import { updateEnvironment as Environment } from './repository.js';
+import { md5Hex } from './md5.js';
 
 // ==================== 下载任务实体 ====================
 class DownloadTask {
@@ -14,6 +15,9 @@ class DownloadTask {
         this.critical = info.critical;
         this.priority = info.priority || 0;
         this.skip = info.skip || false;
+        this.md5 = info.md5 || null;           // 清单中的期望 md5（null 表示跳过校验）
+        this.kind = info.kind || 'file';       // 'file' 普通文件 | 'zip' 代码包哨兵
+        this.urls = Array.isArray(info.urls) && info.urls.length > 0 ? info.urls : null; // 显式下载地址列表
         this.downloadedBytes = 0;
     }
 }
@@ -51,6 +55,9 @@ class SmartDownloader {
         if (msg.includes('NOT_FOUND') || msg.includes('404')) {
             return { type: 'not_found', recoverable: false };
         }
+        if (msg.includes('MD5校验失败') || msg.includes('MD5')) {
+            return { type: 'md5', recoverable: true };
+        }
         if (msg.includes('下载已取消')) {
             return { type: 'cancelled', recoverable: true };
         }
@@ -82,15 +89,15 @@ class SmartDownloader {
     async download(task, onProgress, stateManager = null) {
         if (this.isCancelled) throw new Error('下载已取消');
 
-        const url = this.repo.getURL(task.remote);
-        const fallback = this.repo.getFallbackURL(task.remote);
+        // 显式 URL 列表（代码包哨兵）或默认的 raw + 备用源
+        const urls = task.urls && task.urls.length > 0
+            ? task.urls.slice()
+            : [this.repo.getURL(task.remote), this.repo.getFallbackURL(task.remote)];
+        const attempts = [...new Set(urls.filter(Boolean))];
 
         if (stateManager) {
             await stateManager.updateFile(task.remote, 'downloading', null, null, 0, true);
         }
-
-        const attempts = [url];
-        if (fallback && fallback !== url) attempts.push(fallback);
 
         let lastError = null;
         for (let index = 0; index < attempts.length; index++) {
@@ -98,6 +105,15 @@ class SmartDownloader {
             try {
                 await this.removeTempFile(task.temp);
                 const result = await this.downloadViaGame(currentUrl, task.temp, onProgress);
+
+                // 内容完整性校验：与清单 md5 不一致视为失败（媒体逐文件与代码包共用此钩子）
+                if (task.md5) {
+                    const actual = md5Hex(result.data);
+                    if (actual !== task.md5) {
+                        await this.removeTempFile(task.temp);
+                        throw new Error(`MD5校验失败: ${task.remote}`);
+                    }
+                }
 
                 if (stateManager) {
                     await stateManager.updateFile(task.remote, 'success', null, null, result.size, true);

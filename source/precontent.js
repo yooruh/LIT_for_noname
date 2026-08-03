@@ -5,6 +5,11 @@ import { loadPackRegistry } from './tool/pack/registry.js';
 import { CHARACTER_PACK_FILES, CARD_PACK_FILES } from './tool/pack/manifest.js';
 
 export const lib_lit = {
+	// AI 防重试守卫占位（content 阶段由 tool/ai/aiGuard.js 的真实实现覆盖）
+	aiGuard: {
+		blocked: () => false,
+		record: () => { },
+	},
 	sdhh_connectName: '../extension/叁岛世界/source/mode/sandaohuanhua',
 	// precontent 创建、content 消费并删除的角色包注册表。
 	// 同时服务角色提示和需要延后注册的国战角色包，避免维护多个派生索引。

@@ -83,17 +83,20 @@ class StateManager {
         }
     }
 
-    async init(repo, branch, mode, files) {
+    async init(repo, branch, mode, files, zipMeta = null) {
         this.data = {
             timestamp: Date.now(),
             repo: { platform: repo.platform, owner: repo.owner, repo: repo.repo, branch },
             mode: mode,
             phase: 'downloading', // 新增：阶段标记
+            zipMeta: zipMeta || null, // 代码包元数据（断点续传时无需重取 version.json）
             files: files.map(f => ({
                 path: f.remote,
                 size: f.size,
                 type: f.type,
                 critical: f.critical,
+                md5: f.md5 || null,
+                kind: f.kind || 'file',
                 status: 'pending',
                 retries: 0,
                 error: null,
@@ -203,11 +206,11 @@ class StateManager {
         return changed;
     }
 
-    // 将下载失败标记为跳过
+    // 将下载失败标记为跳过（代码包除外——代码包失败必须重试，跳过会导致应用阶段被阻止）
     async markAllFailedAsSkipped() {
         if (!this.data) return;
         for (const file of this.data.files) {
-            if (file.status === 'failed') {
+            if (file.status === 'failed' && file.kind !== 'zip') {
                 file.status = 'skipped';
             }
         }
@@ -217,7 +220,7 @@ class StateManager {
     // 设置更新阶段
     async setPhase(phase, immediate = true) {
         if (!this.data) return;
-        const validPhases = ['downloading', 'backing_up', 'moving', 'completed'];
+        const validPhases = ['downloading', 'staging', 'extracting', 'verifying', 'backing_up', 'moving', 'completed'];
         if (validPhases.includes(phase)) {
             this.data.phase = phase;
             await this.save(immediate);
@@ -246,13 +249,8 @@ class StateManager {
 
     canResume() {
         if (!this.data) return false;
-        if (this.data.phase === 'downloading') {
-            return this.data.files.some(f => f.status === 'pending' || f.status === 'failed');
-        }
-        if (this.data.phase === 'moving') {
-            return this.data.files.some(f => (f.status === 'success' && f.tempVerified && !f.applied) || f.status === 'pending' || f.status === 'failed');
-        }
-        return false;
+        // 凡处于未收尾的阶段（下载/暂存/校验/覆盖中）都可恢复，恢复时按当前进度重放
+        return ['downloading', 'staging', 'extracting', 'verifying', 'moving'].includes(this.data.phase);
     }
 
     hasPendingApply() {

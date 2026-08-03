@@ -14,7 +14,6 @@ export const character = {
 };
 
 export const skill = {
-    // 9张盛杰
     lit_lizhi: {
         forced: true,
         trigger: {

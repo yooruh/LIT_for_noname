@@ -17,7 +17,6 @@ export const character = {
 };
 
 export const skill = {
-    // 菠树
     lit_guimi: {
         forced: true,
         marktext: "闺",

@@ -13,7 +13,6 @@ export const character = {
 };
 
 export const skill = {
-    // 9李洋
     lit_xiuer: {
         derivation: 'lit_xiuer_faq',
         trigger: {

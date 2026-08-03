@@ -2,10 +2,14 @@
  * 叁岛世界 开发同步 — 路径配置
  *
  * 将「项目固有配置」与「本机专属路径」分离：
- * - 本文件（随仓库提交）：devRoot、SYNC_ENTRIES 是项目固有内容。
+ * - 本文件（随仓库提交）：devRoot 是项目固有内容。
  * - scripts/lib/dev-config.local.json（已加入 .gitignore，不随仓库上传）：
  *   存放本机安装目录 installed。该文件缺失时 installed 为空数组，
  *   同步工具会提示按 scripts/lib/dev-config.local.example.json 创建。
+ *
+ * 同步文件集不再在此维护：dev:install / dev:export 以源目录的 Directory.json
+ * 为唯一依据，只同步清单中列出的文件（Directory.json 由 scripts/rebuild.mjs 生成，
+ * 且与在线更新器清理失效文件共用同一清单）。
  */
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -31,10 +35,3 @@ export const devRoot = PATHS.root;
 
 /** 两个已安装的游戏扩展目录（离线版 + 联机版）——来自本机配置，勿提交 */
 export const installed = Array.isArray(local.installed) ? local.installed : [];
-
-/**
- * 需要同步的顶层条目（相对 devRoot 与已安装目录）。
- * 当前布局无 script/（已并入 source/），补上 image/ 与 audio/，
- * 与已安装目录中的实际内容保持一致。
- */
-export const SYNC_ENTRIES = ['extension.js', 'info.json', 'style', 'source', 'image', 'audio'];

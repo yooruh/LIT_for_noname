@@ -131,7 +131,7 @@ export const skill = {
 export const translate = {
     'lit_yutong雨桐': "雨桐",
     'lit_shengjiyt': "升级·雨桐",
-    'lit_shengjiyt_info': "击杀1名角色后升级获得【赤心】；全场角色数小于5时开局立即升级",
+    'lit_shengjiyt_info': "击杀时全场获得1经验，击杀者额外获得1经验；经验达3或全场不足5人时升级，主公开局即升级；升级获得【赤心】",
     'lit_qiqi': "歧戚",
     'lit_qiqi_info': "他人失去体力后，或其每回合第一次进入濒死状态时，若你的体力值与其不同，你可以将体力值与其互换。若你因此回血，你失去一点体力上限",
     'lit_qiongyin': "跫音",

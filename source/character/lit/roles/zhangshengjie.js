@@ -19,7 +19,6 @@ export const character = {
 export const characterReplace = { 'lit_zhangshengjie': ['lit_zhangshengjie张盛杰', 'lit_zhangshengjie9张盛杰'] };
 
 export const skill = {
-    // 张盛杰
     lit_wutou: {
         forced: true,
         preHidden: true,
@@ -439,6 +438,7 @@ export const skill = {
             return target.inRangeOf(player) && player.canUse({ name: 'sha', isCard: true }, target);
         },
         async content(event, trigger, player) {
+            lib.lit.aiGuard.record(player, 'lit_xinhen');
             const target = event.targets[0];
             const delayCards = player.getCards('j');
             const hasShandian = delayCards.some(card => get.name(card) === 'shandian' || card.viewAs === 'shandian');
@@ -502,6 +502,7 @@ export const skill = {
         },
         ai: {
             order: (item, player) => {
+                if (lib.lit.aiGuard.blocked(player, 'lit_xinhen')) return -1;
                 const delayCards = player.getCards('j');
                 const hasLebu = delayCards.some(card => get.name(card) === 'lebu' || card.viewAs === 'lebu');
                 if (hasLebu) return get.order({ name: "sha" }) + 0.03;

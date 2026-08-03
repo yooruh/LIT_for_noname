@@ -85,6 +85,7 @@ export const skill = {
             return target !== player && target.countCards('h') > 0;
         },
         async content(event, trigger, player) {
+            lib.lit.aiGuard.record(player, 'lit_danchun');
             const target = event.targets[0];
             const handCards = target.getCards('h');
 
@@ -140,7 +141,7 @@ export const skill = {
                     return player.countCards('h') < 3 ? 1 : 0.5;
                 },
             },
-            order: 10,
+            order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_danchun') ? -1 : 10,
             expose: 0.4,
             effect: {
                 target: (card, player, target) => {
@@ -259,6 +260,7 @@ export const skill = {
                         return evt.filterCard(get.autoViewAs({ name: "shunshou" }, [card]), player, evt);
                     },
                     backup: (links, player) => {
+                        lib.lit.aiGuard.record(player, 'lit_cidi_shun');
                         return {
                             selectCard: -1,
                             position: "x",
@@ -272,7 +274,7 @@ export const skill = {
                     },
                 },
                 ai: {
-                    order: 10,
+                    order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_cidi_shun') ? -1 : 10,
                     result: {
                         player: (player) => {
                             return player.getExpansions("lit_cidi").length - 1;

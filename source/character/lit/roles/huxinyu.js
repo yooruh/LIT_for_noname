@@ -17,7 +17,6 @@ export const character = {
 };
 
 export const skill = {
-    // 胡馨予
     lit_mimang: {
         mod: {
             cardname(card, player) {
@@ -82,6 +81,7 @@ export const skill = {
         },
         prompt: "索敌一人，与其拼点：若你赢，视为你对其使用了【决斗】，否则，视为其对你使用了【决斗】",
         async content(event, trigger, player) {
+            lib.lit.aiGuard.record(player, 'lit_xukong');
             let target = event.targets[0];
             let result = await player.chooseToCompare(target).forResult();
             if (!player.hasSkill("lit_xukong_mark")) {
@@ -103,6 +103,7 @@ export const skill = {
         },
         ai: {
             order: (item, player) => {
+                if (lib.lit.aiGuard.blocked(player, 'lit_xukong')) return -1;
                 if (!lib.skill.lit_xukong.utils.shouldUse(player)) return -1;
                 return 7;
             },

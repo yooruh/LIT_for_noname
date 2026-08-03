@@ -14,6 +14,7 @@
  *
  * 用法:
  *   node scripts/build.mjs              按发布清单生成所有产物
+ *   node scripts/build.mjs --zip        生成所有产物后，额外产出代码包（等价 build.mjs + zip.mjs --code）
  *   node scripts/build.mjs --dry-run    仅预览将要改动的文件
  *   node scripts/build.mjs --current    显示发布清单中的当前版本
  */
@@ -32,9 +33,11 @@ import {
   writeContentJs,
 } from './lib/release.mjs';
 import { rebuildProject } from './rebuild.mjs';
+import { zipProject } from './zip.mjs';
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run') || args.includes('-d');
+const buildZip = args.includes('--zip');
 const showCurrentOnly = args.includes('--current') || args.includes('-c');
 const positionalArgs = args.filter(arg => !arg.startsWith('-'));
 
@@ -49,6 +52,7 @@ function printBanner() {
 function printUsage() {
   console.log(`用法:
   node scripts/build.mjs              根据 release/releases.json 生成所有发布产物
+  node scripts/build.mjs --zip        生成所有产物并打包代码包（zip.mjs --code）
   node scripts/build.mjs --dry-run    预览模式（不写入文件）
   node scripts/build.mjs --current    显示当前发布版本
 
@@ -118,13 +122,19 @@ try {
 
   printSummary(results, dryRun);
 
+  if (buildZip && !dryRun) {
+    console.log('');
+    log.info('打包代码包（在线更新用）...');
+    zipProject({ codeOnly: true, versionOption: { kind: 'release' }, silent: false });
+  }
+
   if (dryRun) {
     console.log('');
     console.log('\x1b[90m提示: 去掉 --dry-run 参数以实际生成发布产物\x1b[0m');
   } else {
     console.log('');
     log.ok('分发版本产物已全部同步完成。');
-    console.log('\x1b[90m提示: 可继续使用 git diff 检查更改\x1b[0m');
+    console.log('\x1b[90m提示: 可继续使用 git diff 检查更改，并将代码包提交到 zips 分支\x1b[0m');
   }
 } catch (error) {
   printBanner();

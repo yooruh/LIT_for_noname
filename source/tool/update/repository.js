@@ -147,6 +147,38 @@ class GitAdapter {
     getFallbackURL(path = '') {
         return this.fallback + path.replace(/^\/+/, '');
     }
+
+    /**
+     * 生成代码包的下载地址列表（按优先级排序，供 SmartDownloader 依次尝试）。
+     * 主源：专门分支（默认 zips）上的 release/code/，走与逐文件更新相同的 raw + jsdelivr 机制；
+     * 备用：GitHub/Gitee release 资产（tag + filename）。
+     * @param {{filename:string, branch?:string, tag?:string}} zipMeta
+     * @returns {string[]}
+     */
+    getZipURLs(zipMeta = {}) {
+        const filename = zipMeta.filename;
+        if (!filename) return [];
+        const branch = zipMeta.branch || 'zips';
+        const url = encodeURIComponent(filename);
+        const urls = [];
+
+        if (this.platform === 'github') {
+            urls.push(`https://raw.githubusercontent.com/${this.owner}/${this.repo}/${branch}/release/code/${url}`);
+            urls.push(`https://cdn.jsdelivr.net/gh/${this.owner}/${this.repo}@${branch}/release/code/${url}`);
+        } else {
+            urls.push(`https://gitee.com/${this.owner}/${this.repo}/raw/${branch}/release/code/${url}`);
+            urls.push(`https://raw.githubusercontent.com/${this.owner}/${this.repo}/${branch}/release/code/${url}`);
+            urls.push(`https://cdn.jsdelivr.net/gh/${this.owner}/${this.repo}@${branch}/release/code/${url}`);
+        }
+
+        // 备用：release 资产（需要 version.json 提供 tag；无 tag 则跳过）
+        const tag = zipMeta.tag;
+        if (tag) {
+            urls.push(`https://github.com/${this.owner}/${this.repo}/releases/download/${tag}/${url}`);
+            urls.push(`https://gitee.com/${this.owner}/${this.repo}/releases/download/${tag}/${url}`);
+        }
+        return urls;
+    }
 }
 
 export { Environment, Environment as updateEnvironment, TokenManager, GitAdapter };

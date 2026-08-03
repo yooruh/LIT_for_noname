@@ -18,7 +18,6 @@ export const character = {
 };
 
 export const skill = {
-    // 张钦奕
     lit_danke: {
         forced: true,
         popup: false,

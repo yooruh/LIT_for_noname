@@ -1,6 +1,20 @@
 
 
 // ==================== 配置与常量 ====================
+// 更新模式：
+//   auto  自动选择 —— 代码来自代码包，媒体按 md5 比对（未改动则跳过下载）
+//   code  仅代码 —— 只更新代码，媒体完全不管（不下载、不写入、不删除、不校验）
+//   full  完整覆写 —— 代码 + 全部媒体无条件覆盖
+//   retry_failed —— 仅重试上次失败的文件（非独立模式，见 index.js 的 isRetryMode）
+// （兼容旧值：simple → auto）
+const MODES = ['auto', 'code', 'full', 'retry_failed'];
+const DEFAULT_MODE = 'auto';
+
+export function normalizeMode(mode) {
+    if (mode === 'simple') return 'auto';
+    return MODES.includes(mode) ? mode : DEFAULT_MODE;
+}
+
 const CONFIG = {
     name: '叁岛世界',
     urls: {
@@ -10,7 +24,10 @@ const CONFIG = {
     files: {
         directory: 'Directory.json',
         version: 'version.json',
-        state: '.update_state.json'
+        state: '.update_state.json',
+        codeZip: 'code.zip',            // 代码包下载到临时目录的文件名
+        codeZipSentinel: '~code.zip',   // 状态任务中代表代码包的哨兵 remote（不落盘）
+        stagingDir: '_temp_update'      // 代码包解压/校验暂存目录（扩展目录内）
     },
     limits: {
         maxRetries: 3,

@@ -1,6 +1,7 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js';
 import { registerPoptips } from './tool/ui/poptips.js';
 import { registerCharacterPack } from './tool/pack/registry.js';
+import { aiGuard, aiGuardReset } from './tool/ai/aiGuard.js';
 
 export const updateContent = [
 	{ type: "players", data: [
@@ -25,6 +26,12 @@ export async function content(config, pack) {
 	lib.extensionPack['叁岛世界'].author = "一个月惹";
 	lib.extensionPack['叁岛世界'].version = game.getExtensionConfig('叁岛世界', 'version');
 	game.showExtensionChangeLog(updateContent, '叁岛世界');
+
+	// AI 防重试守卫：阻止 AI 反复发动同一主动技导致死循环。
+	// 在 content 阶段挂载（模式已加载后），避免模式覆写 lib.skill.global 把注册冲掉。
+	lib.lit.aiGuard = aiGuard;
+	lib.skill.lit_aiGuardReset = aiGuardReset;
+	if (!lib.skill.global.includes('lit_aiGuardReset')) game.addGlobalSkill('lit_aiGuardReset');
 
 	const characterPacks = lib.lit.characterPacks || {};
 	// 注册自定义poptip

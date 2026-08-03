@@ -40,6 +40,7 @@ export const skill = {
         },
         selectTarget: 1,
         async content(event, trigger, player) {
+            lib.lit.aiGuard.record(player, 'lit_wuma');
             const card = event.cards[0];
             const target = event.targets[0];
             await player.$give(card, target, false);
@@ -49,7 +50,7 @@ export const skill = {
         },
         discard: false,
         ai: {
-            order: 10,
+            order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_wuma') ? -1 : 10,
             result: {
                 target: (player, target) => {
                     const card = ui.selected.cards[0];

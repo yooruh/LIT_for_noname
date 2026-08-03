@@ -43,7 +43,6 @@ export const character = {
 
 // 技能定义：键为技能 ID，值为无名杀技能配置。
 export const skill = {
-    // 蒋海旭
     lit_yuanzhu: {
         marktext: "援",
         intro: {

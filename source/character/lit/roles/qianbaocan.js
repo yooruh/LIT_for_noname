@@ -17,7 +17,6 @@ export const character = {
 };
 
 export const skill = {
-    // 钱保灿
     lit_chushou: {
         trigger: {
             player: "phaseBeforeStart",

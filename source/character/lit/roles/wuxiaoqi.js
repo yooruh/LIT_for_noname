@@ -18,12 +18,12 @@ export const character = {
 };
 
 export const skill = {
-    // 伍小戚
     lit_shencaocao: {
         nobracket: true,
         enable: "phaseUse",
         usable: 1,
         async content(event, trigger, player) {
+            lib.lit.aiGuard.record(player, 'lit_shencaocao');
             event.targets = game.filterPlayer(current => {
                 return current !== player;
             }).sortBySeat();
@@ -47,7 +47,7 @@ export const skill = {
             }
         },
         ai: {
-            order: 1,
+            order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_shencaocao') ? -1 : 1,
             threaten: 0.8,
             result: {
                 player: (player) => {

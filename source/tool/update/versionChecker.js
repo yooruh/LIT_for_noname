@@ -42,7 +42,8 @@ class VersionChecker {
                     branch: v.branch || info.defaultBranch || this.repo.branch,
                     description: v.description || `兼容游戏版本 ${v.gameVersion}`,
                     highlights: Array.isArray(v.highlights) ? v.highlights : [],
-                    compatible: utils.matchVersion(gameVersion, v.gameVersion)
+                    compatible: utils.matchVersion(gameVersion, v.gameVersion),
+                    zip: v.zip || null
                 }));
         } catch (e) {
             console.warn('[版本检查] 失败:', e.message);
@@ -62,7 +63,8 @@ class VersionChecker {
             gameVersion: matched.gameVersion,
             branch: matched.branch,
             description: matched.description,
-            compatible: matched.compatible
+            compatible: matched.compatible,
+            zip: matched.zip || null
         };
     }
 }

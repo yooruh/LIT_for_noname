@@ -17,7 +17,6 @@ export const character = {
 };
 
 export const skill = {
-    // 王荣
     lit_manmanlai: {
         unique: true,
         zhuSkill: true,
@@ -224,6 +223,7 @@ export const skill = {
             return true;
         },
         async content(event, trigger, player) {
+            lib.lit.aiGuard.record(player, 'lit_qixu');
             const target = event.target;
             if (player.hasSkill("lit_qixuV2")) {
                 await player.logSkill("lit_qixuV2", target);
@@ -297,6 +297,7 @@ export const skill = {
         },
         ai: {
             order: (item, player) => {
+                if (lib.lit.aiGuard.blocked(player, 'lit_qixu')) return -1;
                 if (!lib.skill.lit_qixu.utils.shouldUse(player)) return -1;
                 return 8;
             },

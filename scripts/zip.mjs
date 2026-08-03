@@ -29,12 +29,13 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateRawSync } from 'node:zlib';
 import { isValidVersion, log, stripV } from './lib/shared.mjs';
 import { crc32 } from './lib/crc32.mjs';
-import { getCurrentReleaseVersion, readReleaseManifest } from './lib/release.mjs';
+import { getCurrentReleaseVersion, readReleaseManifest, patchVersionJsonZip } from './lib/release.mjs';
 import { walkDir } from './rebuild.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -42,6 +43,9 @@ const ROOT = resolve(__dirname, '..');
 const SELF_PATH = fileURLToPath(import.meta.url);
 const OUT_DIR = resolve(ROOT, '..', '_others');
 const PACK_SUFFIX = '叁岛世界(一班杀).zip';
+const CODE_SUFFIX = '叁岛世界(一班杀)-code.zip';
+// 专门存储代码包的 git 分支（客户端按 version.json 的 zip.branch 读取）
+const ZIP_BRANCH = 'zips';
 
 /** ZIP 条目 DOS 日期/时间 */
 function dosDateTime(date) {
@@ -171,11 +175,14 @@ function readCentralDirectory(zipBuf) {
 /**
  * 计算待打包文件集：与 rebuild.walkDir 的排除规则一致，
  * 含 Directory.json（在线更新清单，本地副本供更新时精确清理失效文件）。
+ * codeOnly 时排除 image/ 与 audio/（在线更新的代码包不携带媒体）。
  * @returns {{ files: Array<{name:string, absPath:string, mtime:Date, size:number}>, fileCount:number, totalSize:number }}
  */
-function buildManifest() {
+function buildManifest({ codeOnly = false } = {}) {
   const manifest = walkDir(ROOT, ROOT);
+  const isCode = name => !name.startsWith('image/') && !name.startsWith('audio/');
   const files = Object.keys(manifest)
+    .filter(name => !codeOnly || isCode(name))
     .sort()
     .map(name => {
       const absPath = resolve(ROOT, name);
@@ -195,8 +202,11 @@ function findExistingZipVersions(outDir) {
   if (!existsSync(outDir)) return [];
   const versions = [];
   for (const name of readdirSync(outDir)) {
-    if (!name.endsWith(PACK_SUFFIX)) continue;
-    const prefix = name.slice(0, -PACK_SUFFIX.length);
+    const suffix = name.endsWith(PACK_SUFFIX)
+      ? PACK_SUFFIX
+      : (name.endsWith(CODE_SUFFIX) ? CODE_SUFFIX : null);
+    if (!suffix) continue;
+    const prefix = name.slice(0, -suffix.length);
     if (isValidVersion(prefix)) versions.push(stripV(prefix));
   }
   return versions;
@@ -278,12 +288,15 @@ function parseVersionOption(args) {
  * @returns {{file:string, changed:boolean, fileCount:number, totalSize:number, zipSize?:number, version:string, versionSource:string}}
  */
 export function zipProject(options = {}) {
-  const { checkOnly = false, outDir = OUT_DIR, silent = false, versionOption } = options;
+  const { checkOnly = false, outDir = OUT_DIR, silent = false, versionOption, codeOnly = false } = options;
   const manifest = readReleaseManifest();
-  const { version, source } = resolveZipVersion(versionOption || { kind: 'none' }, manifest, outDir, checkOnly);
-  const filename = `${version}${PACK_SUFFIX}`;
+  // 代码包必须与发布版本绑定：默认强制使用发布清单版本号（不做自动递增），避免文件名与版本元数据错位
+  const resolvedOption = codeOnly && (!versionOption || versionOption.kind === 'none') ? { kind: 'release' } : (versionOption || { kind: 'none' });
+  const { version, source } = resolveZipVersion(resolvedOption, manifest, outDir, checkOnly);
+  const suffix = codeOnly ? CODE_SUFFIX : PACK_SUFFIX;
+  const filename = `${version}${suffix}`;
   const outPath = resolve(outDir, filename);
-  const { files, fileCount, totalSize } = buildManifest();
+  const { files, fileCount, totalSize } = buildManifest({ codeOnly });
 
   if (!silent) {
     log.info(`发布版本: ${version}（${VERSION_SOURCE_LABELS[source]}）`);
@@ -323,10 +336,20 @@ export function zipProject(options = {}) {
 
   // 真实写入：内存组装后与既有文件比对，内容一致则不重写
   const zipBuf = buildZip(files);
+  const zipMd5 = createHash('md5').update(zipBuf).digest('hex');
   const changed = !existsSync(outPath) || !readFileSync(outPath).equals(zipBuf);
   if (changed) {
     mkdirSync(outDir, { recursive: true });
     writeFileSync(outPath, zipBuf);
+  }
+  if (codeOnly && !checkOnly) {
+    // 无论内容是否变化都把 zip 元数据写入 version.json（幂等），供在线更新客户端读取
+    try {
+      patchVersionJsonZip(version, { filename, size: zipBuf.length, md5: zipMd5, branch: ZIP_BRANCH, tag: `v${version}` });
+      if (!silent) log.ok(`version.json — 已写入 zip 元数据 (${filename}, md5 ${zipMd5.slice(0, 8)}…)`);
+    } catch (e) {
+      log.warn(`写入 version.json zip 元数据失败: ${e.message}`);
+    }
   }
   if (!silent) {
     const mb = totalSize / (1024 * 1024);
@@ -336,12 +359,13 @@ export function zipProject(options = {}) {
       log.warn('内容一致，未重新写入');
     }
   }
-  return { file: filename, changed, fileCount, totalSize, zipSize: zipBuf.length, version, versionSource: source };
+  return { file: filename, changed, fileCount, totalSize, zipSize: zipBuf.length, zipMd5, version, versionSource: source };
 }
 
 function printUsage() {
   console.log(`用法:
   node scripts/zip.mjs              生成发布包（默认输出到 ../_others）
+  node scripts/zip.mjs --code       生成代码包（不含 image/audio，并写入 version.json 的 zip 元数据）
   node scripts/zip.mjs --dry-run    预览模式（不压缩、不写盘）
   node scripts/zip.mjs --check      校验现有发布包与预期文件集是否一致
   node scripts/zip.mjs -o <目录>    输出到指定目录
@@ -357,6 +381,7 @@ function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run') || args.includes('-d');
   const checkOnly = args.includes('--check');
+  const codeOnly = args.includes('--code');
   const outIndex = args.indexOf('-o') >= 0 ? args.indexOf('-o') : args.indexOf('--out');
   const outDir = outIndex >= 0 && args[outIndex + 1] ? resolve(process.cwd(), args[outIndex + 1]) : OUT_DIR;
 
@@ -364,9 +389,10 @@ function main() {
     const versionOption = parseVersionOption(args);
     if (dryRun) {
       const manifest = readReleaseManifest();
-      const { version, source } = resolveZipVersion(versionOption, manifest, outDir, false);
-      const filename = `${version}${PACK_SUFFIX}`;
-      const { files, fileCount, totalSize } = buildManifest();
+      const resolvedOption = codeOnly && (!versionOption || versionOption.kind === 'none') ? { kind: 'release' } : (versionOption || { kind: 'none' });
+      const { version, source } = resolveZipVersion(resolvedOption, manifest, outDir, false);
+      const filename = `${version}${codeOnly ? CODE_SUFFIX : PACK_SUFFIX}`;
+      const { files, fileCount, totalSize } = buildManifest({ codeOnly });
       const mb = totalSize / (1024 * 1024);
       log.info(`发布版本:     ${version}（${VERSION_SOURCE_LABELS[source]}）`);
       log.info(`文件名:       ${filename}`);
@@ -378,7 +404,7 @@ function main() {
       process.exit(0);
     }
 
-    const result = zipProject({ checkOnly, outDir, versionOption, silent: false });
+    const result = zipProject({ checkOnly, outDir, versionOption, silent: false, codeOnly });
     if (checkOnly && result.changed) {
       process.exit(1);
     }

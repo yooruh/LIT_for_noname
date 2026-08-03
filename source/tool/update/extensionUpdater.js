@@ -1,5 +1,5 @@
-import { lib, game } from '../../../../../noname.js';
-import { UPDATE_CONFIG as CONFIG } from './config.js';
+import { lib, game, get } from '../../../../../noname.js';
+import { UPDATE_CONFIG as CONFIG, normalizeMode } from './config.js';
 import { updateUtils as utils } from './utils.js';
 import { extensionFilesPath, extensionPath } from '../utils/paths.js';
 import { updateEnvironment as Environment, TokenManager, GitAdapter } from './repository.js';
@@ -8,6 +8,7 @@ import { DownloadTask, SmartDownloader } from './downloader.js';
 import { VersionChecker } from './versionChecker.js';
 import { UpdateDialogs as UIManager } from './updateDialogs.js';
 import { BackupManager } from './backupManager.js';
+import { md5Hex } from './md5.js';
 
 // 更新时需保护、绝不删除/清理的目录与文件
 const PROTECTED_DIRS = new Set(['_temp_downloading', '.git', '.vscode', 'node_modules']);
@@ -18,6 +19,7 @@ class ExtensionUpdater {
     constructor() {
         this.repo = null;
         this.tempDir = null;
+        this.stagingDir = `${extensionPath}/${CONFIG.files.stagingDir}`; // 代码包解压/校验暂存目录
         this.targetDir = extensionPath;
         this.filesDir = extensionFilesPath;
         this.tokens = new TokenManager();
@@ -26,7 +28,12 @@ class ExtensionUpdater {
         this.backupManager = new BackupManager(this.targetDir, this.filesDir);
         this.downloader = null;
         this.tasks = []; // DownloadTask 数组
-        this.mode = 'simple';
+        this.mode = 'auto';
+        this.codeZipMeta = null;
+        this.codeZipAvailable = false;
+        this.staged = {};          // 暂存目录中 路径 → md5
+        this.stagedManifest = null; // 代码包内 Directory.json 解析结果
+        this.stagedManifestPaths = []; // 代码包内新版本完整路径清单
         this.versionSelect = false; // 交互路径是否允许自选更新版本
         this.startTime = 0;
         this.shouldCleanup = true;
@@ -53,7 +60,7 @@ class ExtensionUpdater {
         if (!url) throw new Error('无效的平台');
 
         this.repo = new GitAdapter(url);
-        this.mode = mode;
+        this.mode = normalizeMode(mode);
         this.tempDir = `${this.targetDir}/${this.fixedTempDirName}`;
         this.state = new StateManager(this.tempDir);
         this.downloader = new SmartDownloader(this.repo, this.tokens);
@@ -71,7 +78,8 @@ class ExtensionUpdater {
 
         if (loaded) {
             // 验证阶段合法性
-            if (loaded.phase && !['downloading', 'moving'].includes(loaded.phase)) {
+            const RESUMABLE_PHASES = ['downloading', 'staging', 'extracting', 'verifying', 'moving'];
+            if (loaded.phase && !RESUMABLE_PHASES.includes(loaded.phase)) {
                 console.warn(`[恢复] 上次更新停留在阶段: ${loaded.phase}，可能未完整应用`);
                 if (loaded.phase === 'completed') {
                     return false; // 已完成的不恢复
@@ -80,21 +88,29 @@ class ExtensionUpdater {
 
             this.repo = new GitAdapter(CONFIG.urls[loaded.repo.platform]);
             this.repo.switchBranch(loaded.repo.branch);
-            this.mode = loaded.mode;
+            this.mode = normalizeMode(loaded.mode);
             this.downloader = new SmartDownloader(this.repo, this.tokens);
+
+            // 恢复代码包元数据（断点续传时不重新下载 version.json）
+            this.codeZipMeta = loaded.zipMeta || null;
+            this.codeZipAvailable = !!(this.codeZipMeta && this.codeZipMeta.filename);
 
             // 恢复任务列表，验证临时文件存在性
             this.tasks = [];
             for (const f of loaded.files) {
+                const isZip = f.kind === 'zip';
                 const task = new DownloadTask({
                     remote: f.path,
-                    temp: `${this.tempDir}/${f.path}`,
-                    target: `${this.targetDir}/${f.path}`,
+                    temp: isZip ? `${this.tempDir}/${CONFIG.files.codeZip}` : `${this.tempDir}/${f.path}`,
+                    target: isZip ? '' : `${this.targetDir}/${f.path}`,
                     size: f.size,
                     type: f.type,
                     critical: f.critical,
                     priority: f.type === 'text' ? 0 : (f.type === 'media' ? 2 : 1),
-                    skip: f.status === 'skipped'
+                    skip: f.status === 'skipped',
+                    md5: f.md5 || null,
+                    kind: f.kind || 'file',
+                    urls: isZip ? this.repo.getZipURLs(loaded.zipMeta || {}) : null
                 });
 
                 // 验证已下载文件的临时文件是否存在
@@ -183,7 +199,7 @@ class ExtensionUpdater {
         this.state.data.stats = stats;
     }
 
-    async prepareFileList(targetBranch = null) {
+    async prepareFileList(targetBranch = null, verInfo = null) {
         if (targetBranch) this.repo.switchBranch(targetBranch);
         // 下载文件列表
         const listTask = new DownloadTask({
@@ -201,7 +217,7 @@ class ExtensionUpdater {
                 if (token) {
                     this.tokens.set(this.repo.platform, token);
                     this.downloader = new SmartDownloader(this.repo, this.tokens);
-                    return this.prepareFileList(targetBranch); // 重试
+                    return this.prepareFileList(targetBranch, verInfo); // 重试
                 }
             }
             const error = new Error(`获取文件列表失败: ${result.error}`);
@@ -239,8 +255,14 @@ class ExtensionUpdater {
             if (fileName.startsWith('.')) continue;
 
             const cleanPath = parts.join('/');
+
+            // 代码文件随代码包整包更新；媒体（image/audio）走逐文件任务。
+            // code 模式不建立任何逐文件任务。
+            if (utils.isCodePath(cleanPath) || this.mode === 'code') continue;
+
             const type = utils.getFileType(fileName);
             const size = info?.size || 0;
+            const md5 = info?.md5 || null;
 
             const task = new DownloadTask({
                 remote: cleanPath,
@@ -249,15 +271,21 @@ class ExtensionUpdater {
                 size,
                 type,
                 critical: utils.isCritical(fileName),
-                priority: type === 'text' ? 0 : (type === 'media' ? 2 : 1)
+                priority: type === 'text' ? 0 : (type === 'media' ? 2 : 1),
+                md5
             });
 
-            // 简易模式：标记已存在的媒体文件为跳过
-            if (this.mode === 'simple' && task.priority > 0) {
+            // auto 模式：媒体本地 md5 与清单一致则跳过下载（未改动）
+            if (this.mode === 'auto' && task.priority > 0) {
                 try {
-                    const exists = await game.promises.checkFile(task.target);
-                    if (exists === 1) {
-                        task.skip = true;
+                    if (await game.promises.checkFile(task.target) === 1) {
+                        if (md5) {
+                            const local = await game.promises.readFile(task.target);
+                            if (md5Hex(local) === md5) task.skip = true;
+                        } else {
+                            // 过渡期：清单暂无 md5 时回退为“存在即跳过”
+                            task.skip = true;
+                        }
                     }
                 } catch (e) { }
             }
@@ -266,19 +294,46 @@ class ExtensionUpdater {
             if (!task.skip) this.totalBytes += size;
         }
 
-        // 按优先级排序（关键文件优先）
+        // 代码包哨兵任务（三种模式都走代码包；priority -1 保证最先下载）
+        const zipMeta = verInfo?.zip || null;
+        if (zipMeta && zipMeta.filename) {
+            this.codeZipMeta = zipMeta;
+            this.codeZipAvailable = true;
+            this.tasks.push(new DownloadTask({
+                remote: CONFIG.files.codeZipSentinel,
+                temp: `${this.tempDir}/${CONFIG.files.codeZip}`,
+                target: '',
+                size: zipMeta.size || 0,
+                type: 'zip',
+                critical: true,
+                priority: -1,
+                md5: zipMeta.md5 || null,
+                kind: 'zip',
+                urls: this.repo.getZipURLs(zipMeta)
+            }));
+            this.totalBytes += zipMeta.size || 0;
+        } else {
+            this.codeZipAvailable = false;
+        }
+
+        if (!this.codeZipAvailable) {
+            throw new Error('未找到代码包信息（version.json 缺少 zip 元数据），暂无法在线更新，请等待版本发布完整');
+        }
+
+        // 按优先级排序（关键文件优先，代码包最先）
         this.tasks.sort((a, b) => {
             if (a.critical !== b.critical) return a.critical ? -1 : 1;
             return a.priority - b.priority;
         });
 
         const skipCount = this.tasks.filter(t => t.skip).length;
-        await this.state.init(this.repo, this.repo.branch, this.mode, this.tasks);
+        await this.state.init(this.repo, this.repo.branch, this.mode, this.tasks, this.codeZipMeta);
 
         return {
             fileCount: this.tasks.length,
             skipCount,
-            totalBytes: this.totalBytes
+            totalBytes: this.totalBytes,
+            zipSize: this.codeZipMeta?.size || 0
         };
     }
 
@@ -376,26 +431,191 @@ class ExtensionUpdater {
     }
 
     async applyUpdate() {
-        const backupResult = await this.backupManager.createBackup();
-        if (!backupResult.success) {
-            console.warn('[备份] 创建失败，继续更新:', backupResult.error);
-        } else {
-            await this.state.setPhase('backing_up', true);
+        // 代码包未就绪时禁止应用（即使勾选“忽略失败”），杜绝本次事故的“缺必需文件继续覆盖”
+        const zipState = this.state.data?.files?.find(f => f.kind === 'zip');
+        if (!zipState || zipState.status !== 'success' || !zipState.tempVerified) {
+            const error = new Error('代码包未就绪（下载失败或未完成），无法应用更新，请重试下载');
+            error.updateStage = 'apply';
+            throw error;
         }
+
+        let backup = null;
         try {
+            // 1) 解压并校验代码包到暂存目录 —— 此阶段不触碰正式目录
+            await this.prepareCodeStaging();
+            await this.verifyCodeStaging();
+
+            // 2) 备份当前版本（正式目录首次被触碰）
+            await this.state.setPhase('backing_up', true);
+            const backupResult = await this.backupManager.createBackup();
+            if (!backupResult.success) {
+                console.warn('[备份] 创建失败，继续更新:', backupResult.error);
+            } else {
+                backup = backupResult;
+            }
+
+            // 3) 覆盖：先媒体（临时文件）后代码（已校验的暂存目录）
             await this.state.setPhase('moving', true);
-            // 更新前读取本地（旧）文件清单，用于清理新版本已移除的文件
-            const oldFileList = await this.readLocalDirectoryJson();
             await this.applyDownloadedFiles();
-            await this.removeObsoleteFiles(oldFileList);
-            // 将新版本文件清单写回本地，保持后续更新的差集准确
+            await this.applyCodeFromStaging();
+            await this.postVerifyCode();
+
+            // 4) 清理失效文件（按模式过滤）
+            const oldFileList = await this.readLocalDirectoryJson();
+            await this.removeObsoleteFiles(oldFileList, this.stagedManifestPaths);
+
+            // 5) 写回新清单、清理临时与暂存
             await this.refreshLocalDirectoryJson();
             await this.cleanup();
         } catch (error) {
             console.error('[应用更新] 失败:', error);
+            // 回滚到备份，确保正式目录不被半更新状态破坏
+            if (backup) await this.rollback(backup);
             await this.state.setPhase('downloading', true);
             if (!error.updateStage) error.updateStage = 'apply';
             throw error;
+        }
+    }
+
+    // 将代码包解压到暂存目录（_temp_update），不触碰正式目录
+    async prepareCodeStaging() {
+        await this.state.setPhase('staging', true);
+        const codeZipTemp = `${this.tempDir}/${CONFIG.files.codeZip}`;
+        const exists = await game.promises.checkFile(codeZipTemp);
+        if (exists !== 1) {
+            const error = new Error('代码包文件缺失，无法解压');
+            error.updateStage = 'verify';
+            throw error;
+        }
+
+        // 清空并重建暂存目录
+        try {
+            if (await game.promises.checkDir(this.stagingDir) === 1) {
+                await game.promises.removeDir(this.stagingDir);
+            }
+        } catch (e) { }
+        await game.promises.ensureDirectory(this.stagingDir);
+
+        const buf = await game.promises.readFile(codeZipTemp);
+        let zip;
+        try {
+            zip = await get.promises.zip();
+            // jszip 2.7：同步 load，checkCRC32 对每个条目做 CRC 校验，损坏/截断即抛
+            zip.load(buf, { checkCRC32: true });
+        } catch (e) {
+            const error = new Error(`代码包损坏（CRC32 校验失败）: ${e.message}`);
+            error.updateStage = 'verify';
+            throw error;
+        }
+
+        this.staged = {};
+        await this.state.setPhase('extracting', true);
+        try {
+            for (const name of Object.keys(zip.files)) {
+                if (!name || name.endsWith('/')) continue; // 跳过目录条目
+                const cleanName = name.replace(/^\/+/, '');
+                if (!cleanName) continue;
+                const data = zip.files[name].asUint8Array();
+                const slashIdx = cleanName.lastIndexOf('/');
+                const dir = slashIdx >= 0 ? `${this.stagingDir}/${cleanName.slice(0, slashIdx)}` : this.stagingDir;
+                const fileName = cleanName.slice(slashIdx + 1);
+                await game.promises.ensureDirectory(dir);
+                // writeFile 需要 ArrayBuffer/Buffer；取视图对应的精确字节
+                const ab = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+                await game.promises.writeFile(ab, dir, fileName);
+                this.staged[cleanName] = md5Hex(data);
+            }
+        } catch (e) {
+            const error = new Error(`解压代码包失败: ${e.message}`);
+            error.updateStage = 'verify';
+            throw error;
+        }
+
+        // 代码包内 Directory.json 为新版本完整清单（权威）
+        this.stagedManifest = null;
+        this.stagedManifestPaths = [];
+        try {
+            const manifestText = await game.promises.readFileAsText(`${this.stagingDir}/${CONFIG.files.directory}`);
+            this.stagedManifest = JSON.parse(manifestText);
+            this.stagedManifestPaths = Object.keys(this.stagedManifest);
+        } catch (e) {
+            const error = new Error(`代码包内缺少有效的 Directory.json，无法校验`);
+            error.updateStage = 'verify';
+            throw error;
+        }
+    }
+
+    // 校验暂存树：代码文件齐全 + md5 与清单一致（写盘前的“缺必需文件”防线）
+    async verifyCodeStaging() {
+        await this.state.setPhase('verifying', true);
+        const missing = [];
+        const mismatched = [];
+        for (const path of this.stagedManifestPaths) {
+            if (!utils.isCodePath(path)) continue; // 媒体不随代码包，跳过
+            if (!this.staged[path]) {
+                missing.push(path);
+                continue;
+            }
+            const expected = this.stagedManifest[path]?.md5;
+            if (expected && this.staged[path] !== expected) {
+                mismatched.push(path);
+            }
+        }
+        if (missing.length > 0 || mismatched.length > 0) {
+            const error = new Error(
+                `代码包校验失败：缺失 ${missing.length} 个文件、MD5 不符 ${mismatched.length} 个\n` +
+                (missing.slice(0, 5).join('\n'))
+            );
+            error.updateStage = 'verify';
+            throw error;
+        }
+    }
+
+    // 从暂存目录写入代码文件（暂存已整体校验通过）
+    async applyCodeFromStaging() {
+        for (const path of Object.keys(this.staged)) {
+            const slashIdx = path.lastIndexOf('/');
+            const dir = slashIdx >= 0 ? `${this.targetDir}/${path.slice(0, slashIdx)}` : this.targetDir;
+            const fileName = path.slice(slashIdx + 1);
+            const content = await game.promises.readFile(`${this.stagingDir}/${path}`);
+            await game.promises.ensureDirectory(dir);
+            await game.promises.writeFile(content, dir, fileName);
+        }
+    }
+
+    // 覆盖后复验：已写入的代码文件 md5 与清单一致，不符则回滚
+    async postVerifyCode() {
+        for (const path of Object.keys(this.staged)) {
+            const expected = this.stagedManifest[path]?.md5;
+            if (!expected) continue; // Directory.json 自身等 md5 为 null 的文件跳过
+            const local = await game.promises.readFile(`${this.targetDir}/${path}`);
+            if (md5Hex(local) !== expected) {
+                const error = new Error(`覆盖后校验失败: ${path}`);
+                error.updateStage = 'verify';
+                throw error;
+            }
+        }
+    }
+
+    // 回滚到备份，并清理暂存目录
+    async rollback(backup) {
+        if (!backup || !backup.path) return;
+        try {
+            const result = await this.backupManager.rollbackToBackup(backup);
+            if (result.success) {
+                console.log('[回滚] 已恢复到备份版本');
+            } else {
+                console.error('[回滚] 失败:', result.error);
+                await this.ui.alert('回滚失败', `更新失败且自动回滚未成功，可手动从备份恢复：\n${backup.path}`);
+            }
+        } catch (e) {
+            console.error('[回滚] 异常:', e.message);
+        } finally {
+            try {
+                if (await game.promises.checkDir(this.stagingDir) === 1) {
+                    await game.promises.removeDir(this.stagingDir);
+                }
+            } catch (e) { }
         }
     }
 
@@ -415,8 +635,10 @@ class ExtensionUpdater {
     // 删除新版本已移除的本地文件，并清理空目录
     // 正常路径按「旧清单 − 新清单」差集删除；本地缺少 Directory.json 无法对比时，
     // 回退为清空式清理：删除本地所有不在新清单中的文件（等效"全部删除再重下"）
-    async removeObsoleteFiles(oldFileList) {
-        const newSet = new Set(this.state.data.files.map(f => f.path));
+    // 新清单必须是完整清单（代码包内 Directory.json 的全部路径），且按模式过滤：
+    // code 模式绝不触碰媒体文件。
+    async removeObsoleteFiles(oldFileList, newManifestPaths) {
+        const newSet = new Set(newManifestPaths || []);
         if (newSet.size === 0) {
             console.warn('[清理] 新版本文件清单为空，跳过清理');
             return;
@@ -432,7 +654,13 @@ class ExtensionUpdater {
             candidates = localFiles.filter(p => !newSet.has(p));
         }
 
+        // code 模式：媒体完全不动
+        if (this.mode === 'code') {
+            candidates = candidates.filter(utils.isCodePath);
+        }
+
         for (const relPath of candidates) {
+            if (PROTECTED_FILES.has(relPath)) continue; // Directory.json / version.json 保护
             const target = `${this.targetDir}/${relPath}`;
             try {
                 const exists = await game.promises.checkFile(target);
@@ -498,10 +726,14 @@ class ExtensionUpdater {
     // 新版本清单已包含 Directory.json 时会随下载应用；此处仅兜底旧分支等未分发清单的情况
     async refreshLocalDirectoryJson() {
         try {
-            if (this.state.data.files.some(f => f.path === CONFIG.files.directory)) return;
-            const exists = await game.promises.checkFile(`${this.tempDir}/${CONFIG.files.directory}`);
-            if (exists !== 1) return;
-            const content = await game.promises.readFileAsText(`${this.tempDir}/${CONFIG.files.directory}`);
+            // 优先写回代码包内的 Directory.json（权威），其次使用临时下载的副本
+            let content = null;
+            if (await game.promises.checkFile(`${this.stagingDir}/${CONFIG.files.directory}`) === 1) {
+                content = await game.promises.readFileAsText(`${this.stagingDir}/${CONFIG.files.directory}`);
+            } else if (await game.promises.checkFile(`${this.tempDir}/${CONFIG.files.directory}`) === 1) {
+                content = await game.promises.readFileAsText(`${this.tempDir}/${CONFIG.files.directory}`);
+            }
+            if (content == null) return;
             await game.promises.writeFile(content, this.targetDir, CONFIG.files.directory);
             console.log('[更新] 已更新本地文件清单 Directory.json');
         } catch (e) {
@@ -514,6 +746,7 @@ class ExtensionUpdater {
         for (const fileState of successFiles) {
             const task = this.tasks.find(t => t.remote === fileState.path);
             if (!task) continue;
+            if (task.kind === 'zip') continue; // 代码包由 applyCodeFromStaging 处理
 
             try {
                 const content = await game.promises.readFile(task.temp);
@@ -534,15 +767,17 @@ class ExtensionUpdater {
     }
 
     async cleanup() {
-        if (!this.tempDir) return;
-        try {
-            const exists = await game.promises.checkDir(this.tempDir);
-            if (exists === 1) {
-                await game.promises.removeDir(this.tempDir);
-                console.log(`[清理] 已删除临时目录: ${this.tempDir}`);
+        for (const dir of [this.tempDir, this.stagingDir]) {
+            if (!dir) continue;
+            try {
+                const exists = await game.promises.checkDir(dir);
+                if (exists === 1) {
+                    await game.promises.removeDir(dir);
+                    console.log(`[清理] 已删除临时目录: ${dir}`);
+                }
+            } catch (e) {
+                console.warn(`[清理] 删除临时目录失败: ${dir}`, e);
             }
-        } catch (e) {
-            console.warn('[清理] 删除临时目录失败:', e);
         }
     }
 
@@ -635,7 +870,7 @@ class ExtensionUpdater {
             this.repo.switchBranch(verInfo.branch);
         }
 
-        const { fileCount, skipCount, totalBytes } = await this.prepareFileList();
+        const { fileCount, skipCount, totalBytes, zipSize } = await this.prepareFileList(undefined, verInfo);
 
         const confirmed = await this.ui.confirmStart({
             version: verInfo?.extensionVersion,
@@ -647,6 +882,7 @@ class ExtensionUpdater {
             fileCount,
             skipCount,
             totalSize: utils.parseSize(totalBytes),
+            zipSize,
             envType: this.envType
         });
 

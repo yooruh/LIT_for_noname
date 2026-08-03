@@ -15,7 +15,6 @@ export const character = {
 export const perfectPair = ['lit_zhangchi张驰', 'lit_liyang9李洋'];
 
 export const skill = {
-    // 9张驰
     lit_bolun: {
         init: (player, skill) => {
             player.storage.lit_bolun = [[], []];

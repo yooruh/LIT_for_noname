@@ -46,7 +46,7 @@ class BackupManager {
             if (dirExists === 1) {
                 game.print(`[备份] 创建备份: ${backupDir}`);
                 await this.copyDirectoryRecursive(this.targetDir, backupDir, {
-                    skipDirs: new Set(['_temp_downloading']),
+                    skipDirs: new Set(['_temp_downloading', CONFIG.files.stagingDir]),
                     skipFiles: new Set([CONFIG.files.state])
                 });
                 await this.cleanupOldBackups(CONFIG.limits.backupCount);

@@ -88,6 +88,7 @@ export const skill = {
             return false;
         },
         async content(event, trigger, player) {
+            lib.lit.aiGuard.record(player, 'lit_yiyu');
             const target = event.targets[0];
 
             // 步骤0: 弃置目标区域牌
@@ -122,7 +123,7 @@ export const skill = {
             }
         },
         ai: {
-            order: 1,
+            order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_yiyu') ? -1 : 1,
             expose: 0.8,
             threaten: 1.4,
             result: {
