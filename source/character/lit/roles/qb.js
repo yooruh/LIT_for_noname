@@ -80,7 +80,6 @@ export const skill = {
                     return target !== player && target.hasZhuSkill("lit_33", player) && !target.hasSkill("lit_33_used");
                 },
                 async content(event, trigger, player) {
-                    lib.lit.aiGuard.record(player, 'lit_33_use');
                     let target = event.target;
                     await player.damage().set('source', target);
                     if (target.hp > 3) await target.loseHp();
@@ -88,7 +87,7 @@ export const skill = {
                     target.addTempSkill("lit_33_used", "phaseUseEnd");
                 },
                 ai: {
-                    order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_33_use') ? -1 : 10,
+                    order: 10,
                     result: {
                         target: (player, target) => {
                             return lib.skill.lit_33.utils.targetValue(player, target);

@@ -515,7 +515,6 @@ export const skill = {
             return target.maxHp > 1;
         },
         async content(event, trigger, player) {
-            lib.lit.aiGuard.record(player, 'lit_fumeng');
             let target = event.target;
             if (!target.hasSkill('lit_mengying')) await target.addSkills('lit_mengying');
 
@@ -526,7 +525,6 @@ export const skill = {
         },
         ai: {
             order: (item, player) => {
-                if (lib.lit.aiGuard.blocked(player, 'lit_fumeng')) return -1;
                 if (!lib.skill.lit_fumeng.utils.shouldUse(player)) return -1;
                 if (game.hasPlayer(current => get.attitude(player, current) < 0 && current.hp === current.maxHp && current.maxHp > 1)) return 10;
                 return 1;

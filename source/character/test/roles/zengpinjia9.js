@@ -97,7 +97,6 @@ export const skill = {
             return 10 - get.value(card, player);
         },
         async content(event, trigger, player) {
-            lib.lit.aiGuard.record(player, 'lit_kuizeng');
             const cards = event.cards;
             const target = event.targets[0];
 
@@ -144,7 +143,6 @@ export const skill = {
         },
         ai: {
             order: (skill, player) => {
-                if (lib.lit.aiGuard.blocked(player, 'lit_kuizeng')) return -1;
                 if (player.hp < player.maxHp && player.countCards('he') > 2) {
                     return 10;
                 }

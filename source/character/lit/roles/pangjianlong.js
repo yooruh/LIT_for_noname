@@ -153,7 +153,6 @@ export const skill = {
             return `(${Math.floor((ui.selected.targets.length + 1) / 2)})后出杀`;
         },
         async content(event, trigger, player) {
-            lib.lit.aiGuard.record(player, 'lit_duilian');
             if (event.targets.length % 2 === 1) event.targets.pop();
             for (let i = 0; i < event.targets.length / 2; i++) {
                 event.targets[2 * i + 1].line(event.targets[2 * i], "fire");
@@ -162,7 +161,7 @@ export const skill = {
             }
         },
         ai: {
-            order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_duilian') ? -1 : 8,
+            order: 8,
             result: {
                 target: (player, target) => {
                     let i = ui.selected.targets.length;
@@ -192,7 +191,7 @@ export const skill = {
         filterCard: false,
         position: undefined,
         ai: {
-            order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_duilian') ? -1 : 8,
+            order: 8,
             result: {
                 target: (player, target) => {
                     let i = ui.selected.targets.length;

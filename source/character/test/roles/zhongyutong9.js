@@ -260,7 +260,6 @@ export const skill = {
                         return evt.filterCard(get.autoViewAs({ name: "shunshou" }, [card]), player, evt);
                     },
                     backup: (links, player) => {
-                        lib.lit.aiGuard.record(player, 'lit_cidi_shun');
                         return {
                             selectCard: -1,
                             position: "x",
@@ -274,7 +273,7 @@ export const skill = {
                     },
                 },
                 ai: {
-                    order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_cidi_shun') ? -1 : 10,
+                    order: 10,
                     result: {
                         player: (player) => {
                             return player.getExpansions("lit_cidi").length - 1;

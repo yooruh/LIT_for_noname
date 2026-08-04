@@ -345,7 +345,6 @@ export const skill = {
         multitarget: true,
         multiline: true,
         async content(event, trigger, player) {
-            lib.lit.aiGuard.record(player, 'lit_pandejianpan');
             player.addTempSkill("lit_pandejianpan_used");
             event.forceDie = true;
             await event.targets[0].swapHandcards(event.targets[1]).set("forceDie", true);
@@ -354,7 +353,7 @@ export const skill = {
             threaten: 3.5,
             pretao: true,
             nokeep: true,
-            order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_pandejianpan') ? -1 : 1,
+            order: 1,
             expose: 0.3,
             skillTagFilter: (player, tag, arg) => {
                 if (["pretao", "nokeep"].includes(tag)) {
@@ -551,7 +550,6 @@ export const skill = {
             return target.hasSkill('lit_diaokajineng');
         },
         async content(event, trigger, player) {
-            lib.lit.aiGuard.record(player, 'lit_xiaohongtanver');
             // 记录target当前拥有的吊卡技能
             const target = event.target;
             const targetSkills = target.getStorage("lit_diaokajineng", []);
@@ -614,7 +612,7 @@ export const skill = {
             }
         },
         ai: {
-            order: (item, player) => lib.lit.aiGuard.blocked(player, 'lit_xiaohongtanver') ? -1 : 10,
+            order: 10,
             result: {
                 player: 10,
                 target: (player, target) => {

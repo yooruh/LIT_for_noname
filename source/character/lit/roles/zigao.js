@@ -45,7 +45,6 @@ export const skill = {
             return player !== target && (lib.lit.isSameGroup(target, 'three'));
         },
         async content(event, trigger, player) {
-            lib.lit.aiGuard.record(player, 'lit_xinren');
             let cardToUse = event.cards[0],
                 user = event.target;
             await player.give(cardToUse, user);
@@ -69,8 +68,7 @@ export const skill = {
             },
         },
         ai: {
-            order: (item, player) => {
-                if (player && lib.lit.aiGuard.blocked(player, 'lit_xinren')) return -1;
+            order: () => {
                 return get.order({ name: "nanman" }) + 0.03;
             },
             expose: 0.1,
@@ -177,7 +175,6 @@ export const skill = {
             return player !== target;
         },
         async content(event, trigger, player) {
-            lib.lit.aiGuard.record(player, 'lit_zhanshi');
             let target = event.target;
             if (target.countCards('h') > 0) {
                 await target.showCards(target.getCards('h'), `${get.translation(target)} 被 ${get.translation(player)} 点名要求展示`);
@@ -204,7 +201,6 @@ export const skill = {
         ai: {
             threaten: 1.1,
             order: (item, player) => {
-                if (lib.lit.aiGuard.blocked(player, 'lit_zhanshi')) return -1;
                 if (!player) player = get.player();
                 if (player.needsToDiscard(0, null, true) > 0) return get.order({ name: "wuzhong" }) - 0.05;
                 return get.order({ name: "tiesuo" }) - 0.03;
@@ -348,7 +344,6 @@ export const skill = {
             if (player.hasSkill('lit_zhanshi')) player.removeSkill('lit_zhanshi');
         },
         async content(event, trigger, player) {
-            lib.lit.aiGuard.record(player, 'lit_zhanshi');
             let target = event.target;
             if (target.countCards('h') > 0) {
                 await target.showCards(target.getCards('h'), `${get.translation(target)} 被 ${get.translation(player)} 点名要求展示`);

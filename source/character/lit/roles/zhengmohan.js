@@ -137,14 +137,12 @@ export const skill = {
             if (result.targets.length > 0) result.card = get.autoViewAs({ name: "tiesuo" }, result.cards);
         },
         async content(event, trigger, player) {
-            lib.lit.aiGuard.record(player, 'lit_mensao');
             await player.discard(event.cards);
             await player.draw(event.cards.length);
         },
         group: 'lit_mensao_after',
         ai: {
             order: (item, player) => {
-                if (lib.lit.aiGuard.blocked(player, 'lit_mensao')) return -1;
                 if (!lib.skill.lit_mensao.utils.shouldUse(player)) return -1;
                 return 7.5;
             },

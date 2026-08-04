@@ -64,7 +64,7 @@ export const config = {
 		}
 	},
 	lit_updateOnline: {
-		name: '<button>在线更新扩展(测试)</button>',
+		name: '<button>在线更新扩展</button>',
 		intro: "从GitHub/Gitee在线获取扩展并更新",
 		clear: true,
 		async onclick() {
