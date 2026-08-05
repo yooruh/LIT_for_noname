@@ -25,16 +25,17 @@ export const skill = {
                 player.addSkill("lit_shengji_markAfterShow");
             }
             player.setStorage("lit_shengji", 0);
+            // 人数不足5或身份为主公，直接升级
+            if (lib.lit.getPlayers() < 5 || player.isZhu || player === game.zhu) {
+                player.useSkill('lit_shengji');
+            }
         },
 
-        trigger: { global: ['dieAfter', 'gameStart'] },
+        trigger: { global: ['dieAfter'] },
         async content(event, trigger, player) {
-            // 开局：全场不足5人 或 玩家为主公 → 升级
-            if (trigger?.name === 'gameStart') {
-                if (lib.lit.getPlayers() >= 5 && !(player.isZhu || player === game.zhu)) return;
-            }
+            // 开场升级条件由 init 强制触发
             // 击杀：全场+1经验，击杀者额外+1；经验≥3 或 全场不足5人 → 升级
-            else if (trigger?.name === 'die') {
+            if (trigger?.name === 'die') {
                 if (!player.isAlive()) return;
                 const expGain = (trigger.source === player && trigger.source.isAlive() ? 1 : 0) + 1;
                 if (player.skills.some(e => lib.lit.isShengjiSkill(e))) {
@@ -246,7 +247,7 @@ export const skill = {
         inherit: 'lit_sj',
         derivation: 'lit_wutongV2',
     },
-    lit_shengjirs: {
+    lit_shengjiwr: {
         inherit: 'lit_sj',
         derivation: 'lit_qixuV2',
     },

@@ -2,7 +2,7 @@
   "defaultBranch": "main",
   "versions": [
     {
-      "extensionVersion": "26.8.3.1",
+      "extensionVersion": "26.8.6.0",
       "gameVersion": ">=1.11.2",
       "branch": "main",
       "description": "支持无名杀1.11.2及以上的版本",
@@ -14,11 +14,11 @@
         "重构叁岛、国战及测试角色包的加载结构，将叁岛与测试技能按角色拆分；统一版本、更新日志与在线更新清单的构建流程，便于后续维护与发布。"
       ],
       "zip": {
-        "filename": "26.8.3.1叁岛世界(一班杀)-code.zip",
-        "size": 334312,
-        "md5": "ec6a4f14b8b680b7bfb05949fb8ca932",
+        "filename": "26.8.6.0叁岛世界(一班杀)-code.zip",
+        "size": 334369,
+        "md5": "21e318b54f463a41ba4966601e68eb8b",
         "branch": "zips",
-        "tag": "v26.8.3.1"
+        "tag": "v26.8.6.0"
       }
     }
   ]

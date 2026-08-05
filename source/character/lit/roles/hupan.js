@@ -389,7 +389,10 @@ export const skill = {
                 async content(event, trigger, player) {
                     let del = player.getStorage("lit_mengying") - player.getStorage("lit_mengying_neg");
                     if (del === 0) return;
-                    if (del > 0) {
+                    if (del === Infinity) {
+                        player.maxHp = player.hp;
+                        player.update();
+                    } else if (del > 0) {
                         await player.loseMaxHp(del);
                     } else {
                         if (player.getStorage("lit_mengying") <= 0) {
@@ -487,8 +490,8 @@ export const skill = {
     lit_fumeng: {
         utils: {
             shouldUse(player) {
-                return game.hasPlayer(current => current.maxHp > 1 
-                    && get.attitude(player, current) < 0 
+                return game.hasPlayer(current => current.maxHp > 1
+                    && get.attitude(player, current) < 0
                     && lib.skill.lit_fumeng.utils.targetScore(player, current) > 0);
             },
             targetScore(player, target) {
@@ -546,7 +549,7 @@ export const skill = {
 
 export const translate = {
     'lit_hupan胡畔': "胡畔",
-    'lit_hupan_chara': "决心",    'lit_cuiruo': "脆弱",
+    'lit_hupan_chara': "决心", 'lit_cuiruo': "脆弱",
     'lit_cuiruo_info': `回合结束阶段，若你不为满体力，你可以摸${X}张牌，然后将体力值调整至${X}（${X}为你已损失的体力值）`,
     'lit_shichou': "誓仇",
     'lit_shichou_info': `锁定技，当你受到伤害后，伤害来源获得“誓”标记；当你体力值为1时，你对所有带“誓”标记的角色造成${Y}点伤害，然后移除所有“誓”标记（${Y}为其体力值与护甲值之和-1）`,
@@ -562,7 +565,8 @@ export const translate = {
     'lit_shengjihp_info': `失去1点体力上限，获得：${get.poptip('lit_yigou')}`,
 };
 
-export const simpleTranslate = {    'lit_cuiruo_info': `回合结束若不为满血可+${X}牌并将体力调至${X}（${X}为已失去的体力）`,
+export const simpleTranslate = {
+    'lit_cuiruo_info': `回合结束若不为满血可+${X}牌并将体力调至${X}（${X}为已失去的体力）`,
     'lit_shichou_info': `锁；受伤后伤害源获得“誓”，血=1时对所有带“誓”者造成${Y}点伤害，并移除所有“誓”（${Y}为其血+护甲-1）`,
     'lit_yigou_info': `限；令他人+1体力上限，你获得${get.poptip("lit_fenhua")}`,
     'lit_fenhua_info': `转；-1血，<li>阳：视为使用或打出无距离和次数限制的杀，若造成伤害则+1血；</li><li>阴：令体力上限>1的1人${get.poptip("lit_mengying")}层数+Z（Z为其已损失体力且至少为1）</li>`,

@@ -5,7 +5,7 @@
   },
   "extension.js": {
     "size": 5235,
-    "md5": "3b96b37a9aea0e5cb685252cbfdc7b8b"
+    "md5": "375099315e9d4d88ba540cf170c8e95d"
   },
   "image/card/lit_diaoka.png": {
     "size": 4793,
@@ -185,7 +185,7 @@
   },
   "info.json": {
     "size": 240,
-    "md5": "c532cc536fad712c6728420fe1a52f9c"
+    "md5": "16faef131d7a6aba03d825781cbe6d42"
   },
   "LICENSE": {
     "size": 35475,
@@ -220,8 +220,8 @@
     "md5": "f44b5067feccd3a991dbe5ad45a86b07"
   },
   "source/character/lit/roles/hupan.js": {
-    "size": 27609,
-    "md5": "4906c6cd065e42e693f2d0c5cab53a55"
+    "size": 27751,
+    "md5": "7c7a6391b466cdc1a4f9d911d336b87c"
   },
   "source/character/lit/roles/huxinyu.js": {
     "size": 11961,
@@ -336,8 +336,8 @@
     "md5": "c72452f730a36ed696d7f5136bd679c6"
   },
   "source/character/lit/_shengji.js": {
-    "size": 10535,
-    "md5": "fec5e9c3a560cb2ae9e65e668d6f0dc9"
+    "size": 10548,
+    "md5": "fdafcf22c648787f04145e95faf540bd"
   },
   "source/character/lit_gz/index.js": {
     "size": 3624,
