@@ -13,6 +13,8 @@
     "zip:dry": "node scripts/zip.mjs --dry-run",
     "zip:check": "node scripts/zip.mjs --check",
     "zip:release": "node scripts/zip.mjs --version",
+    "publish": "node scripts/publish.mjs",
+    "publish:dry": "node scripts/publish.mjs --dry-run",
     "version": "node scripts/build.mjs --current",
     "changelog": "node scripts/changelog.mjs show",
     "changelog:path": "node scripts/changelog.mjs path",

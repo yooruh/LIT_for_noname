@@ -134,7 +134,9 @@ export const skill = {
         delay: false,
         async precontent(event, trigger, player) {
             const result = event.result;
-            if (result.targets.length > 0) result.card = get.autoViewAs({ name: "tiesuo" }, result.cards);
+            if (result.targets.length > 0) { // 修改result的card，走card分支避免发动skill的“重铸”效果
+                result.card = get.autoViewAs({ name: "tiesuo" }, result.cards);
+            }
         },
         async content(event, trigger, player) {
             await player.discard(event.cards);

@@ -173,6 +173,9 @@
     max-height: 350px;
     overflow-y: auto;
     margin-bottom: 20px;
+    /* 抵消无名杀全局 div{position:absolute;display:inline-block} */
+    position: relative !important;
+    display: block !important;
 }
 
 .lit-ui-list-item {
@@ -218,51 +221,153 @@
 
 /* ========== 复杂加载进度条样式 ========== */
 
-/* 进度信息行 */
+/* 下载进度内容按自身高度排列，避免被通用内容区的 flex-grow 推到对话框底部 */
+.lit-complex-loading-dialog {
+    justify-content: flex-start;
+}
+.lit-complex-loading-message {
+    flex: none;
+    margin-bottom: 10px;
+    color: #555;
+}
+.lit-complex-loading-section {
+    width: 100%;
+    box-sizing: border-box;
+    position: relative !important;
+    display: block !important;
+    transition: none !important;
+}
+
+/* 总进度：使用更大、更深的文字作为主要视觉层级 */
+.lit-complex-loading-total {
+    margin-bottom: 18px;
+}
+.lit-complex-loading-section-title {
+    margin-bottom: 5px;
+    color: #111;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.35;
+    position: relative !important;
+    display: block !important;
+    transition: none !important;
+}
 .lit-complex-loading-info {
-    display: flex;
+    display: flex !important;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0;
-    font-size: 14px;
-    min-height: 24px;
+    align-items: baseline;
+    min-height: 30px;
+    position: relative !important;
+    transition: none !important;
 }
 .lit-complex-loading-percent {
-    font-weight: bold;
-    color: #2196F3;
+    min-width: 66px;
+    color: #111;
     font-family: monospace;
-    min-width: 50px;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.3;
     text-align: right;
 }
 .lit-complex-loading-status {
-    color: #666;
     flex: 1;
+    padding-right: 16px;
+    color: #222;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.4;
     text-align: left;
-    padding-right: 15px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+.lit-complex-loading-detail {
+    margin-top: 2px;
+    color: #333;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    position: relative !important;
+    transition: none !important;
+}
 
-/* 进度条容器 */
+/* 主进度条 */
 .lit-complex-loading-bar-container {
     width: 100%;
-    height: 10px;
-    background: #e8e8e8;
-    border-radius: 5px;
+    height: 12px;
+    margin-top: 9px;
+    background: #e2e6ea;
+    border-radius: 6px;
     overflow: hidden;
     position: relative;
-    margin-bottom: 15px;
+    display: block !important;
+    transition: none !important;
 }
-/* 实体进度条 */
 .lit-complex-loading-bar-fill {
     height: 100%;
-    background: #2196F3;
-    border-radius: 5px;
-    transition: width 0.3s ease;
     width: 0%;
     z-index: 2;
+    background: #2196F3;
+    border-radius: 6px;
+    transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    /* 块级铺满槽高：抵消全局 div{display:inline-block} 的基线裁剪 */
+    display: block !important;
+    position: relative !important;
 }
+
+/* 当前文件：浅色独立分组 + 橙色细条，弱于总进度但保持可读 */
+.lit-complex-loading-file {
+    padding: 11px 12px 12px;
+    background: #f6f7f9;
+    border-left: 3px solid #ff9800;
+    border-radius: 7px;
+}
+.lit-complex-loading-file-title {
+    margin-bottom: 4px;
+    color: #777;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+    position: relative !important;
+    display: block !important;
+    transition: none !important;
+}
+.lit-complex-loading-file-label {
+    min-width: 0;
+    margin-bottom: 8px;
+    color: #555;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    /* 抵消全局 div{position:absolute;display:inline-block}，恢复文档流与块级 */
+    position: relative !important;
+    display: block !important;
+    transition: none !important;
+}
+.lit-complex-loading-filebar-container {
+    width: 100%;
+    height: 6px;
+    background: #dfe3e8;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+    display: block !important;
+    transition: none !important;
+}
+.lit-complex-loading-filebar-fill {
+    height: 100%;
+    width: 0%;
+    background: #ff9800;
+    border-radius: 3px;
+    transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    /* 块级铺满槽高：抵消全局 div{display:inline-block} 的基线裁剪 */
+    display: block !important;
+    position: relative !important;
+}
+
 /* 不确定(循环)进度条 */
 .lit-complex-loading-indeterminate {
     position: absolute;
@@ -282,6 +387,8 @@
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid #eee;
+    position: relative !important;
+    transition: none !important;
 }
 
 /* 状态颜色 */
@@ -475,6 +582,15 @@
         min-width: auto;
         padding: 20px;
     }
+    .lit-complex-loading-section-title {
+        font-size: 17px;
+    }
+    .lit-complex-loading-percent {
+        font-size: 20px;
+    }
+    .lit-complex-loading-status {
+        font-size: 15px;
+    }
     .lit-ui-button-row {
         flex-direction: column-reverse;
     }
@@ -501,6 +617,29 @@
     .lit-ui-content {
         font-size: 14px;
         margin-bottom: 15px;
+    }
+    .lit-complex-loading-message {
+        margin-bottom: 8px;
+    }
+    .lit-complex-loading-total {
+        margin-bottom: 14px;
+    }
+    .lit-complex-loading-section-title {
+        font-size: 16px;
+    }
+    .lit-complex-loading-percent {
+        min-width: 58px;
+        font-size: 19px;
+    }
+    .lit-complex-loading-status {
+        padding-right: 10px;
+        font-size: 14px;
+    }
+    .lit-complex-loading-detail {
+        font-size: 13px;
+    }
+    .lit-complex-loading-file {
+        padding: 9px 10px 10px;
     }
     .lit-ui-input {
         font-size: 16px; /* 防止iOS自动缩放 */

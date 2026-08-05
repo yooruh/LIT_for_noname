@@ -33,12 +33,12 @@ export const skill = {
         logTarget: "target",
         preHidden: true,
         async content(event, trigger, player) {
-            const { bool } = await player.judge(card => {
+            const result = await player.judge(card => {
                 if (get.suit(card) === "diamond") return 3;
                 return -0.5;
             }).set("judge2", result => result.bool)
                 .set("forceDie", true).forResult();
-            if (bool) {
+            if (result.bool) {
                 trigger.getParent().baseDamage++;
                 trigger.getParent().directHit.add(trigger.target);
             }

@@ -338,15 +338,26 @@ class ExtensionUpdater {
     }
 
     // 核心下载逻辑
-    async downloadFiles(onProgress, onFileStart) {
+    async downloadFiles(onProgress, onFileStart, onFileComplete) {
         const pending = this.state.getPending()
             .map(p => this.tasks.find(t => t.remote === p.path))
             .filter(Boolean);
 
         if (pending.length === 0) return this.state.data.stats;
 
-        let completedCount = this.tasks.length - pending.length;
-        let totalDownloadedBytes = this.state.data.stats.bytes;
+        const downloadable = pending.filter(task => !task.skip);
+        if (downloadable.length === 0) {
+            for (const task of pending) {
+                await this.state.updateFile(task.remote, 'skipped', null, null, 0, true);
+            }
+            await this.state.flush();
+            return this.state.data.stats;
+        }
+
+        let completedCount = 0;
+        let totalDownloadedBytes = 0;
+        let roundTotalBytes = downloadable.reduce((sum, task) => sum + (task.size || 0), 0);
+        let unknownSizeCount = downloadable.filter(task => !(task.size > 0)).length;
         let lastForceSaveTime = Date.now();
         const FORCE_SAVE_INTERVAL = 5000; // 每5秒强制保存一次
 
@@ -354,59 +365,104 @@ class ExtensionUpdater {
         await utils.asyncPool(CONFIG.limits.maxConcurrent, pending, async (task) => {
             if (task.skip) {
                 await this.state.updateFile(task.remote, 'skipped', null, null, 0, true);
-                completedCount++;
                 return;
             }
 
             if (onFileStart) onFileStart(task.remote, task.size);
 
-            let lastReportedBytes = 0;
+            let accountedBytes = 0;
+            let accountedTotal = task.size || 0;
             let lastProgressSave = Date.now();
+            let lastUiTime = 0;
+            let result = null;
 
-            const result = await this.downloader.download(task, async (received, total) => {
-                // 细粒度进度 - 使用防抖，但定期强制保存
-                task.downloadedBytes = received;
-                const delta = received - lastReportedBytes;
-                const now = Date.now();
-
-                // 每64KB或完成时更新内存进度
-                if (delta > 65536 || received === total) {
+            const reportProgress = (received, fileTotal, force = false) => {
+                const normalized = Math.max(accountedBytes, Number(received) || 0);
+                const delta = normalized - accountedBytes;
+                if (delta > 0) {
                     totalDownloadedBytes += delta;
-                    lastReportedBytes = received;
-
-                    // 每2秒或完成时强制保存进度
-                    if (now - lastProgressSave > 2000 || received === total) {
-                        await this.state.updateProgress(task.remote, received, true);
-                        lastProgressSave = now;
-                    } else {
-                        await this.state.updateProgress(task.remote, received, false);
-                    }
-
-                    if (onProgress) {
-                        onProgress(received, total, totalDownloadedBytes, this.totalBytes, completedCount, pending.length);
-                    }
+                    accountedBytes = normalized;
+                }
+                if (normalized > accountedTotal) {
+                    roundTotalBytes += normalized - accountedTotal;
+                    accountedTotal = normalized;
                 }
 
-                // 定期强制刷新所有状态
-                if (now - lastForceSaveTime > FORCE_SAVE_INTERVAL) {
-                    await this.state.flush();
-                    lastForceSaveTime = now;
+                totalDownloadedBytes = Math.min(totalDownloadedBytes, roundTotalBytes);
+                if (onProgress && (force || delta > 0)) {
+                    onProgress(
+                        task.remote,
+                        normalized,
+                        fileTotal,
+                        totalDownloadedBytes,
+                        unknownSizeCount > 0 ? 0 : roundTotalBytes,
+                        completedCount,
+                        downloadable.length
+                    );
                 }
-            }, this.state); // 传入 stateManager 以便内部管理状态流转
+            };
 
-            if (result.success) {
-                completedCount++;
-                // 状态已在 download 方法中强制保存，这里更新计数即可
-            } else {
-                // 失败状态也已在 download 方法中保存
-                // 动态 Token 提示
-                if (result.needToken && !this._tokenPrompted) {
+            try {
+                result = await this.downloader.download(task, async (received, total) => {
+                    task.downloadedBytes = received;
+                    const fileTotal = task.size || total || 0;
+                    const delta = Math.max(0, received - accountedBytes);
+                    const now = Date.now();
+                    const completed = fileTotal > 0 && received >= fileTotal;
+
+                    // 每次网络数据事件都刷新UI；状态落盘仍由 StateManager 自身防抖。
+                    if (delta > 0 || completed || now - lastUiTime >= 500) {
+                        reportProgress(received, fileTotal, true);
+                        lastUiTime = now;
+
+                        // 每2秒或完成时强制保存进度
+                        if (now - lastProgressSave > 2000 || completed) {
+                            await this.state.updateProgress(task.remote, received, true);
+                            lastProgressSave = now;
+                        } else {
+                            await this.state.updateProgress(task.remote, received, false);
+                        }
+                    }
+
+                    // 定期强制刷新所有状态
+                    if (now - lastForceSaveTime > FORCE_SAVE_INTERVAL) {
+                        await this.state.flush();
+                        lastForceSaveTime = now;
+                    }
+                }, this.state); // 传入 stateManager 以便内部管理状态流转
+
+                if (result.success) {
+                    const actualSize = result.size || task.size || accountedBytes;
+                    // 清单大小与实际大小不一致时同步修正本轮分母，保证最终收敛到100%。
+                    roundTotalBytes = Math.max(0, roundTotalBytes + actualSize - accountedTotal);
+                    accountedTotal = actualSize;
+                    if (!(task.size > 0)) unknownSizeCount = Math.max(0, unknownSizeCount - 1);
+                    completedCount++;
+                    reportProgress(actualSize, actualSize, true);
+                } else if (result.needToken && !this._tokenPrompted) {
+                    // 失败状态已在 download 方法中保存；动态 Token 提示
                     this._tokenPrompted = true;
                     const token = await this.ui.promptForToken(this.repo.platform, result.errorType);
                     if (token) {
                         this.tokens.set(this.repo.platform, token);
                         this.downloader = new SmartDownloader(this.repo, this.tokens);
                     }
+                }
+            } catch (error) {
+                console.error(`[下载] ${task.remote} 异常:`, error);
+                result = { success: false, error: String(error?.message || error), errorType: 'network' };
+                try {
+                    await this.state.updateFile(task.remote, 'failed', result.error, result.errorType, 0, true);
+                } catch (stateError) {
+                    console.error(`[下载] ${task.remote} 保存失败状态异常:`, stateError);
+                }
+            } finally {
+                if (onFileComplete) {
+                    onFileComplete(
+                        task.remote,
+                        result?.success ? (result.size || task.size || accountedBytes) : (task.size || accountedBytes),
+                        !!result?.success
+                    );
                 }
             }
         });
@@ -417,7 +473,7 @@ class ExtensionUpdater {
     }
 
     // 仅重试失败文件
-    async retryFailedFiles(onProgress, onFileStart) {
+    async retryFailedFiles(onProgress, onFileStart, onFileComplete) {
         const failed = this.state.getFailed();
         if (failed.length === 0) return this.state.data.stats;
 
@@ -427,7 +483,7 @@ class ExtensionUpdater {
         // 重新计算总字节数（仅失败文件）
         this.totalBytes = failed.reduce((sum, f) => sum + (f.size || 0), 0);
 
-        return this.downloadFiles(onProgress, onFileStart);
+        return this.downloadFiles(onProgress, onFileStart, onFileComplete);
     }
 
     async applyUpdate() {
@@ -959,14 +1015,15 @@ class ExtensionUpdater {
                 }
             }
 
-            // 获取待下载文件数
-            const pendingCount = retryMode
-                ? this.state.getFailed().length
-                : this.state.getPending().length;
-
-            const totalBytes = retryMode
-                ? this.state.getFailed().reduce((s, f) => s + (f.size || 0), 0)
-                : this.totalBytes;
+            // 获取本轮真正需要下载的文件；auto 模式中已命中本地校验的 skip 项不计入进度分母。
+            const pendingFiles = retryMode
+                ? this.state.getFailed()
+                : this.state.getPending().filter(file => {
+                    const task = this.tasks.find(item => item.remote === file.path);
+                    return task && !task.skip;
+                });
+            const pendingCount = pendingFiles.length;
+            const totalBytes = pendingFiles.reduce((sum, file) => sum + (file.size || 0), 0);
 
             if (pendingCount === 0 && !this.state.hasPendingApply()) {
                 return { success: true, stats: this.state.data.stats, message: '所有文件已是最新' };
@@ -981,30 +1038,23 @@ class ExtensionUpdater {
                 );
             }
 
-            let currentFileIndex = 0;
             if (pendingCount > 0) {
                 // 执行下载（区分正常下载、断点续传和重试下载）
+                const onProgress = (name, fileRec, fileTot, totalRec, totalTot, idx, tot) => {
+                    progressUI.updateProgress(name, fileRec, fileTot, totalRec, totalTot, idx, tot);
+                };
+                const onFileStart = (name, size) => {
+                    progressUI.setFile(name, size);
+                };
+                const onFileComplete = (name, size, success) => {
+                    progressUI.finishFile(name, size, success);
+                };
                 const downloadMethod = retryMode
-                    ? () => this.retryFailedFiles(
-                        (fileRec, fileTot, totalRec, totalTot, idx, tot) => {
-                            progressUI.updateProgress(fileRec, fileTot, totalRec, totalTot, idx, tot);
-                        },
-                        (name, size) => {
-                            currentFileIndex++;
-                            progressUI.setFile(name, size);
-                        }
-                    )
-                    : () => this.downloadFiles(
-                        (fileRec, fileTot, totalRec, totalTot, idx, tot) => {
-                            progressUI.updateProgress(fileRec, fileTot, totalRec, totalTot, idx, tot);
-                        },
-                        (name, size) => {
-                            currentFileIndex++;
-                            progressUI.setFile(name, size);
-                        }
-                    );
+                    ? () => this.retryFailedFiles(onProgress, onFileStart, onFileComplete)
+                    : () => this.downloadFiles(onProgress, onFileStart, onFileComplete);
 
                 await downloadMethod();
+                await progressUI.drain();
                 progressUI.close();
             }
 
@@ -1022,7 +1072,8 @@ class ExtensionUpdater {
                     failed.map(f => ({
                         path: f.path,
                         error: f.error,
-                        errorType: f.errorType
+                        errorType: f.errorType,
+                        kind: f.kind // 'zip' = code.zip 哨兵任务；其余为 'file'
                     }))
                 );
 

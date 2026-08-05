@@ -421,16 +421,26 @@ const DialogManager = (() => {
                     width: options.width || 'min(480px, 90vw)',
                     minHeight: options.minHeight || 'auto'
                 });
+                dialog.classList.add('lit-complex-loading-dialog');
 
                 // 主消息文本
                 const msgEl = document.createElement('div');
-                msgEl.className = 'lit-ui-content lit-ui-message';
+                msgEl.className = 'lit-ui-content lit-ui-message lit-complex-loading-message';
                 msgEl.textContent = message;
                 dialog.appendChild(msgEl);
 
-                // 进度信息行（百分比 + 状态）
+                // 总进度区域
+                const totalSection = document.createElement('div');
+                totalSection.className = 'lit-complex-loading-section lit-complex-loading-total';
+
+                const totalTitleEl = document.createElement('div');
+                totalTitleEl.className = 'lit-complex-loading-section-title';
+                totalTitleEl.textContent = '总进度';
+                totalSection.appendChild(totalTitleEl);
+
+                // 进度信息行（状态 + 百分比）
                 const infoRow = document.createElement('div');
-                infoRow.className = 'lit-ui-content lit-complex-loading-info';
+                infoRow.className = 'lit-complex-loading-info';
                 const percentEl = document.createElement('span');
                 percentEl.className = 'lit-complex-loading-percent';
                 percentEl.textContent = '0%';
@@ -440,9 +450,16 @@ const DialogManager = (() => {
 
                 infoRow.appendChild(statusEl);
                 infoRow.appendChild(percentEl);
-                dialog.appendChild(infoRow);
+                totalSection.appendChild(infoRow);
 
-                // 进度条容器
+                // 详细信息（总大小或已下载大小）
+                const detailEl = document.createElement('div');
+                detailEl.className = 'lit-complex-loading-detail';
+                detailEl.style.display = options.initialDetail ? 'block' : 'none';
+                if (options.initialDetail) detailEl.textContent = options.initialDetail;
+                totalSection.appendChild(detailEl);
+
+                // 主进度条（总进度）
                 const progressContainer = document.createElement('div');
                 progressContainer.className = 'lit-complex-loading-bar-container';
 
@@ -458,14 +475,32 @@ const DialogManager = (() => {
 
                 progressContainer.appendChild(progressFill);
                 progressContainer.appendChild(indeterminateBar);
-                dialog.appendChild(progressContainer);
+                totalSection.appendChild(progressContainer);
+                dialog.appendChild(totalSection);
 
-                // 详细信息/文件名显示区域
-                const detailEl = document.createElement('div');
-                detailEl.className = 'lit-ui-content';
-                detailEl.style.display = options.initialDetail ? 'block' : 'none';
-                if (options.initialDetail) detailEl.textContent = options.initialDetail;
-                dialog.appendChild(detailEl);
+                // 当前文件区域（仅 options.fileBar 时显示）
+                const fileSection = document.createElement('div');
+                fileSection.className = 'lit-complex-loading-section lit-complex-loading-file';
+                fileSection.style.display = options.fileBar ? 'block' : 'none';
+
+                const fileTitleEl = document.createElement('div');
+                fileTitleEl.className = 'lit-complex-loading-file-title';
+                fileTitleEl.textContent = '当前文件';
+                fileSection.appendChild(fileTitleEl);
+
+                const fileLabelEl = document.createElement('div');
+                fileLabelEl.className = 'lit-complex-loading-file-label';
+                if (options.fileBar && options.initialFileName) fileLabelEl.textContent = options.initialFileName;
+                fileSection.appendChild(fileLabelEl);
+
+                const fileBarContainer = document.createElement('div');
+                fileBarContainer.className = 'lit-complex-loading-filebar-container';
+                const fileBarFill = document.createElement('div');
+                fileBarFill.className = 'lit-complex-loading-filebar-fill';
+                fileBarFill.style.width = '0%';
+                fileBarContainer.appendChild(fileBarFill);
+                fileSection.appendChild(fileBarContainer);
+                dialog.appendChild(fileSection);
 
                 // 操作按钮区域（可选）
                 const actionRow = document.createElement('div');
@@ -488,6 +523,7 @@ const DialogManager = (() => {
 
                 // 内部状态
                 let currentProgress = 0;
+                let currentFileProgress = 0;
                 let isIndeterminate = options.indeterminate || false;
 
                 // 返回控制器对象
@@ -537,6 +573,16 @@ const DialogManager = (() => {
                                 percentEl.classList.add(`lit-state-${state}`);
                             }
                         }
+
+                        // 次级进度条（当前文件进度）
+                        if (opts.filePercent !== undefined) {
+                            currentFileProgress = Math.max(0, Math.min(100, Math.round(opts.filePercent)));
+                            fileBarFill.style.width = `${currentFileProgress}%`;
+                        }
+                        if (opts.fileName !== undefined) {
+                            fileLabelEl.textContent = opts.fileName;
+                            fileLabelEl.style.display = opts.fileName ? 'block' : 'none';
+                        }
                     },
 
                     setIndeterminate: (enable = true, statusText) => {
@@ -565,6 +611,7 @@ const DialogManager = (() => {
                         percentEl.textContent = '100%';
                         progressFill.classList.add('lit-state-success');
                         percentEl.classList.add('lit-state-success');
+                        if (options.fileBar) fileBarFill.style.width = '100%';
                         if (message) {
                             msgEl.textContent = message;
                             statusEl.textContent = '完成';
@@ -585,6 +632,10 @@ const DialogManager = (() => {
                         progressFill.classList.add('lit-state-error');
                         percentEl.classList.add('lit-state-error');
                         dialog.classList.add('lit-loading-error');
+                        if (options.fileBar) {
+                            fileBarFill.classList.add('lit-state-error');
+                            fileLabelEl.classList.add('lit-state-error');
+                        }
 
                         if (message) {
                             msgEl.textContent = message;
@@ -610,6 +661,56 @@ const DialogManager = (() => {
                         detailEl.textContent = text;
                         detailEl.style.display = text ? 'block' : 'none';
                     },
+
+                    // 更新次级进度条：文件名标签与当前文件进度百分比（均可选）
+                    setFileBar: (name, percent, opts = {}) => {
+                        if (name !== undefined && name !== null) {
+                            fileLabelEl.textContent = String(name);
+                            fileLabelEl.style.display = 'block';
+                        }
+                        if (percent !== undefined && percent !== null) {
+                            currentFileProgress = Math.max(0, Math.min(100, Math.round(percent)));
+                            if (opts.immediate) {
+                                const transition = fileBarFill.style.transition;
+                                fileBarFill.style.transition = 'none';
+                                fileBarFill.style.width = `${currentFileProgress}%`;
+                                void fileBarFill.offsetWidth;
+                                fileBarFill.style.transition = transition;
+                            } else {
+                                fileBarFill.style.width = `${currentFileProgress}%`;
+                            }
+                        }
+                    },
+
+                    waitForFileBar: (target = currentFileProgress, timeout = 700) => {
+                        const expected = Math.max(0, Math.min(100, Math.round(target)));
+                        if (currentFileProgress !== expected) return Promise.resolve(false);
+
+                        const rendered = parseFloat(getComputedStyle(fileBarFill).width) || 0;
+                        const totalWidth = fileBarContainer.getBoundingClientRect().width;
+                        const renderedPercent = totalWidth > 0 ? (rendered / totalWidth) * 100 : expected;
+                        if (Math.abs(renderedPercent - expected) < 0.5) return Promise.resolve(true);
+
+                        return new Promise(resolveWait => {
+                            let settled = false;
+                            const finish = (result) => {
+                                if (settled) return;
+                                settled = true;
+                                clearTimeout(timer);
+                                fileBarFill.removeEventListener('transitionend', onEnd);
+                                resolveWait(result);
+                            };
+                            const onEnd = (event) => {
+                                if (event.target === fileBarFill && event.propertyName === 'width') finish(true);
+                            };
+                            const timer = setTimeout(() => finish(false), timeout);
+                            fileBarFill.addEventListener('transitionend', onEnd);
+                        });
+                    },
+
+                    nextFrame: () => new Promise(resolveFrame => {
+                        requestAnimationFrame(() => requestAnimationFrame(resolveFrame));
+                    }),
 
                     getProgress: () => currentProgress,
 

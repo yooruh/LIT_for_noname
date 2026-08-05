@@ -113,7 +113,8 @@ export const skill = {
                 sourceSkill: "lit_jijinV2",
             },
         },
-    }, lit_shouji: {
+    },
+    lit_shouji: {
         lit_neg: 2,
         derivation: "lit_negClear_faq",
         mark: true,

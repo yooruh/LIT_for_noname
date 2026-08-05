@@ -99,8 +99,12 @@ export const skill = {
         },
         ai: {
             threaten: 0.6,
+            "maixie_hp": true,
             "maixie_defend": true,
             skillTagFilter: (player, tag, arg) => {
+                if (tag === "maixie_hp") {
+                    return arg?.player === player && player.hp === 2;
+                }
                 if (tag === "maixie_defend") {
                     return arg?.player?.hp > 1 && player.hp > 1;
                 }
@@ -180,9 +184,10 @@ export const skill = {
             return target.isIn() && target !== player;
         },
         prompt: "令场上的1名其他角色增加1点体力上限，然后你获得【分化】",
-        async content(event, trigger, player) {
-            player.storage.lit_yigou = true;
+        contentBefore(event, trigger, player) {
             player.awakenSkill("lit_yigou");
+        },
+        async content(event, trigger, player) {
             const target = event.targets[0];
             await target.gainMaxHp();
             await player.addSkills("lit_fenhua");

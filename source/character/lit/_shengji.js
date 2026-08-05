@@ -44,10 +44,6 @@ export const skill = {
                 }
                 if (player.countMark('lit_shengji') < 3 && lib.lit.getPlayers() >= 5) return;
             }
-            // 其它触发（防御）不升级
-            else {
-                return;
-            }
 
             player.clearMark('lit_shengji', false);
             await player.logSkill('lit_shengji');

@@ -877,6 +877,8 @@ export let info = {
                                 deadPlayer.skillH = [];
                                 deadPlayer.reinit(deadPlayer.name, initTarget, [lib.character[initTarget].hp, lib.character[initTarget].maxHp]);
                                 await deadPlayer.reviveEvent(deadPlayer.maxHp, false);
+                                // 变将复活入场：触发 enterGame，让入场技生效
+                                await game.triggerEnter(deadPlayer);
                                 deadPlayer.addSkill("sdhh_noCard");
                             }
                         };

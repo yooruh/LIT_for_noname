@@ -34,7 +34,7 @@ export const skill = {
         position: 'hes',
         discard: false,
         lose: false,
-        delay: 0,
+        delay: false,
         check(card) {
             const player = get.owner(card);
             if (get.tag(card, "damage")) return get.value(card);
@@ -71,24 +71,14 @@ export const skill = {
             order: () => {
                 return get.order({ name: "nanman" }) + 0.03;
             },
-            expose: 0.1,
             threaten: 1.1,
             result: {
-                player: (player, target, card) => {
-                    if (!card) return;
-                    if (get.tag(card, "damage") && target) {
-                        let res = 0;
-                        const user = target;
-                        if (user.hasSkillTag("directHit_ai", true, { card: card }, true)) res += 2;
-                        if (user.hasSkillTag("damageBonus", true, { card: card }, true)) res += 1;
-
-                        const canActuallyUse = user.hasUseTarget(card, true, true);
-                        return (canActuallyUse ? 0.5 : -0.5) + get.threaten(target) / 2 + res;
-                    }
-                    if (target?.hasUseTarget(card, true, true)) return 0.6;
-                    return -0.5;
+                player: 0.6,
+                target: (player, target) => {
+                    let res = 1 + get.threaten(target) / 2;
+                    if (target.countCards("h") <= 2) res += 0.5;
+                    return res;
                 },
-                target: 1.2,
             },
         },
         subSkill: {

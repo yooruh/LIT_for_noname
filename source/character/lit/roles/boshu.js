@@ -99,7 +99,7 @@ export const skill = {
                         target.addSkill('lit_guimi_total');
                         target.setStorage("lit_guimi_total", player);
                         player.setStorage("lit_guimi", target);
-                        await event.trigger("lit_guimi_set");
+                        await event.trigger("lit_trigger_guimi_set");
                     }
                 },
                 ai: {
@@ -268,7 +268,7 @@ export const skill = {
         },
         group: ["lit_yisui_damage", "lit_yisui_die"],
         trigger: {
-            player: ["loseAfter", "lit_guimi_set"],
+            player: ["loseAfter", "lit_trigger_guimi_set"],
             global: ["gameDrawAfter", "equipAfter", "addJudgeAfter", "gainAfter", "loseAsyncAfter", "addToExpansionAfter"],
         },
         forced: true,
@@ -281,7 +281,7 @@ export const skill = {
                 return current.hasMark('lit_guimi');
             })) return false;
             if (player.countCards("h") === handcardsMax) return false;
-            if (name === "lit_guimi_set") return true;
+            if (name === "lit_trigger_guimi_set") return true;
             if (event.name === "gameDraw" || event.name === "gain" && event.player === player) return player.countCards("h") > handcardsMax;
             let evt = event.getl(player);
             if (!evt || !evt.hs || evt.hs.length === 0 || player.countCards("h") >= handcardsMax) return false;

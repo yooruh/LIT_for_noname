@@ -1,2 +1,3 @@
 node_modules/
 scripts/lib/dev-config.local.json
+/.zips-worktree

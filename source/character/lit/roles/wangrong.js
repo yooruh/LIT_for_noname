@@ -95,9 +95,8 @@ export const skill = {
 
                             // 获取如果发生回血的收益；考虑到要先吃到延时牌，再在准备阶段主动弃判定区牌，收益不宜高估
                             let divAtt = Math.abs(get.attitude(player, skiller)) ?? 5;
-                            let futureRecover = get.recoverEffect(skiller, target, player) / divAtt;
-                            let eff = futureRecover - 0.6;
-                            if (eff <= 0) return;
+                            let eff = get.recoverEffect(skiller, target, player) / divAtt;
+                            if (eff <= 0.6) return;
                             return [1, 0, 1, eff * 0.6];
                         },
                     },
@@ -255,7 +254,7 @@ export const skill = {
             game.log(target, "选择了", `#y${controlTanslation}`);
             target.chat("我选" + controlTanslation);
 
-            const { suit } = await target.judge(card => {
+            const judgeResult = await target.judge(card => {
                 if (get.suit(card) === control) return 1;
                 let judgeName = "";
                 switch (get.suit(card)) {
@@ -267,8 +266,9 @@ export const skill = {
                 }
                 return Math.min(get.effect(target, { name: judgeName }, player, target), 0);
             }).set("judge2", result => result.bool).forResult();
+            const { suit } = judgeResult;
             game.delay(2);
-
+            
             if (!suit) return;
             if (suit === control) {
                 if (!player.hasSkill("lit_qixuV2")) await player.removeSkills("lit_qixu");

@@ -1,4 +1,5 @@
 import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
+import { extensionPath } from '../../../tool/utils/paths.js';
 
 export const sort = 'sdp';
 export const title = `复活·双形态·${styleText('o', "较难")}`;
@@ -17,6 +18,12 @@ export const character = {
     },
 };
 
+export const characterSubstitute = {
+    'lit_yutong雨桐': [
+        ['lit_yutong_zhong', [`img:${extensionPath}/image/character/lit_zhongyutong.png`]],
+    ],
+};
+
 export const skill = {
     lit_qiqi: {
         trigger: {
@@ -24,27 +31,28 @@ export const skill = {
         },
         filter(event, player) {
             const target = event.player;
-            if (target === player || !target.isIn()) return false;
+            if (!player.isIn() || !target.isIn()) return false;
             if (player.hp === target.hp) return false;
-            if (event.name === 'dying') return !target.hasSkill('lit_qiqi_used');
-            return target.hp > 0;
+            return !target.hasSkill('lit_qiqi_used');
         },
         async cost(event, trigger, player) {
             const target = trigger.player;
             const dying = trigger.name === 'dying';
             const result = await player.chooseBool(
-                `歧戚：${get.translation(target)}${dying ? '正在濒死' : '失去体力'}，是否将体力值与其互换？${player.hp > target.hp ? '' : '（你将失去1点体力上限）'}`
-                + `<li>你的体力值（${player.hp}↔${target.hp}）</li><li>${get.translation(target)}的体力值（${target.hp}↔${player.hp}）</li>`
+                `歧戚：${get.translation(target)}${dying ? '处于濒死状态' : '失去了体力'}，是否将体力值与其互换？${player.hp > target.hp ? '' : '（你将失去1点体力上限）'}`
+                + `<li>你的体力值（${player.hp}→${Math.min(target.hp, player.maxHp)}）</li><li>TA的体力值（${target.hp}→${Math.min(player.hp, target.maxHp)}）</li>`
             ).set('ai', () => {
-                if (dying) return get.attitude(player, target) > 0;
-                if (get.attitude(player, target) < 0) return target.hp > player.hp;
-                return get.attitude(player, target) > 0 && target.hp < player.hp;
+                const att = get.attitude(player, target);
+                if (dying || target.hp < player.hp) return att > 0;
+                const gainByExchange = 0
+                    + get.effect(target, { name: "losehp" }, player, player)
+                    + get.effect(player, { name: "recover" }, player, player) / 3.3;
+                return gainByExchange;
             }).forResult();
             event.result = { bool: result.bool };
         },
         async content(event, trigger, player) {
             const target = trigger.player;
-            if (!target.isIn()) return;
             const delta = target.hp - player.hp;
             if (delta > 0) {
                 await target.loseHp(delta);
@@ -54,7 +62,7 @@ export const skill = {
                 await target.recover(-delta);
                 await player.loseHp(-delta);
             }
-            if (trigger.name === 'dying') target.addTempSkill('lit_qiqi_used', 'roundStart');
+            target.addTempSkill('lit_qiqi_used');
         },
         subSkill: {
             used: {
@@ -75,19 +83,22 @@ export const skill = {
             const target = trigger.player;
             const x = target.hp - 1;
             const result = await target.chooseBool(
-                `跫音：是否失去${x}点体力至1点，令${get.translation(player)}判定？（红：其+${x}点体力上限并摸${x}张牌；黑：其恢复${x}点体力）`
+                `跫音：是否失去${x}点体力至1点，令${get.translation(player)}判定？<li>红：其+${x}点体力上限并摸${x}张牌</li><li>黑：其恢复${x}点体力</li>`
             ).set('ai', () => {
                 return get.attitude(target, player) > 0;
             }).forResult();
-            event.result = { bool: result.bool, cost_data: { target, x } };
+            event.result = { bool: result.bool, cost_data: { x } };
         },
         async content(event, trigger, player) {
-            const { target, x } = event.cost_data;
-            if (!target || !target.isIn() || x <= 0) return;
-            await target.loseHp(x);
-            const result = await player.judge();
-            const suit = result.card ? get.suit(result.card) : '';
-            if (suit === 'heart' || suit === 'diamond') {
+            const { x } = event.cost_data;
+            await trigger.player.loseHp(x);
+            const result = await player.judge(card => {
+                if (get.color(card) === "red") return 3;
+                return 3.5 - player.hp + Math.min(x, player.maxHp - player.hp);
+            }).forResult();
+
+            const { color } = result;
+            if (color === 'red') {
                 await player.gainMaxHp(x);
                 await player.draw(x);
             } else {
@@ -96,52 +107,81 @@ export const skill = {
         },
     },
     lit_pobi: {
-        forced: true,
+        direct: true,
         juexingji: true,
-        skillAnimation: true,
-        animationColor: "water",
         mark: true,
         marktext: "壁",
         intro: {
             name: "破壁",
-            content: "死亡前：给其他所有人的判定区置入一张虚拟遣返牌，取消此次死亡，更换角色牌为“钟雨桐”，体力重置为新角色牌值，体力上限保留",
+            content: `死亡前：取消此次死亡，给其他所有人的判定区置入一张虚拟${get.poptip("lit_qianfanpai")}，更换角色牌为“钟雨桐”，体力重置为新角色牌值，体力上限保留`,
         },
         trigger: { player: 'dieBefore' },
         async content(event, trigger, player) {
-            for (const other of game.filterPlayer(p => p !== player)) {
-                if (!other.hasJudge('lit_qianfanpai')) {
-                    await other.addJudge({ name: 'lit_qianfanpai' });
-                }
-            }
-            player.awakenSkill('lit_pobi');
+            player.changeSkin(event.name, "lit_yutong_zhong");
             trigger.cancel();
-            const targetName = (get.mode() === 'guozhan' && lib.character['gz_lit_zhongyutong钟雨桐'])
-                ? 'gz_lit_zhongyutong钟雨桐' : 'lit_zhongyutong钟雨桐';
-            await player.reinit(player.name, targetName, [Math.min(3, player.maxHp), player.maxHp]);
-            if (player.hasSkill('lit_chixin')) {
-                player.addSkill('lit_chixin');
-                player.removeSkill('lit_shengjizyt');
-            } else if (player.skills.some(e => lib.lit.isShengjiSkill(e)) && !player.hasSkill('lit_shengji')) {
-                player.addSkill('lit_shengji');
-            }
+            await event.trigger("lit_trigger_pobi_use");
+        },
+        group: "lit_pobi_main",
+        subSkill: {
+            main: {
+                forced: true,
+                juexingji: true,
+                skillAnimation: true,
+                animationStr: "破壁",
+                animationColor: "water",
+                trigger: { player: 'lit_trigger_pobi_use' },
+                async content(event, trigger, player) {
+                    player.awakenSkill('lit_pobi');
+
+                    for (const other of game.filterPlayer(p => p !== player)) {
+                        if (!other.hasJudge('lit_qianfanpai')) {
+                            await other.addJudge({ name: 'lit_qianfanpai' });
+                        }
+                    }
+                    const shengjiCount = player.countMark('lit_shengji');
+                    const targetName = (get.mode() === 'guozhan' && lib.character['gz_lit_zhongyutong钟雨桐'])
+                        ? 'gz_lit_zhongyutong钟雨桐' : 'lit_zhongyutong钟雨桐';
+                    game.log(player, "将自己的角色牌变更为了", targetName);
+                    await player.reinit(player.name, targetName, [Math.min(lib.character[targetName].hp, player.maxHp), player.maxHp]);
+                    await player.changeGroup('one', false);
+                    player.setMark('lit_shengji', shengjiCount);
+
+                    // 手动触发 enterGame，让传说等入场技生效
+                    await game.triggerEnter(player);
+                    if (player.hasSkill('lit_chixin')) {
+                        player.addSkill('lit_chixin');
+                        player.removeSkill('lit_shengjizyt');
+                    }
+                },
+                sub: true,
+                sourceSkill: "lit_pobi",
+            },
         },
     },
 };
 
 export const translate = {
     'lit_yutong雨桐': "雨桐",
-    'lit_shengjiyt': "升级·雨桐",
-    'lit_shengjiyt_info': "击杀时全场获得1经验，击杀者额外获得1经验；经验达3或全场不足5人时升级，主公开局即升级；升级获得【赤心】",
     'lit_qiqi': "歧戚",
-    'lit_qiqi_info': "他人失去体力后，或其每回合第一次进入濒死状态时，若你的体力值与其不同，你可以将体力值与其互换。若你因此回血，你失去一点体力上限",
+    'lit_qiqi_info': "每回合每人限1次，他人失去体力后，或其濒死时，若你的体力值与其不同，你可以将体力值与其互换。若你因此回血，你失去1点体力上限",
     'lit_qiongyin': "跫音",
-    'lit_qiongyin_info': "他人的结束阶段，其可失去体力至一点，然后令你判定：①为红，你+x点体力上限并摸x张牌；②为黑，你+x点体力（x为其因此失去的体力）",
+    'lit_qiongyin_info': "他人的结束阶段，其可失去体力至1点，令你判定：<br>①为红，你+x点体力上限并摸x张牌；<br>②为黑，你+x点体力（x为其因此失去的体力）",
     'lit_pobi': "破壁",
-    'lit_pobi_info': "觉醒技，你死亡前，给其他所有人的判定区置入一张虚拟的遣返牌，然后你取消此次死亡，并更换角色牌为“钟雨桐”，同时重置你的体力为新角色牌的值，但不重置体力上限",
+    'lit_pobi_info': `觉醒技，你死亡前，取消此次死亡，给其他所有人的判定区置入一张虚拟的遣返牌。你更换角色牌为${get.poptip("lit_zhongyutong钟雨桐")}，重置体力为新角色牌的值，但不重置体力上限`,
+    'lit_shengjiyt': "升级·雨桐",
+    'lit_shengjiyt_info': `获得：${get.poptip('lit_chixin')}`,
 };
 
 export const simpleTranslate = {
-    'lit_qiqi_info': "他人失去体力后/每回合首次濒死时，可互换体力；你回血则-1上限",
-    'lit_qiongyin_info': "他人结束阶段可-体力至1，令你判定：红+上限+摸牌；黑回血",
-    'lit_pobi_info': "觉醒；死亡前全员判定区置遣返，取消死亡，换牌为“钟雨桐”，保留上限",
+    'lit_qiqi_info': "每回合每人限1次，他人失去体力后/濒死时，可与其互换体力；若你回血则-1上限",
+    'lit_qiongyin_info': "他人结束阶段可-x体力至1，令你判定：红，+x上限+x牌；黑，+x血",
+    'lit_pobi_info': `觉；死亡前取消死亡，全员判定区置遣返，你变为${get.poptip("lit_zhongyutong钟雨桐")}，重置血量，保留上限`,
+    'lit_shengjiyt_info': `获得：${get.poptip('lit_chixin')}`,
+};
+
+export const dynamicTranslate = {
+    lit_pobi() {
+        if (get.mode() === 'guozhan') return `觉；死亡前取消死亡，全员判定区置遣返，你变为${get.poptip("gz_lit_zhongyutong钟雨桐")}，保留上限`;
+        return `觉；死亡前取消死亡，全员判定区置遣返，你变为${get.poptip("lit_zhongyutong钟雨桐")}，重置血量，保留上限`;
+    }
 };

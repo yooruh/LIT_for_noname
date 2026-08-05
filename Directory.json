@@ -1,6 +1,6 @@
 {
   "Directory.json": {
-    "size": 16148,
+    "size": 16150,
     "md5": null
   },
   "extension.js": {
@@ -208,20 +208,20 @@
     "md5": "03c2f0ba5733303d958419215c9e89de"
   },
   "source/character/lit/roles/boshu.js": {
-    "size": 21197,
-    "md5": "8c61bed1af1ad606cb28de669e2526e4"
+    "size": 21221,
+    "md5": "1836790282fbe1e139ada74867c2b274"
   },
   "source/character/lit/roles/chenke.js": {
     "size": 8012,
     "md5": "7a96dc99ab8ab69caad6cdc9abde589e"
   },
   "source/character/lit/roles/hujunwei.js": {
-    "size": 14209,
-    "md5": "be8c2f3f99215148d7ba1177754e1048"
+    "size": 14214,
+    "md5": "f44b5067feccd3a991dbe5ad45a86b07"
   },
   "source/character/lit/roles/hupan.js": {
-    "size": 27428,
-    "md5": "2e23cdea50668bae16391fc5b17a3fac"
+    "size": 27609,
+    "md5": "4906c6cd065e42e693f2d0c5cab53a55"
   },
   "source/character/lit/roles/huxinyu.js": {
     "size": 11961,
@@ -240,8 +240,8 @@
     "md5": "9a5973c8f8dcbf6348dc952f6fad2162"
   },
   "source/character/lit/roles/liuchenmu.js": {
-    "size": 11184,
-    "md5": "2dddc1afe0107a34b6a692f9c8481861"
+    "size": 11189,
+    "md5": "2ac526be3b00d7b0a277b85758988cca"
   },
   "source/character/lit/roles/liyang9.js": {
     "size": 4776,
@@ -268,12 +268,12 @@
     "md5": "b43db70ddd3353baa5a6b68049a5b995"
   },
   "source/character/lit/roles/wangcan9.js": {
-    "size": 6598,
-    "md5": "0cbf63b971a379c7eeadb2132ffb3f33"
+    "size": 6605,
+    "md5": "9f526dedc250f7a42c5e4b05da7d4067"
   },
   "source/character/lit/roles/wangrong.js": {
-    "size": 26435,
-    "md5": "bf34f18c00163f4c7c08ef42898ee1c1"
+    "size": 26425,
+    "md5": "ee091618f0f3400d80ae8531cadacd3f"
   },
   "source/character/lit/roles/wuxiaoqi.js": {
     "size": 16135,
@@ -284,8 +284,8 @@
     "md5": "889c837b2112d8fa65b41ceb594170a6"
   },
   "source/character/lit/roles/yutong.js": {
-    "size": 7485,
-    "md5": "34bee0df78a6470171641f5372e33a6d"
+    "size": 9330,
+    "md5": "20c1df8cc1bec2e967986c28edcca73e"
   },
   "source/character/lit/roles/zengpinjia.js": {
     "size": 22836,
@@ -312,16 +312,16 @@
     "md5": "d5fc044c087dfc8a3a427c3bd6820c03"
   },
   "source/character/lit/roles/zhengmohan.js": {
-    "size": 14158,
-    "md5": "5a376bc06c043cd86ce79d5900a92fe5"
+    "size": 14269,
+    "md5": "0d86204c35c5956506e490c537f500f3"
   },
   "source/character/lit/roles/zhongyutong.js": {
-    "size": 9556,
-    "md5": "fff2c7b48bac393a2a3907f132e53276"
+    "size": 11642,
+    "md5": "672d809819412cdbc30b2a0fae5adc3d"
   },
   "source/character/lit/roles/zigao.js": {
-    "size": 22818,
-    "md5": "8e5efac9f61bec86d6c0646a17e3c51f"
+    "size": 22246,
+    "md5": "f2e171ffd60592ac331246b92c6b841d"
   },
   "source/character/lit/shared.js": {
     "size": 869,
@@ -336,8 +336,8 @@
     "md5": "c72452f730a36ed696d7f5136bd679c6"
   },
   "source/character/lit/_shengji.js": {
-    "size": 10645,
-    "md5": "eec94c73c51938778b897e1d2870dc15"
+    "size": 10535,
+    "md5": "fec5e9c3a560cb2ae9e65e668d6f0dc9"
   },
   "source/character/lit_gz/index.js": {
     "size": 3624,
@@ -356,8 +356,8 @@
     "md5": "6f4b106415145cdf91d8ff3fcd4c1149"
   },
   "source/character/test/roles/pengliying.js": {
-    "size": 10139,
-    "md5": "32d809347dd4313668a0a4abd051ea3f"
+    "size": 10153,
+    "md5": "9f0f14240a481138cdc6fd425dfe54f0"
   },
   "source/character/test/roles/wangsiyuan.js": {
     "size": 4448,
@@ -396,12 +396,12 @@
     "md5": "cad7e1c9439e7dd9a853b94005f12991"
   },
   "source/mode/sandaohuanhua.js": {
-    "size": 61664,
-    "md5": "48b4182941188b869c8ae1e1370d8bd6"
+    "size": 59871,
+    "md5": "21e81c8481bf74549427a6ffaa3905dd"
   },
   "source/mode/sandaohuanhua_brawl.js": {
-    "size": 74521,
-    "md5": "2850f6e27a50d79c7eed43dac4cf8df0"
+    "size": 73326,
+    "md5": "d1d81ed66fc32bf74b59a337d04fb171"
   },
   "source/onlineFix/characterSelection.js": {
     "size": 14608,
@@ -468,8 +468,8 @@
     "md5": "bac38e967e531d5c7e7c9b8b0a7f65b9"
   },
   "source/tool/ai/aiGuard.js": {
-    "size": 3902,
-    "md5": "d265c61ad538ee46bade16111422328d"
+    "size": 3979,
+    "md5": "ceb3575f74fbc1f96c9dbe2bafbe2f30"
   },
   "source/tool/configuration/configManager.js": {
     "size": 15031,
@@ -496,8 +496,8 @@
     "md5": "60f07936e8a5c2d10b2dfdbfd99c5e97"
   },
   "source/tool/ui/dialogManager.js": {
-    "size": 46481,
-    "md5": "c2bc50a5773aafeea8880beec59226b5"
+    "size": 52515,
+    "md5": "677025448a214ced61911b5d5bebad25"
   },
   "source/tool/ui/poptips.js": {
     "size": 1360,
@@ -512,20 +512,20 @@
     "md5": "c62add50c95f50518622fc116e5f11ed"
   },
   "source/tool/update/downloader.js": {
-    "size": 6193,
-    "md5": "de2a3d9ee2d2db0ec59021e1eb2d18b3"
+    "size": 12774,
+    "md5": "f20fe8b4077fcb69396ea2bd1230530a"
   },
   "source/tool/update/extensionUpdater.js": {
-    "size": 47159,
-    "md5": "e5acf7ccc7deb6031a202a881c00ec08"
+    "size": 50262,
+    "md5": "fe11fa52ff92cc33a293de1675ca20f0"
   },
   "source/tool/update/index.js": {
-    "size": 11774,
-    "md5": "2c11fbe8f110a993445a558be95302b1"
+    "size": 14488,
+    "md5": "10c95b64b374c69a0f661a5ed1df677b"
   },
   "source/tool/update/md5.js": {
-    "size": 3119,
-    "md5": "4a161a893a949751a2b1aa3a85de8fee"
+    "size": 3207,
+    "md5": "db00ce6d82f8bbe753b4722d7d6ca289"
   },
   "source/tool/update/repository.js": {
     "size": 6666,
@@ -536,8 +536,8 @@
     "md5": "cf67ed0302faf5f64d3c3943434dd807"
   },
   "source/tool/update/updateDialogs.js": {
-    "size": 21465,
-    "md5": "368baa60bc47ab119f4a03b63b893624"
+    "size": 30533,
+    "md5": "0339ce66707733e0eb284adcdffba15d"
   },
   "source/tool/update/utils.js": {
     "size": 4744,
@@ -560,12 +560,12 @@
     "md5": "a6b6ea4aeea16a10d2c3090e4974c22e"
   },
   "style/css/dialogManager.css": {
-    "size": 10489,
-    "md5": "bc56c6256edddb3ede720562446045b7"
+    "size": 14255,
+    "md5": "a706105e2217c621a29212fc17f5c0df"
   },
   "style/css/extension.css": {
-    "size": 5964,
-    "md5": "697828193c2431b9bd71038a3560a962"
+    "size": 6264,
+    "md5": "381f0098d860e48e6003889e4b89a19d"
   },
   "style/html/help.html": {
     "size": 16969,

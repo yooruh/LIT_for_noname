@@ -75,7 +75,7 @@ export const skill = {
                 },
                 forced: true,
                 async content(event, trigger, player) {
-                    let result = await player.judge((card) => {
+                    const result = await player.judge((card) => {
                         if (get.suit(card) === 'heart') return 1;
                         return -0.5;
                     }).forResult();
@@ -120,11 +120,11 @@ export const skill = {
             return event.cards.filterInD().length > 0 && !player.hasSkill('lit_renxiao_finish');
         },
         async content(event, trigger, player) {
-            const { bool } = await player.judge(card => {
+            const result = await player.judge(card => {
                 if (get.suit(card) === 'heart') return 1;
                 return -0.5;
             }).set("judge2", result => result.bool).forResult();
-            if (bool) {
+            if (result.bool) {
                 await player.gain(trigger.cards.filterInD(), 'gain2');
                 player.addTempSkill('lit_renxiao_finish');
             }

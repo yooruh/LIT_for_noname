@@ -198,35 +198,87 @@ export const extensionUpdateManager = {
 
             let progressUI = null;
             if (!silent) {
-                progressUI = await updater.ui.createDownloadProgress('快速下载', updater.totalBytes, tasks.length, 'full');
+                const knownTotalBytes = tasks.every(task => task.size > 0) ? updater.totalBytes : 0;
+                progressUI = await updater.ui.createDownloadProgress('快速下载', knownTotalBytes, tasks.length, 'full');
             }
 
-            let currentFileIndex = 0;
+            let completedFileCount = 0;
             let totalDownloadedBytes = 0;
+            let roundTotalBytes = updater.totalBytes;
+            let unknownSizeCount = tasks.filter(task => !(task.size > 0)).length;
             await utils.asyncPool(CONFIG.limits.maxConcurrent, tasks, async (task) => {
-                let lastReportedBytes = 0;
-                const result = await updater.downloader.download(task, (rec, tot) => {
-                    if (onProgress) onProgress(task.remote, rec, tot);
-                    const delta = Math.max(0, rec - lastReportedBytes);
+                if (progressUI) progressUI.setFile(task.remote, task.size || 0);
+                let accountedBytes = 0;
+                let accountedTotal = task.size || 0;
+                let result = null;
+
+                const reportProgress = (received, fileTotal, force = false) => {
+                    const normalized = Math.max(accountedBytes, Number(received) || 0);
+                    const delta = normalized - accountedBytes;
                     if (delta > 0) {
                         totalDownloadedBytes += delta;
-                        lastReportedBytes = rec;
+                        accountedBytes = normalized;
                     }
-                    if (progressUI) {
-                        progressUI.updateProgress(rec, tot, totalDownloadedBytes, updater.totalBytes || tot, currentFileIndex, tasks.length);
+                    if (normalized > accountedTotal) {
+                        roundTotalBytes += normalized - accountedTotal;
+                        accountedTotal = normalized;
                     }
-                }, updater.state);
+                    totalDownloadedBytes = Math.min(totalDownloadedBytes, roundTotalBytes);
 
-                if (result.success) {
-                    currentFileIndex++;
-                    if (progressUI) progressUI.setFile(task.remote, task.size || result.size || 0);
-                } else if (!silent) {
-                    console.warn(`[快速下载] 失败: ${task.remote} - ${result.error}`);
+                    if (progressUI && (force || delta > 0)) {
+                        progressUI.updateProgress(
+                            task.remote,
+                            normalized,
+                            fileTotal,
+                            totalDownloadedBytes,
+                            unknownSizeCount > 0 ? 0 : roundTotalBytes,
+                            completedFileCount,
+                            tasks.length
+                        );
+                    }
+                };
+
+                try {
+                    result = await updater.downloader.download(task, (rec, tot) => {
+                        if (onProgress) onProgress(task.remote, rec, tot);
+                        reportProgress(rec, task.size || tot || 0, true);
+                    }, updater.state);
+
+                    if (result.success) {
+                        const actualSize = result.size || task.size || accountedBytes;
+                        roundTotalBytes = Math.max(0, roundTotalBytes + actualSize - accountedTotal);
+                        accountedTotal = actualSize;
+                        if (!(task.size > 0)) unknownSizeCount = Math.max(0, unknownSizeCount - 1);
+                        completedFileCount++;
+                        reportProgress(actualSize, actualSize, true);
+                    } else if (!silent) {
+                        console.warn(`[快速下载] 失败: ${task.remote} - ${result.error}`);
+                    }
+                    return result;
+                } catch (error) {
+                    console.error(`[快速下载] ${task.remote} 异常:`, error);
+                    result = { success: false, error: String(error?.message || error), errorType: 'network' };
+                    try {
+                        await updater.state.updateFile(task.remote, 'failed', result.error, result.errorType, 0, true);
+                    } catch (stateError) {
+                        console.error(`[快速下载] ${task.remote} 保存失败状态异常:`, stateError);
+                    }
+                    return result;
+                } finally {
+                    if (progressUI) {
+                        progressUI.finishFile(
+                            task.remote,
+                            result?.success ? (result.size || task.size || accountedBytes) : (task.size || accountedBytes),
+                            !!result?.success
+                        );
+                    }
                 }
-                return result;
             });
 
-            if (progressUI) progressUI.close();
+            if (progressUI) {
+                await progressUI.drain();
+                progressUI.close();
+            }
 
             const failedTasks = updater.state.getFailed();
             if (failedTasks.length) {

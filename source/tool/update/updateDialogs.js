@@ -190,83 +190,273 @@ class UIManager {
                 minHeight: '280px',
                 indeterminate: false,
                 initialStatus: '连接中...',
-                initialDetail: totalBytes > 0 ? `共 ${utils.parseSize(totalBytes)} (${totalFiles} 个文件)` : `共 ${totalFiles} 个文件`
+                initialDetail: totalBytes > 0
+                    ? `已下载 0 B / 共 ${utils.parseSize(totalBytes)} · 剩余 ${utils.parseSize(totalBytes)}`
+                    : `共 ${totalFiles} 个文件 · 大小未知`,
+                fileBar: true,
+                initialFileName: '等待开始...'
             }
         );
 
-        let startTime = Date.now();
-        let lastUpdate = Date.now();
-        let downloadedBytes = 0;
-        const useFileCountMode = totalBytes === 0;
+        const files = new Map();
+        const queue = [];
+        const drainWaiters = [];
+        const startTime = Date.now();
+        let lastSpeedTime = startTime;
+        let lastSpeedBytes = 0;
+        let sampledSpeed = 0;
+        let activeName = null;
+        let activeReady = false;
+        let processing = false;
+        let closed = false;
+        let msgStarted = false;
+
+        const resolveDrain = (force = false) => {
+            if (!force && (processing || queue.length > 0)) return;
+            drainWaiters.splice(0).forEach(resolve => resolve());
+        };
+
+        const notify = (file) => {
+            file.waiters.splice(0).forEach(resolve => resolve());
+        };
+
+        const ensureFile = (name, size = 0) => {
+            let file = files.get(name);
+            if (!file) {
+                file = {
+                    name,
+                    size: Number(size) || 0,
+                    received: 0,
+                    total: Number(size) || 0,
+                    percent: 0,
+                    complete: false,
+                    success: false,
+                    timedOut: false,
+                    queued: false,
+                    waiters: [],
+                    timeoutId: null
+                };
+                files.set(name, file);
+            } else if (size > 0) {
+                file.size = Number(size);
+                file.total = Math.max(file.total, Number(size));
+            }
+            return file;
+        };
+
+        const waitForChange = file => new Promise(resolve => file.waiters.push(resolve));
+
+        const enqueueFile = (file) => {
+            if (file.queued) return;
+            file.queued = true;
+            queue.push(file.name);
+        };
+
+        const armFileTimeout = (file) => {
+            if (file.timeoutId) clearTimeout(file.timeoutId);
+            file.timeoutId = setTimeout(() => {
+                if (file.complete || closed) return;
+                file.complete = true;
+                file.success = false;
+                file.timedOut = true;
+                enqueueFile(file);
+                notify(file);
+                scheduleQueue();
+            }, 180000);
+        };
+
+        const formatFileLabel = (file, percent = file.percent) => {
+            const total = file.total || file.size;
+            if (total <= 0) return `${percent}% · 大小未知 · ${file.name}`;
+            const received = Math.min(Math.max(0, file.received), total);
+            const remaining = Math.max(0, total - received);
+            // 将百分比和剩余大小放在文件名前，长路径被截断时关键信息仍保持可见。
+            return `${percent}% · 剩余 ${utils.parseSize(remaining)} · ${utils.parseSize(received)} / ${utils.parseSize(total)} · ${file.name}`;
+        };
+
+        const processQueue = async () => {
+            if (processing || closed) return;
+            processing = true;
+
+            try {
+                while (queue.length > 0 && !closed) {
+                    const name = queue[0];
+                    const file = files.get(name);
+                    if (!file) {
+                        queue.shift();
+                        continue;
+                    }
+
+                    activeName = name;
+                    activeReady = false;
+                    // 切换文件时先立即落到0%，跨两帧后再应用缓存目标，确保浏览器能建立动画起点。
+                    controller.setFileBar(formatFileLabel({ ...file, received: 0 }, 0), 0, { immediate: true });
+                    await controller.nextFrame();
+                    activeReady = true;
+
+                    // 应用等待动画帧期间积累的最新进度；之后由 updateProgress 直接实时刷新。
+                    if (!file.complete) {
+                        const target = Math.min(99, file.percent);
+                        controller.setFileBar(formatFileLabel(file, target), target);
+                    }
+
+                    while (!file.complete && !closed) await waitForChange(file);
+
+                    if (closed) break;
+                    if (file.success) {
+                        file.received = file.total || file.size || file.received;
+                        file.percent = 100;
+                        controller.setFileBar(formatFileLabel(file, 100), 100);
+                        await controller.waitForFileBar(100);
+                    } else {
+                        const reason = file.timedOut ? '进度等待超时' : '下载失败';
+                        controller.setFileBar(`${reason} · ${file.name}`, file.percent);
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
+
+                    queue.shift();
+                    activeName = null;
+                    activeReady = false;
+                }
+            } finally {
+                activeName = null;
+                activeReady = false;
+                processing = false;
+                resolveDrain();
+            }
+        };
+
+        const scheduleQueue = () => {
+            processQueue().catch(error => {
+                console.error('[更新进度] 文件动画队列异常:', error);
+                queue.length = 0;
+                activeName = null;
+                activeReady = false;
+                processing = false;
+                resolveDrain(true);
+            });
+        };
+
+        const close = () => {
+            closed = true;
+            files.forEach(file => {
+                if (file.timeoutId) clearTimeout(file.timeoutId);
+                file.timeoutId = null;
+                notify(file);
+            });
+            queue.length = 0;
+            activeName = null;
+            activeReady = false;
+            processing = false;
+            resolveDrain(true);
+            controller.close();
+        };
 
         return {
             setFile: (name, size) => {
-                controller.setDetail(`${name} (${useFileCountMode ? '计算中...' : utils.parseSize(size)})`);
+                if (!msgStarted) {
+                    controller.updateText('正在下载...');
+                    msgStarted = true;
+                }
+                const file = ensureFile(name, size);
+                enqueueFile(file);
+                armFileTimeout(file);
+                scheduleQueue();
             },
 
             // 基于实际下载字节或文件数的进度计算
-            updateProgress: (fileReceived, fileTotal, totalReceived, totalSize, currentFileIndex, totalFilesCount) => {
+            updateProgress: (name, fileReceived, fileTotal, totalReceived, totalSize, currentFileIndex, totalFilesCount) => {
                 const now = Date.now();
                 const elapsed = (now - startTime) / 1000;
+                const normalizedTotal = Math.max(0, Number(totalSize) || 0);
+                const normalizedReceived = normalizedTotal > 0
+                    ? Math.min(normalizedTotal, Math.max(0, Number(totalReceived) || 0))
+                    : Math.max(0, Number(totalReceived) || 0);
+                const file = ensureFile(name, fileTotal);
+                enqueueFile(file);
+
+                file.received = Math.max(file.received, Number(fileReceived) || 0);
+                file.total = Math.max(file.total, Number(fileTotal) || 0);
+                armFileTimeout(file);
+                file.percent = file.total > 0
+                    ? Math.min(100, Math.round((file.received / file.total) * 100))
+                    : 0;
 
                 let totalPercent;
                 let status;
                 let detail;
 
-                if (useFileCountMode) {
-                    // 按文件数量计算进度
-                    totalPercent = Math.min(100, Math.round((currentFileIndex / totalFilesCount) * 100));
-
-                    const deltaTime = (now - lastUpdate) / 1000;
-                    if (deltaTime >= 0.5) {
-                        lastUpdate = now;
-                    }
-
-                    const remainingFiles = totalFilesCount - currentFileIndex;
+                if (normalizedTotal === 0) {
+                    totalPercent = totalFilesCount > 0
+                        ? Math.min(100, Math.round((currentFileIndex / totalFilesCount) * 100))
+                        : 0;
+                    const remainingFiles = Math.max(0, totalFilesCount - currentFileIndex);
                     const avgTimePerFile = elapsed > 0 && currentFileIndex > 0 ? elapsed / currentFileIndex : 0;
                     const eta = avgTimePerFile > 0 ? remainingFiles * avgTimePerFile : 0;
-
                     status = `文件 ${currentFileIndex}/${totalFilesCount}` + (eta > 0 ? ` · 剩余 ${utils.formatTime(eta)}` : '');
-                    detail = `按文件计数模式 · 当前文件 ${fileTotal > 0 ? Math.round((fileReceived / fileTotal) * 100) : 0}%`;
+                    detail = `已完成 ${currentFileIndex}/${totalFilesCount} 个文件 · 大小未知`;
                 } else {
-                    // 按字节计算进度
-                    totalPercent = totalSize > 0
-                        ? Math.min(100, Math.round((totalReceived / totalSize) * 100))
-                        : 0;
-
-                    // 当前文件进度
-                    const filePercent = fileTotal > 0 ? Math.round((fileReceived / fileTotal) * 100) : 0;
-
-                    // 计算速度
-                    const deltaTime = (now - lastUpdate) / 1000;
-                    const deltaBytes = totalReceived - downloadedBytes;
-                    const speed = deltaTime > 0 ? deltaBytes / deltaTime : 0;
-
-                    if (deltaTime >= 0.5) {
-                        downloadedBytes = totalReceived;
-                        lastUpdate = now;
+                    totalPercent = Math.min(100, Math.round((normalizedReceived / normalizedTotal) * 100));
+                    const speedDeltaTime = (now - lastSpeedTime) / 1000;
+                    if (speedDeltaTime >= 0.5) {
+                        sampledSpeed = Math.max(0, normalizedReceived - lastSpeedBytes) / speedDeltaTime;
+                        lastSpeedBytes = normalizedReceived;
+                        lastSpeedTime = now;
                     }
 
-                    const remainingBytes = totalSize - totalReceived;
-                    const eta = speed > 0 ? remainingBytes / speed : 0;
-
-                    status = speed > 0
-                        ? `${utils.parseSize(speed)}/s · 剩余 ${utils.formatTime(eta)} · 文件 ${currentFileIndex}/${totalFilesCount}`
+                    const remainingBytes = Math.max(0, normalizedTotal - normalizedReceived);
+                    const eta = sampledSpeed > 0 ? remainingBytes / sampledSpeed : 0;
+                    status = sampledSpeed > 0
+                        ? `${utils.parseSize(sampledSpeed)}/s · 剩余 ${utils.formatTime(eta)} · 文件 ${currentFileIndex}/${totalFilesCount}`
                         : `文件 ${currentFileIndex}/${totalFilesCount}`;
-
-                    detail = `${utils.parseSize(totalReceived)}/${utils.parseSize(totalSize)} · 当前文件 ${filePercent}%`;
+                    detail = `已下载 ${utils.parseSize(normalizedReceived)} / 共 ${utils.parseSize(normalizedTotal)} · 剩余 ${utils.parseSize(remainingBytes)}`;
                 }
 
-                controller.updateProgress({
-                    percent: totalPercent,
-                    status: status,
-                    detail: detail
-                });
+                controller.updateProgress({ percent: totalPercent, status, detail });
+
+                // 当前正在展示的文件直接刷新标签和目标宽度；队列只负责文件间的0%/100%切换。
+                if (activeReady && activeName === name && !file.complete) {
+                    const target = Math.min(99, file.percent);
+                    controller.setFileBar(formatFileLabel(file, target), target);
+                }
+                notify(file);
+                scheduleQueue();
+            },
+
+            finishFile: (name, size, success) => {
+                const file = ensureFile(name, size);
+                enqueueFile(file);
+                if (size > 0) {
+                    file.size = Number(size);
+                    file.total = Number(size);
+                }
+                if (file.timeoutId) {
+                    clearTimeout(file.timeoutId);
+                    file.timeoutId = null;
+                }
+                file.success = !!success;
+                file.complete = true;
+                if (file.success) {
+                    file.received = file.total || file.size || file.received;
+                    file.percent = 100;
+                }
+                notify(file);
+                scheduleQueue();
+            },
+
+            drain: () => {
+                if (!processing && queue.length === 0) return Promise.resolve();
+                return new Promise(resolve => drainWaiters.push(resolve));
             },
 
             setError: (msg) => controller.setError(msg),
-            complete: (msg, delay) => controller.complete(msg, delay),
-            close: () => controller.close(),
+            complete: async (msg, delay) => {
+                await (processing || queue.length > 0
+                    ? new Promise(resolve => drainWaiters.push(resolve))
+                    : Promise.resolve());
+                controller.complete(msg, delay);
+            },
+            close,
             showRetry: (onRetry) => {
                 controller.setError('部分文件下载失败', true, onRetry);
             }
@@ -316,10 +506,23 @@ class UIManager {
                 failedFiles.slice(0, 3).map(f => `• ${f.path}`).join('\n') +
                 (failedFiles.length > 3 ? `\n...等${failedFiles.length}个` : '');
 
-            const choice = await this.dialog.choice(title, message,
-                ['🔄 立即重试失败项', '⏭️ 忽略失败并应用', '💾 保存进度稍后处理']
-            );
-            return ['retry', 'ignore', 'later'][choice] || 'later';
+            // 代码包失败时不允许忽略：applyUpdate() 硬性要求 zip 状态为 success，
+            // 且 markAllFailedAsSkipped() 已排除 kind==='zip'，点了「忽略」也必然报错，
+            // 因此此时不提供「忽略失败并应用」选项。
+            const zipFailed = failedFiles.some(f => f.kind === 'zip');
+            let buttons;
+            if (zipFailed) {
+                message += `\n\n⚠️ 代码包（code.zip）下载失败，无法跳过。\n` +
+                    `代码包是本次更新的必需部分，请点击“立即重试失败项”重新下载后再应用。`;
+                buttons = ['🔄 立即重试失败项', '💾 保存进度稍后处理'];
+            } else {
+                buttons = ['🔄 立即重试失败项', '⏭️ 忽略失败并应用', '💾 保存进度稍后处理'];
+            }
+
+            const choice = await this.dialog.choice(title, message, buttons);
+            // 按钮数量可变，按位置映射：0=重试；中间=忽略（仅三按钮时存在）；最后=稍后处理
+            const actions = zipFailed ? ['retry', 'later'] : ['retry', 'ignore', 'later'];
+            return actions[choice] || 'later';
         } else {
             const shouldRestart = await this.dialog.confirm(
                 title,

@@ -15,29 +15,29 @@
 
 div[data-nature='nine'],
 span[data-nature='nine'] {
-	text-shadow: rgba(210, 210, 30, 1) 0 0 2px, rgba(210, 210, 30, 1) 0 0 5px, rgba(210, 210, 30, 1) 0 0 10px,
-		rgba(210, 210, 30, 1) 0 0 10px, rgba(210, 210, 30, 1) 0 0 20px, rgba(210, 210, 30, 1) 0 0 20px, black 0 0 1px;
+	text-shadow: rgba(180, 180, 24, 1) 0 0 2px, rgba(180, 180, 24, 1) 0 0 5px, rgba(180, 180, 24, 1) 0 0 15px,
+		rgba(180, 180, 24, 1) 0 0 15px, rgba(180, 180, 24, 1) 0 0 30px, rgba(180, 180, 24, 1) 0 0 30px, black 0 0 1px;
 }
 div[data-nature='ninem'],
 span[data-nature='ninem'] {
-	text-shadow: rgba(210, 210, 30, 1) 0 0 2px, rgba(210, 210, 30, 1) 0 0 5px, rgba(210, 210, 30, 1) 0 0 5px,
-		rgba(210, 210, 30, 1) 0 0 5px, black 0 0 1px;
+	text-shadow: rgba(180, 180, 24, 1) 0 0 2px, rgba(180, 180, 24, 1) 0 0 10px, rgba(180, 180, 24, 1) 0 0 10px,
+		rgba(180, 180, 24, 1) 0 0 10px, black 0 0 1px;
 }
 div[data-nature='ninemm'],
 span[data-nature='ninemm'] {
-	text-shadow: rgba(210, 210, 30, 1) 0 0 2px, rgba(210, 210, 30, 1) 0 0 2px, rgba(210, 210, 30, 1) 0 0 2px,
-		rgba(210, 210, 30, 1) 0 0 2px, black 0 0 1px;
+	text-shadow: rgba(180, 180, 24, 1) 0 0 2px, rgba(180, 180, 24, 1) 0 0 2px, rgba(180, 180, 24, 1) 0 0 2px,
+		rgba(180, 180, 24, 1) 0 0 2px, black 0 0 1px;
 }
 
 div[data-nature='three'],
 span[data-nature='three'] {
-	text-shadow: rgb(25, 164, 200, 1) 0 0 2px, rgba(25, 164, 200, 1) 0 0 5px, rgba(25, 164, 200, 1) 0 0 10px,
-		rgba(25, 164, 200, 1) 0 0 10px, rgba(25, 164, 200, 1) 0 0 20px, rgba(25, 164, 200, 1) 0 0 20px, black 0 0 1px;
+	text-shadow: rgba(25, 164, 200, 1) 0 0 2px, rgba(25, 164, 200, 1) 0 0 5px, rgba(25, 164, 200, 1) 0 0 15px,
+		rgba(25, 164, 200, 1) 0 0 15px, rgba(25, 164, 200, 1) 0 0 30px, rgba(25, 164, 200, 1) 0 0 30px, black 0 0 1px;
 }
 div[data-nature='threem'],
 span[data-nature='threem'] {
-	text-shadow: rgba(25, 164, 200, 1) 0 0 2px, rgba(25, 164, 200, 1) 0 0 5px, rgba(25, 164, 200, 1) 0 0 5px,
-		rgba(25, 164, 200, 1) 0 0 5px, black 0 0 1px;
+	text-shadow: rgba(25, 164, 200, 1) 0 0 2px, rgba(25, 164, 200, 1) 0 0 10px, rgba(25, 164, 200, 1) 0 0 10px,
+		rgba(25, 164, 200, 1) 0 0 10px, black 0 0 1px;
 }
 div[data-nature='threemm'],
 span[data-nature='threemm'] {
@@ -50,8 +50,12 @@ span[data-nature='one'] {
 	--hue: 0;
 	--glow-color: hsl(var(--hue), 100%, 50%);
 	text-shadow:
-		var(--glow-color) 0 0 3px, 
-		var(--glow-color) 0 0 3px, 
+		var(--glow-color) 0 0 3px,
+		var(--glow-color) 0 0 7px,
+		var(--glow-color) 0 0 15px,
+		var(--glow-color) 0 0 25px,
+		var(--glow-color) 0 0 40px,
+		var(--glow-color) 0 0 60px,
 		black 0 0 1px;
 	animation:
 		color-change 5s linear infinite,
@@ -62,9 +66,11 @@ span[data-nature='onem'] {
 	--hue: 0;
 	--glow-color: hsl(var(--hue), 100%, 45%);
 	text-shadow:
-		var(--glow-color) 0 0 3px, 
-		var(--glow-color) 0 0 7px, 
-		var(--glow-color) 0 0 7px, 
+		var(--glow-color) 0 0 3px,
+		var(--glow-color) 0 0 7px,
+		var(--glow-color) 0 0 15px,
+		var(--glow-color) 0 0 25px,
+		var(--glow-color) 0 0 40px,
 		black 0 0 1px;
 	animation:
 		color-change 5s linear infinite,
@@ -87,21 +93,25 @@ span[data-nature='onemm'] {
 
 div[data-color='nine'],
 span[data-color='nine'] {
-	text-shadow: rgba(210, 210, 30, 1) 0 0 2px, rgba(210, 210, 30, 1) 0 0 5px, rgba(210, 210, 30, 1) 0 0 10px,
-		rgba(210, 210, 30, 1) 0 0 10px, rgba(210, 210, 30, 1) 0 0 20px, rgba(210, 210, 30, 1) 0 0 20px, black 0 0 1px;
+	text-shadow: rgba(180, 180, 24, 1) 0 0 2px, rgba(180, 180, 24, 1) 0 0 5px, rgba(180, 180, 24, 1) 0 0 15px,
+		rgba(180, 180, 24, 1) 0 0 15px, rgba(180, 180, 24, 1) 0 0 30px, rgba(180, 180, 24, 1) 0 0 30px, black 0 0 1px;
 }
 div[data-color='three'],
 span[data-color='three'] {
-	text-shadow: rgb(25, 164, 200, 1) 0 0 2px, rgba(25, 164, 200, 1) 0 0 5px, rgba(25, 164, 200, 1) 0 0 10px,
-		rgba(25, 164, 200, 1) 0 0 10px, rgba(25, 164, 200, 1) 0 0 20px, rgba(25, 164, 200, 1) 0 0 20px, black 0 0 1px;
+	text-shadow: rgba(25, 164, 200, 1) 0 0 2px, rgba(25, 164, 200, 1) 0 0 5px, rgba(25, 164, 200, 1) 0 0 15px,
+		rgba(25, 164, 200, 1) 0 0 15px, rgba(25, 164, 200, 1) 0 0 30px, rgba(25, 164, 200, 1) 0 0 30px, black 0 0 1px;
 }
 div[data-color='one'],
 span[data-color='one'] {
 	--hue: 0;
-	--glow-color: hsl(var(--hue), 100%, 50%);  
+	--glow-color: hsl(var(--hue), 100%, 50%);
 	text-shadow:
-		var(--glow-color) 0 0 3px, 
-		var(--glow-color) 0 0 3px, 
+		var(--glow-color) 0 0 3px,
+		var(--glow-color) 0 0 7px,
+		var(--glow-color) 0 0 15px,
+		var(--glow-color) 0 0 25px,
+		var(--glow-color) 0 0 40px,
+		var(--glow-color) 0 0 60px,
 		black 0 0 1px;
 	animation:
 		color-change 5s linear infinite,

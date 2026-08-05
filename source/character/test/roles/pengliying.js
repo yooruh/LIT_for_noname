@@ -180,10 +180,10 @@ export const skill = {
         init: (player) => {
             player.storage.lit_muhun = false;
         },
+        contentBefore(event, trigger, player) {
+            player.awakenSkill(event.skill);
+        },
         async content(event, trigger, player) {
-            player.awakenSkill(event.name);
-            player.storage.lit_muhun = true;
-
             const targets = event.targets.slice().sort(lib.sort.seat);
             let currentDamage = 2;
 
