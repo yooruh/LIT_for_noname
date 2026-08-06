@@ -1,6 +1,6 @@
 {
   "name": "lit-for-noname",
-  "version": "26.8.6.3",
+  "version": "26.8.6.4",
   "description": "叁岛世界 - 无名杀游戏扩展构建脚本",
   "private": true,
   "type": "module",
@@ -9,7 +9,6 @@
     "zip:release": "node scripts/zip.mjs --version",
     "dev:install": "node scripts/sync.mjs install",
     "dev:export": "node scripts/sync.mjs export",
-    "(提交main后)publish": "node scripts/publish.mjs",
 
     "zip": "node scripts/zip.mjs",
     "zip:dry": "node scripts/zip.mjs --dry-run",
@@ -29,7 +28,9 @@
     "opt:png": "node scripts/opt-png.mjs",
     "opt:png:dry": "node scripts/opt-png.mjs --dry-run",
     "opt:png:check": "node scripts/opt-png.mjs --check",
-    "opt:png:lossy": "node scripts/opt-png.mjs --lossy"
+    "opt:png:lossy": "node scripts/opt-png.mjs --lossy",
+
+    "publish": "node scripts/publish.mjs"
   },
   "author": "一个月惹",
   "license": "GPL-3.0",

@@ -30,7 +30,7 @@ import { createHash } from 'node:crypto';
 import { resolve, dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { log, PATHS, readFile, stripV, withV, isValidVersion } from './lib/shared.mjs';
+import { log, PATHS, readFile, stripV, withV, isValidVersion, releaseTag } from './lib/shared.mjs';
 import { readReleaseManifest, getLatestRelease, getCurrentReleaseVersion } from './lib/release.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -368,15 +368,16 @@ function syncZipBranch(dryRun, target) {
   }
 }
 
-/** 打 v{版本} 标签（指向 zips 分支提交）并推送 */
+/** 打 v{版本}-code-zip 标签（指向 zips 分支提交）并推送 */
 function ensureTag(dryRun, target, sha) {
-  const tag = withV(target.version);
+  const tag = releaseTag(target.version);
   if (dryRun) {
     log.info(`[DRY-RUN] 标签: 创建并推送 ${tag} -> ${sha}`);
     return;
   }
 
-  const localSha = run('git', ['rev-parse', '-q', tag], { allowFail: true }).stdout;
+  // 读取/推送标签始终用显式 refs/tags/，避免与同名 ref 产生歧义
+  const localSha = run('git', ['rev-parse', '--verify', '-q', `refs/tags/${tag}`], { allowFail: true }).stdout;
   if (!localSha) {
     run('git', ['tag', tag, sha]);
     log.ok(`已创建标签 ${tag}`);
@@ -390,19 +391,19 @@ function ensureTag(dryRun, target, sha) {
   const remoteTags = run('git', ['ls-remote', '--tags', GITHUB_PUSH, `refs/tags/${tag}`], { allowFail: true });
   if (remoteTags.status === 0 && remoteTags.stdout.trim().length > 0) {
     log.warn(`远端已存在标签 ${tag}；GitHub 禁止移动已存在的标签，推送可能被拒绝。`);
-    log.warn(`如需重新打标签：git push ${GITHUB_PUSH} :refs/tags/${tag} && git push ${GITHUB_PUSH} ${tag}`);
+    log.warn(`如需重新打标签：git push ${GITHUB_PUSH} :refs/tags/${tag} && git push ${GITHUB_PUSH} refs/tags/${tag}`);
   }
 
-  run('git', ['push', GITHUB_PUSH, tag]);
-  const gitee = run('git', ['push', GITEE_PUSH, tag], { allowFail: true });
+  run('git', ['push', GITHUB_PUSH, `refs/tags/${tag}`]);
+  const gitee = run('git', ['push', GITEE_PUSH, `refs/tags/${tag}`], { allowFail: true });
   if (gitee.status !== 0) {
     log.warn(`Gitee 标签推送失败（不影响 GitHub 发布）: ${gitee.stderr || gitee.stdout || '未知原因'}`);
   }
 }
 
-/** 用 gh 创建 GitHub Release 并附加代码包资产 */
+/** 用 gh 创建 GitHub Release（标签 v{版本}-code-zip）并附加代码包资产 */
 function ensureRelease(dryRun, target, notes) {
-  const tag = withV(target.version);
+  const tag = releaseTag(target.version);
   if (dryRun) {
     log.info(`[DRY-RUN] Release: gh release create ${tag} <${target.absPath}> --repo ${REPO}`);
     return;
@@ -465,6 +466,12 @@ function main() {
     const hasGh = checkPrereqs(dryRun);
     const target = resolveTarget();
 
+    // 护栏：version.json 的 zip.tag 必须与发布标签一致，否则客户端按 tag 下载会 404
+    if (target.tag && target.tag !== releaseTag(target.version)) {
+      log.warn(`version.json 的 zip.tag（${target.tag}）与发布标签（${releaseTag(target.version)}）不一致；`);
+      log.warn(`请先重新执行 npm run build 重新生成代码包（会重写 version.json）后再发布。`);
+    }
+
     log.info(`目标版本: ${target.version}`);
     log.info(`代码包:   ${target.filename}（${(target.size / 1024).toFixed(1)} KB，md5 ${target.md5.slice(0, 8)}…）`);
 
@@ -474,7 +481,7 @@ function main() {
     pushVersionBranch(target.version, { dryRun, force });
 
     if (dryRun) {
-      log.info(`[DRY-RUN] 标签: 创建并推送 ${withV(target.version)} -> ${sha}`);
+      log.info(`[DRY-RUN] 标签: 创建并推送 ${releaseTag(target.version)} -> ${sha}`);
       ensureRelease(dryRun, target, buildReleaseNotes(target.version));
       console.log('\n\x1b[33m（预览模式，未执行任何写操作）\x1b[0m');
       printSummary(target, { changed, sha });

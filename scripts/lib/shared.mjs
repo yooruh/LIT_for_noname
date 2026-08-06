@@ -136,3 +136,15 @@ export function withV(version) {
   const v = stripV(version);
   return `v${v}`;
 }
+
+/**
+ * 生成发布标签名（带 code-zip 后缀）。
+ * 项目用 v{版本} 同时作为分支名，为避免「分支/标签同名」导致 git push 歧义，
+ * 代码包标签统一为 v{版本}-code-zip。version.json 的 zip.tag 与发布脚本
+ * 必须都用本函数生成，保证客户端按 tag 下载时与 Release 一致。
+ * @param {string} version 不带 v 前缀的版本号，如 26.8.6.4
+ * @returns {string}
+ */
+export function releaseTag(version) {
+  return `${withV(version)}-code-zip`;
+}

@@ -33,7 +33,7 @@ import { createHash } from 'node:crypto';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateRawSync } from 'node:zlib';
-import { isValidVersion, log, stripV } from './lib/shared.mjs';
+import { isValidVersion, log, stripV, releaseTag } from './lib/shared.mjs';
 import { crc32 } from './lib/crc32.mjs';
 import { getCurrentReleaseVersion, readReleaseManifest, patchVersionJsonZip } from './lib/release.mjs';
 import { walkDir } from './rebuild.mjs';
@@ -345,7 +345,7 @@ export function zipProject(options = {}) {
   if (codeOnly && !checkOnly) {
     // 无论内容是否变化都把 zip 元数据写入 version.json（幂等），供在线更新客户端读取
     try {
-      patchVersionJsonZip(version, { filename, size: zipBuf.length, md5: zipMd5, branch: ZIP_BRANCH, tag: `v${version}` });
+      patchVersionJsonZip(version, { filename, size: zipBuf.length, md5: zipMd5, branch: ZIP_BRANCH, tag: releaseTag(version) });
       if (!silent) log.ok(`version.json — 已写入 zip 元数据 (${filename}, md5 ${zipMd5.slice(0, 8)}…)`);
     } catch (e) {
       log.warn(`写入 version.json zip 元数据失败: ${e.message}`);
