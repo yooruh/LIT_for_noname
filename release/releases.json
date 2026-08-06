@@ -2,7 +2,7 @@
   "defaultBranch": "main",
   "releases": [
     {
-      "version": "26.8.6.2",
+      "version": "26.8.6.3",
       "gameVersion": ">=1.11.2",
       "branch": "main",
       "description": "支持无名杀1.11.2及以上的版本",
@@ -27,9 +27,6 @@
       "gameVersion": ">=1.11.2",
       "branch": "v26.6.25.2",
       "description": "支持无名杀1.11.2及以上的版本",
-      "players": [
-        "lit_sunnan孙楠"
-      ],
       "highlights": [
         "临时更新，用于测试平衡性与检验新版本适配状况；",
         "加入了新角色 孙楠；",
