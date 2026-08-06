@@ -50,7 +50,7 @@ export const skill = {
         subSkill: {
             loseHp: {
                 firstDo: true,
-                direct: true,
+                silent: true,
                 charlotte: true,
                 mark: true,
                 marktext: "蛋",

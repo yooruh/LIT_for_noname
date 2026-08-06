@@ -48,7 +48,7 @@ export const skill = {
                     player: 'die',
                 },
                 unique: true,
-                direct: true,
+                silent: true,
                 forceDie: true,
                 filter: (trigger) => {
                     return game.hasPlayer(current => {
@@ -161,7 +161,7 @@ export const skill = {
                 trigger: {
                     player: "damageEnd",
                 },
-                direct: true,
+                silent: true,
                 filter: (event, player) => {
                     return player.hasMark('lit_guimi') && player.getHistory("damage").indexOf(event) === 0;
                 },
@@ -223,7 +223,7 @@ export const skill = {
             // "闺蜜"轮换加血效果
             reset: {
                 charlotte: true,
-                direct: true,
+                silent: true,
                 firstDo: true,
                 trigger: { global: "roundStart" },
                 filter: (event, player) => {

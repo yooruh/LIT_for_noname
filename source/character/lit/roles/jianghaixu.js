@@ -134,7 +134,7 @@ export const skill = {
                 sourceSkill: "lit_yuanzhu",
             },
             die: {
-                direct: true,
+                silent: true,
                 forceDie: true,
                 trigger: {
                     player: 'dieAfter',

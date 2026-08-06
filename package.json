@@ -1,24 +1,27 @@
 {
   "name": "lit-for-noname",
-  "version": "26.8.6.0",
+  "version": "26.8.6.1",
   "description": "叁岛世界 - 无名杀游戏扩展构建脚本",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs --zip",
-    "build:dry": "node scripts/build.mjs --dry-run",
+    "zip:release": "node scripts/zip.mjs --version",
     "dev:install": "node scripts/sync.mjs install",
     "dev:export": "node scripts/sync.mjs export",
+    "publish": "node scripts/publish.mjs",
+    
     "zip": "node scripts/zip.mjs",
     "zip:dry": "node scripts/zip.mjs --dry-run",
     "zip:check": "node scripts/zip.mjs --check",
-    "zip:release": "node scripts/zip.mjs --version",
-    "publish": "node scripts/publish.mjs",
+    "build:dry": "node scripts/build.mjs --dry-run",
     "publish:dry": "node scripts/publish.mjs --dry-run",
+  
     "version": "node scripts/build.mjs --current",
     "changelog": "node scripts/changelog.mjs show",
     "changelog:path": "node scripts/changelog.mjs path",
     "changelog:scaffold": "node scripts/changelog.mjs scaffold",
+  
     "opt:png": "node scripts/opt-png.mjs",
     "opt:png:dry": "node scripts/opt-png.mjs --dry-run",
     "opt:png:check": "node scripts/opt-png.mjs --check",

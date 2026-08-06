@@ -4,7 +4,7 @@ export const skill = {
     lit_negClear: {
         nopop: true,
         charlotte: true,
-        direct: true,
+        silent: true,
         priority: -999,
         forceDie: true,
         trigger: {

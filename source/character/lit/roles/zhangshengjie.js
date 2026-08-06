@@ -338,23 +338,24 @@ export const skill = {
                     return false;
                 },
                 async content(event, trigger, player) {
-                    const card = get.cards()[0];
-                    if (!card) return;
-                    await player.showCards(card, get.translation('lit_youxia') + '判定');
-                    const suit = get.suit(card);
                     const delayMap = {
                         spade: 'shandian',
                         heart: 'lebu',
                         club: 'bingliang',
                         diamond: 'lit_qianfanpai',
                     };
-                    const delayName = delayMap[suit];
-                    if (delayName && !player.hasJudge(delayName)) {
+                    const result = await player.judge('lit_youxia', (card) => {
+                        const delayName = delayMap[get.suit(card)];
+                        if (delayName && player.hasJudge(delayName)) return -1; // 花色对应延时锦囊已在判定区 → 判定失败
+                        return 1;                                               // 否则 → 判定成功
+                    }).set("judge2", r => r.bool).forResult();
+                    if (!result || !result.card) return;
+
+                    const card = result.card;
+                    const delayName = delayMap[result.suit];
+                    if (result.bool && delayName) {
                         await player.addJudge({ name: delayName }, [card]);
                         game.log(player, '将', card, '视为', get.translation(delayName), '置入判定区');
-                    } else {
-                        await game.cardsDiscard(card);
-                        game.log(player, '弃置了', card);
                     }
                 },
                 sub: true,
@@ -402,7 +403,7 @@ export const skill = {
         subSkill: {
             mark: {
                 charlotte: true,
-                direct: true,
+                silent: true,
                 trigger: { player: "addJudgeAfter" },
                 filter: (event, player) => {
                     return !player.awakenedSkills.includes("lit_xinyi");
@@ -526,7 +527,8 @@ export const translate = {
     'lit_wutou': "无头",
     'lit_wutou_info': "锁定技，回合开始前，你跳过准备阶段和判定阶段；你的延时锦囊牌可以指定自己为目标",
     'lit_youxia': "游侠",
-    'lit_youxia_info': "①出牌阶段前，你可以移动场上的一张牌，并在移动前获得移动目标位置原来的牌<br>②锁定技，你的判定区每失去1张实体牌，你判定：若判定牌的花色对应的延时锦囊牌不存在于你的判定区中，则你将此判定牌视为此延时锦囊牌并置入判定区中。对应方式：♠️闪电、♥️乐不思蜀、♣️兵粮寸断、♦️遣返牌",
+    'lit_youxia_info': `①出牌阶段前，你可以移动场上的一张牌，并在移动前获得移动目标位置原来的牌`
+        + `<br>②锁定技，你的判定区每失去1张${get.poptip("lit_realCard")}，你判定：若判定牌的花色对应的延时锦囊牌不存在于你的判定区中，则你将此判定牌视为此延时锦囊牌并置入判定区中。对应方式：♠️闪电、♥️乐不思蜀、♣️兵粮寸断、♦️遣返牌`,
     'lit_youxia_faq': "关于获得原来的牌",
     'lit_youxia_faq_info': "如果将要移动到的位置存在多张牌（是分离的，不相关的多张牌，如两张【闪电】。而不是将多张牌当作一张牌使用的那种情况），则获得后进入此位置的那张牌",
     'lit_xinyi': "心毅",
@@ -537,16 +539,16 @@ export const translate = {
     'lit_xinhen_info': "出牌阶段限一次，你可以将你判定区中的所有牌当作【杀】，依次对攻击范围内的1人使用。如果这些牌中有牌在判定区中视为：" +
         "<li>【闪电】，这些【杀】视为雷【杀】</li><li>【乐不思蜀】，目标被指定为技能目标后，须选择弃置与你的判定区等数量的牌；</li><li>【兵粮寸断】，响应每张【杀】所需的【闪】的数量+1；</li><li>【遣返牌】，每张【杀】基础伤害+1</li>",
     'lit_xinhen_faq': "关于判定区内牌数量的计算",
-    'lit_xinhen_faq_info': `由于存在将多张牌当作1张牌使用的情况（如${get.poptip('lit_saohua')}①），故在此明确：对于此类视为牌，即便其对应的实体牌数量大于单张牌，在计算数量时也只算作1张牌。拆和顺等也都将这些牌作为一个集合来看成是1张牌，除非明确说明是按照“实体牌数量”来计算的`,
+    'lit_xinhen_faq_info': `由于存在将多张牌当作单张牌使用的情况（如${get.poptip('lit_saohua')}①），故在此明确：对于此类视为牌，即便其对应的实体牌数量大于单张牌，在计算“牌的数量”时也只算作单张牌。拆和顺等也都将这些牌作为一个集合来看成是单张牌，除非明确说明是按照“实体牌数量”来计算的（如${get.poptip('lit_youxia')}）`,
     'lit_shengjizsj': "升级·张盛杰",
     'lit_shengjizsj_info': `获得场上所有人判定区和手牌中的延时锦囊牌`,
 };
 
 export const simpleTranslate = {
     'lit_wutou_info': "锁；回合开始前，你跳过准备阶段和判定阶段；你的延时锦囊牌可以指定自己为目标",
-    'lit_youxia_info': "①出牌阶段前，可移动场上1牌，移动前获得目的地原来的牌<br>②锁；判定区每失去1张实体牌，判定：按花色置入对应延时锦囊（♠️闪电♥️乐♣️兵粮♦️遣返），若已有则弃置",
+    'lit_youxia_info': `①出牌阶段前，可移动场上1牌，移动前获得目的地原来的牌<br>②锁；判定区每失去1张${get.poptip("lit_realCard")}，进行判定：按判定牌花色置入对应延时锦囊（♠️闪电♥️乐♣️兵粮♦️遣返），若已有则弃置`,
     'lit_xinyi_info': `觉；出牌阶段，若判定区内有或有过≥3种延时锦囊牌，则-1上限，获得${get.poptip('lit_xinhen')}`,
     'lit_xinhen_info': "出牌阶段限1次，可将判定区中所有牌当杀，依次对攻击范围内的1人使用。若这些牌中有牌在判定区中视为：" +
         "<li>【闪电】，这些杀视为雷杀</li><li>【乐不思蜀】，技能目标被指定后，弃置“与你判定区等量”的牌；</li><li>【兵粮寸断】，每张杀所需的闪+1；</li><li>【遣返牌】，杀基础伤害+1</li>",
-        'lit_shengjizsj_info': `获得场上所有人判定区和手牌中的延时锦囊牌`,
+    'lit_shengjizsj_info': `获得场上所有人判定区和手牌中的延时锦囊牌`,
 };

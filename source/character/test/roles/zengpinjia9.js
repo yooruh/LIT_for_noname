@@ -201,7 +201,7 @@ export const skill = {
         trigger: {
             player: "damageEnd",
         },
-        direct: true,
+        silent: true,
         async content(event, trigger, player) {
             await player.draw();
 

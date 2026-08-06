@@ -165,7 +165,7 @@ export const skill = {
         },
         subSkill: {
             after: {
-                direct: true,
+                silent: true,
                 trigger: { player: ["useSkillAfter", "useCardAfter"] },
                 filter: (event, player) => {
                     return event.skill === "lit_mensao";

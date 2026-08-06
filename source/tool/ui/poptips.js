@@ -45,4 +45,10 @@ export function registerPoptips(characterPacks) {
 		type: "character",
 		info: `装备牌和延时锦囊牌除外`,
 	});
+	lib.poptip.add({
+		id: "lit_realCard",
+		name: "实体牌",
+		type: "character",
+		info: `指真实存在的牌：多张牌当作单张牌来使用时，计算数量按照多张牌计算；无实体牌的虚拟牌，不计入数量`,
+	});
 }

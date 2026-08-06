@@ -61,7 +61,7 @@ export const skill = {
         subSkill: {
             wuxie: {
                 firstDo: true,
-                direct: true,
+                silent: true,
                 trigger: {
                     player: "useCard",
                 },
@@ -168,7 +168,7 @@ export const skill = {
             mark: {
                 charlotte: true,
                 firstDo: true,
-                direct: true,
+                silent: true,
                 trigger: { source: "damageAfter" },
                 filter: (event, player) => event.card,
                 async content(event, trigger, player) {

@@ -2,7 +2,7 @@ import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../share
 import { extensionPath } from '../../../tool/utils/paths.js';
 
 export const sort = 'sdp';
-export const title = `复活·双形态·${styleText('o', "较难")}`;
+export const title = `变身复活·补血·${styleText('o', "较难")}`;
 export const intro = `${B("雨桐")}通过${get.poptip("lit_qiqi")}互换体力保队友，再利用队友通过${get.poptip("lit_qiongyin")}换取体力上限，死亡时由${get.poptip("lit_pobi")}化身为隐藏形态「${get.poptip("lit_zhongyutong钟雨桐")}」。`
     + "<li>主公：优先用跫音喂大上限，维持高血量状态，破壁不期望打核爆，主要用于复活甲"
     + "<li>忠臣：歧戚可替濒死队友承伤，触发破壁后影响力减半，但能辅助队友的护甲"
@@ -107,7 +107,7 @@ export const skill = {
         },
     },
     lit_pobi: {
-        direct: true,
+        silent: true,
         juexingji: true,
         mark: true,
         marktext: "壁",

@@ -64,7 +64,7 @@ export const skill = {
         },
     },
     lit_jiwa: {
-        direct: true,
+        silent: true,
         locked: false,
         trigger: {
             player: "turnOverEnd",

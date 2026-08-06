@@ -489,7 +489,7 @@ export const skill = {
     lit_jiqing: {
         lit_neg: 1,
         derivation: "lit_negClear_faq",
-        direct: true,
+        silent: true,
         init: function (player, skill) {
             if (player.hp <= 1) {
                 player.logSkill(skill);

@@ -308,7 +308,7 @@ export const skill = {
         },
         subSkill: {
             mark: {
-                direct: true,
+                silent: true,
                 mark: true,
                 intro: {
                     name: "期许",

@@ -5,7 +5,8 @@ export const skill = {
         nopop: true,
         charlotte: true,
         unique: true,
-        direct: true,
+        silent: true,
+        log: false,
         firstDo: true,
         mark: true,
         marktext: "级",
@@ -78,15 +79,7 @@ export const skill = {
                 'bs': 'lit_yisuiV2',
                 'lcm': 'lit_jijinV2',
                 'zmh': 'lit_jianrenV2',
-                'rita': () => {
-                    if (player.hasSkill('lit_dafang')) {
-                        player.addSkill('lit_hengshuitiV2');
-                        player.popup('lit_hengshuitiV2');
-                    } else {
-                        player.addSkill('lit_dafang');
-                        player.popup('lit_dafang');
-                    }
-                },
+                'rita': 'lit_nuoruoV2',
                 'hp': {
                     skills: 'lit_yigou',
                     beforeAdd: async () => await player.loseMaxHp(),
@@ -161,7 +154,7 @@ export const skill = {
             markAfterShow: {
                 charlotte: true,
                 firstDo: true,
-                direct: true,
+                silent: true,
                 trigger: { player: "showCharacterAfter" },
                 filter(event, player) {
                     return player.skills.some(e => lib.lit.isShengjiSkill(e));
@@ -230,7 +223,7 @@ export const skill = {
     },
     lit_shengjirita: {
         inherit: 'lit_sj',
-        derivation: ['lit_dafang', 'lit_hengshuiti'],
+        derivation: 'lit_nuoruoV2',
     },
     lit_shengjihp: {
         inherit: 'lit_sj',

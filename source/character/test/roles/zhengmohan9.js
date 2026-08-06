@@ -20,7 +20,7 @@ export const skill = {
         trigger: {
             player: ["changeHp"],
         },
-        direct: true,
+        silent: true,
         filter: (event, player) => {
             return get.sgn(player.hp - 3.5) !== get.sgn(player.hp - 3.5 - event.num);
         },

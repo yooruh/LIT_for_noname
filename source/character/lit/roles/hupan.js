@@ -77,7 +77,7 @@ export const skill = {
         },
     },
     lit_shichou: {
-        direct: true,
+        silent: true,
         marktext: "誓",
         intro: {
             name: "誓仇",
@@ -157,7 +157,7 @@ export const skill = {
                 sourceSkill: 'lit_shichou',
             },
             die: {
-                direct: true,
+                silent: true,
                 forceDie: true,
                 trigger: {
                     player: 'dieAfter',
@@ -340,7 +340,7 @@ export const skill = {
         },
     },
     lit_mengying: {
-        direct: true,
+        silent: true,
         lit_neg: 3, // 其他技能变动梦萦层数时需调用neg技能
         derivation: "lit_negClear_faq",
         mark: true,

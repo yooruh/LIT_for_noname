@@ -124,7 +124,7 @@ export const skill = {
         group: "lit_gugu_loseHp",
         subSkill: {
             loseHp: {
-                direct: true,
+                silent: true,
                 locked: true,
                 trigger: {
                     global: "phaseJieshuBegin",

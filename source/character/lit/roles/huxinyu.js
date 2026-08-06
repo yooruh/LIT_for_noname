@@ -132,7 +132,7 @@ export const skill = {
                 sourceSkill: "lit_xukong",
             },
             reset: {
-                direct: true,
+                silent: true,
                 trigger: { source: "damageBegin1" },
                 filter(event, player) {
                     let evt = event.getParent("useCard");

@@ -66,7 +66,6 @@ export const aiGuard = {
 
 export const aiGuardReset = {
 	trigger: { player: "phaseUseBegin" },
-	direct: true,
 	charlotte: true,
 	nopop: true,
 	popup: false,

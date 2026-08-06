@@ -90,7 +90,8 @@ export const skill = {
                 },
             },
         },
-    }, lit_nuoruo: {
+    },
+    lit_nuoruo: {
         frequent: true,
         trigger: { global: "loseEnd" },
         filter: (event, player) => {
@@ -120,9 +121,30 @@ export const skill = {
             if (list.length) await player.gain(list, "gain2");
         },
     },
+    lit_nuoruoV2: {
+        inherit: "lit_nuoruo",
+        init: (player) => {
+            if (player.hasSkill('lit_nuoruo')) player.removeSkill('lit_nuoruo');
+        },
+        filter: (event, player) => {
+            let evt = event.getParent(), evt2 = evt.getParent();
+            if (
+                event.player === player ||
+                evt.name === "useCard" && get.type(evt.card) === "equip" ||
+                evt2.name === "swapHandcards"
+            )
+                return false;
+            for (let i = 0; i < event.cards.length; i++) {
+                if (get.type(event.cards[i]) === "equip" && get.position(event.cards[i]) === "d") {
+                    return true;
+                }
+            }
+            return false;
+        },
+    },
     lit_hengshuiti: {
         nobracket: true,
-        direct: true,
+        silent: true,
         trigger: {
             player: "useCardEnd",
         },
@@ -164,33 +186,33 @@ export const translate = {
     'lit_dafang_info': "主公技，你装备区每失去1张牌后，你可以令一名“叁”势力角色将手牌补至其体力上限（至多补至9），如果其手牌数已经达到体力上限，你恢复1点体力。",
     'lit_nuoruo': "懦弱",
     'lit_nuoruo_info': "其他角色的出牌阶段，当装备牌置入弃牌堆时，你可以获得之",
+    'lit_nuoruoV2': "懦弱V2",
+    'lit_nuoruoV2_info': "其他角色的装备牌置入弃牌堆时，你可以获得之",
     'lit_hengshuiti': "衡水体",
     'lit_hengshuiti_info': "锁定技，当你使用装备牌后，你可以视为对一名角色使用冰【杀】",
     'lit_hengshuitiV2': "衡水体V2",
-    'lit_hengshuitiV2_info': "锁定技，当你使用装备牌后，你可以视为对一名角色使用冰【杀】；恢复1点体力",
+    'lit_hengshuitiV2_info': "锁定技，当你使用装备牌后，恢复1点体力，然后你可以视为对一名角色使用冰【杀】",
     'lit_shengjirita': "升级·Rita",
-    'lit_shengjirita_info': `${get.poptip('lit_dafang')}${get.poptip('lit_hengshuiti')}若你已拥有〖大方〗，则获得〖衡水体〗；否则，获得〖大方〗`,
+    'lit_shengjirita_info': `${get.poptip('lit_nuoruoV2')} 获得并修改〖懦弱〗：去掉出牌阶段条件`,
 };
 
 export const simpleTranslate = {
-    'lit_dafang_info': "主；装备区每失去1张牌后，可令一“叁”势力角色将手牌补至其体力上限（至多补至9），若其手牌数已达上限，恢复1体力",
+    'lit_dafang_info': "主；装备区每失去1张牌后，可令一“叁”势力角色将手牌补至其体力上限（至多补至9），若其手牌数已达上限，你+1血",
     'lit_nuoruo_info': "他人出牌阶段，你可获得其置入弃牌堆的装备牌",
+    'lit_nuoruoV2_info': "你可获得他人置入弃牌堆的装备牌",
     'lit_hengshuiti_info': "锁；使用装备牌后可视为对1人使用冰杀",
     'lit_hengshuitiV2_info': "锁；使用装备牌后+1血，可视为对1人使用冰杀",
-    'lit_shengjirita_info': `${get.poptip('lit_dafang')}${get.poptip('lit_hengshuiti')}若已拥有"大方"，则获得"衡水体V2"并于其中增加：恢复1点体力；否则，获得"大方"`,
+    'lit_shengjirita_info': `${get.poptip('lit_nuoruoV2')} 获得并修改“懦弱”：去掉出牌阶段条件`,
 };
 
 export const dynamicTranslate = {
-    lit_shengjirita(player) {
-        let group = lib.lit.isGuozhanKeyEnabled() ? '叁/键' : '叁';
-        if (player.hasSkill('lit_dafang')) return `获得${get.poptip('lit_hengshuiti')}：锁；使用装备牌后可视为对1人使用冰杀`;
-        return `获得${get.poptip('lit_dafang')}：主；装备区失去牌后，可令1“${group}”势力角色将手牌补至其体力上限（至多补至9）`;
-    },
+    // lit_shengjirita(player) {
+    //     let group = lib.lit.isGuozhanKeyEnabled() ? '叁/键' : '叁';
+    //     if (player.hasSkill('lit_dafang')) return `获得${get.poptip('lit_hengshuiti')}：锁；使用装备牌后可视为对1人使用冰杀`;
+    //     return `获得${get.poptip('lit_dafang')}：主；装备区失去牌后，可令1“${group}”势力角色将手牌补至其体力上限（至多补至9）`;
+    // },
     lit_dafang(player) {
         let group = lib.lit.isGuozhanKeyEnabled() ? '叁/键' : '叁';
         return `主；装备区每失去1张牌后，可令一“${group}”势力角色将手牌补至其体力上限（至多补至9）`;
-    },
-    lit_hengshuitiV2(player) {
-        return "锁；使用装备牌后+1血，可视为对1人使用冰杀";
     },
 };

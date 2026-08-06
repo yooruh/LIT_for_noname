@@ -73,7 +73,7 @@ export const skill = {
         group: 'lit_negClear',
     },
     lit_xiaosa: {
-        direct: true,
+        silent: true,
         locked: false,
         firstDo: true,
         init: (player) => {
@@ -156,7 +156,7 @@ export const skill = {
             },
             losehp: {
                 locked: false,
-                direct: true,
+                silent: true,
                 trigger: {
                     global: "dying",
                 },

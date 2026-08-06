@@ -24,7 +24,7 @@ export function createRolePack(fileNames, modules, packName) {
             }));
         },
         createCharacterSort() {
-            const groups = {};
+            const groups = { "lit_ybs": [], "lit_sdp": [], "lit_jbs": [] };
             for (const fileName of fileNames) {
                 const sort = roles[fileName].sort;
                 if (!sort) continue;

@@ -170,7 +170,7 @@ export const card = {
 export const skill = {
     lit_qianfanpai_skill: {
         nopop: true,
-        direct: true,
+        silent: true,
         firstDo: true,
         charlotte: true,
         trigger: { player: "phaseBefore" },
@@ -192,7 +192,7 @@ export const skill = {
         nopop: true,
         unique: true,
         charlotte: true,
-        direct: true,
+        silent: true,
         forceDie: true,
         firstDo: true,
         mark: true,
@@ -394,6 +394,13 @@ export const skill = {
             content: (storage, player) => {
                 const [turnHujia, hpHujia] = player.getStorage("lit_zhongyutongdebiji", [false, false]);
                 return `<li>${turnHujia ? "已" : "暂未"}获得翻面对应的护甲</li><li>${hpHujia ? "已" : "暂未"}获得无牌对应的护甲</li>`
+            },
+            markcount: (storage, player) => {
+                let sum = 0;
+                const [turnHujia, hpHujia] = player.getStorage("lit_zhongyutongdebiji", [false, false]);
+                if (turnHujia) sum += 2;
+                if (hpHujia) sum += 2;
+                return sum;
             },
         },
 
@@ -653,7 +660,7 @@ export const skill = {
         lit_dk: true,
         charlotte: true,
         nobracket: true,
-        direct: true,
+        silent: true,
         trigger: {
             global: "dieAfter",
         },
@@ -735,7 +742,7 @@ export const skill = {
         },
         subSkill: {
             mark: {
-                direct: true,
+                silent: true,
                 firstDo: true,
                 mark: true,
                 marktext: "热",

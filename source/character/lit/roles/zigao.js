@@ -83,7 +83,7 @@ export const skill = {
         },
         subSkill: {
             count: {
-                direct: true,
+                silent: true,
                 init(player) {
                     player.setStorage("lit_xinren_count", [null, null, 0]);
                 },
@@ -206,7 +206,7 @@ export const skill = {
         subSkill: {
             sub: {
                 unique: true,
-                direct: true,
+                silent: true,
                 charlotte: true,
                 nobracket: true,
                 init: (player) => {
@@ -293,7 +293,7 @@ export const skill = {
                     },
                 },
 
-                direct: true,
+                silent: true,
                 firstDo: true,
                 trigger: {
                     player: ["useCard1", "gainAfter"],

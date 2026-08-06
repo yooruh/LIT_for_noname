@@ -29,7 +29,7 @@ export const skill = {
                 return !event.targets.includes(current) && lib.filter.targetEnabled2(event.card, event.player, current);
             });
         },
-        direct: true,
+        silent: true,
         locked: false,
         async content(event, trigger, player) {
             const result = await player.chooseTarget(get.prompt("lit_gufeng"), `为 ${get.translation(trigger.card)} 增加1个目标`, (card, player, target) => {
@@ -154,7 +154,7 @@ export const skill = {
                     player: 'useCardToTarget',
                 },
                 firstDo: true,
-                direct: true,
+                silent: true,
                 forceDie: true,
                 filter: (event) => {
                     return event.card.name === 'sha' && game.hasPlayer(current => {

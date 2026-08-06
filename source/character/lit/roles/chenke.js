@@ -95,7 +95,7 @@ export const skill = {
             player: ["damageEnd", "loseHpEnd"],
         },
         group: "lit_yizhu_die",
-        direct: true,
+        silent: true,
         filter: (event, player) => {
             return event.num > 0;
         },
