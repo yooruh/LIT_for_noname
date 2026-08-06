@@ -8,15 +8,17 @@
  *      并把 zip 元数据写入 version.json）
  *   2. 已安装并登录 GitHub CLI（gh auth login）
  *
- * 本脚本只处理「zips 分支 + Release」，不运行构建、不触碰 main：
+ * 本脚本只处理「zips 分支 + v{版本} 分支 + Release」，不运行构建、不触碰 main：
  *   1. 校验 version.json 与 ../_others/ 中代码包的 size/md5 一致
  *   2. 把代码包提交到 zips 分支的 release/code/ 并推送（GitHub 必需，Gitee 尽力）
- *   3. 打 v{版本} 标签并推送
- *   4. 用 gh 创建 GitHub Release 并附加代码包资产
+ *   3. 推送 v{版本} 分支（基于当前 HEAD，移除 version.json，GitHub 必需，Gitee 尽力）
+ *   4. 打 v{版本} 标签并推送
+ *   5. 用 gh 创建 GitHub Release 并附加代码包资产
  *
  * 用法:
  *   node scripts/publish.mjs              正式发布
  *   node scripts/publish.mjs --dry-run    预览（不执行任何写操作）
+ *   node scripts/publish.mjs --force      远程 v{版本} 分支不一致时强制覆盖
  */
 
 import { spawnSync } from 'node:child_process';
@@ -38,6 +40,7 @@ const SELF_PATH = fileURLToPath(import.meta.url);
 const OUT_DIR = resolve(ROOT, '..', '_others');
 const ZIP_BRANCH = 'zips';
 const WORKTREE = resolve(ROOT, '..', '.zips-worktree');
+const VERSION_WORKTREE = resolve(ROOT, '..', '.version-worktree');
 const REPO = 'yooruh/LIT_for_noname';
 const GITHUB_PUSH = 'https://github.com/yooruh/LIT_for_noname.git';
 const GITEE_PUSH = 'https://gitee.com/yooruh/LIT_for_noname.git';
@@ -76,8 +79,9 @@ function printBanner() {
 
 function printUsage() {
   console.log(`用法:
-  node scripts/publish.mjs              正式发布（推送 zips 分支 + 标签 + GitHub Release）
+  node scripts/publish.mjs              正式发布（推送 zips 分支 + v{版本} 分支 + 标签 + GitHub Release）
   node scripts/publish.mjs --dry-run    预览（不执行任何写操作）
+  node scripts/publish.mjs --force      远程 v{版本} 分支不一致时强制覆盖
 `);
 }
 
@@ -187,16 +191,96 @@ function buildReleaseNotes(version) {
 }
 
 /** 清理残留 worktree：先 git 移除，失败则直接删除目录 + prune */
-function cleanupWorktree() {
+function cleanupWorktree(target = WORKTREE) {
   run('git', ['worktree', 'prune'], { allowFail: true });
   const list = run('git', ['worktree', 'list', '--porcelain'], { allowFail: true });
-  if (list.status === 0 && list.stdout.includes(WORKTREE)) {
-    const res = run('git', ['worktree', 'remove', '--force', WORKTREE], { allowFail: true });
+  if (list.status === 0 && list.stdout.includes(target)) {
+    const res = run('git', ['worktree', 'remove', '--force', target], { allowFail: true });
     if (res.status !== 0) run('git', ['worktree', 'prune'], { allowFail: true });
   }
-  if (existsSync(WORKTREE)) {
-    rmSync(WORKTREE, { recursive: true, force: true });
+  if (existsSync(target)) {
+    rmSync(target, { recursive: true, force: true });
     run('git', ['worktree', 'prune'], { allowFail: true });
+  }
+}
+
+/**
+ * 推送 v{版本} 分支（基于当前 HEAD，移除 version.json）到 GitHub/Gitee。
+ * 项目用 v{版本} 同时作为发布标签，故推送必须用显式 refs/heads/ refspec，
+ * 避免同名标签造成 "matches more than one" 歧义。
+ * @param {string} version 版本号（可带 v 前缀）
+ * @param {object} [options]
+ * @param {boolean} [options.dryRun] 预览模式，不执行任何写操作
+ * @param {boolean} [options.force] 远程分支不一致时强制覆盖推送
+ */
+function pushVersionBranch(version, { dryRun = false, force = false } = {}) {
+  const branch = withV(version);
+  const ref = `refs/heads/${branch}:refs/heads/${branch}`;
+
+  // 目标分支就是当前分支时，无法用 worktree 重建
+  const currentBranch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD']).stdout;
+  if (currentBranch === branch) {
+    throw new Error(`当前已在 ${branch} 分支上，请先切回 main 再执行`);
+  }
+
+  log.info(`版本分支: ${branch}（基于当前 HEAD，移除 version.json）`);
+  // version.json 是否被跟踪（只读探测，dry-run 同样有效）
+  const tracked = run('git', ['ls-files', '--error-unmatch', 'version.json'], { allowFail: true }).status === 0;
+
+  if (dryRun) {
+    log.info(`[DRY-RUN] git worktree add -B ${branch} <worktree> HEAD`);
+    if (tracked) {
+      log.info(`[DRY-RUN] git rm version.json`);
+      log.info(`[DRY-RUN] git commit -m "移除 version.json（${branch} 版本分支）"`);
+    } else {
+      log.warn('version.json 未被跟踪，分支上无需移除');
+    }
+    log.info(`[DRY-RUN] git push ${force ? '--force ' : ''}${GITHUB_PUSH} ${ref}`);
+    log.info(`[DRY-RUN] git push ${force ? '--force ' : ''}${GITEE_PUSH} ${ref}（Gitee 尽力）`);
+    return;
+  }
+
+  try {
+    // 1) 创建/重置版本分支 worktree
+    run('git', ['worktree', 'add', '-B', branch, VERSION_WORKTREE, 'HEAD']);
+
+    // 2) 移除 version.json 并提交（仅当被跟踪）
+    if (tracked) {
+      run('git', ['rm', '--ignore-unmatch', 'version.json'], { cwd: VERSION_WORKTREE });
+      const porcelain = run('git', ['status', '--porcelain'], { cwd: VERSION_WORKTREE });
+      if (porcelain.stdout.trim().length > 0) {
+        run('git', ['commit', '-m', `移除 version.json（${branch} 版本分支）`], { cwd: VERSION_WORKTREE });
+        log.ok(`已在 ${branch} 分支移除 version.json 并提交`);
+      } else {
+        log.ok(`${branch} 分支已不含 version.json，无需提交`);
+      }
+    } else {
+      log.warn('version.json 未被跟踪，分支上无需移除');
+    }
+
+    // 3) 推送：GitHub 必需；Gitee 尽力
+    const pushArgs = force ? ['--force'] : [];
+    const github = run('git', ['push', ...pushArgs, GITHUB_PUSH, ref], { allowFail: true });
+    if (github.status !== 0) {
+      if (!force && /rejected|non-fast-forward|fetch first/i.test(github.stderr + github.stdout)) {
+        throw new Error(
+          `推送 ${branch} 到 GitHub 被拒绝（远程分支已存在且与本机不一致）。\n` +
+          `如需覆盖远程分支，请加 --force 重试。\n` +
+          (github.stderr || github.stdout)
+        );
+      }
+      throw new Error(`推送 ${branch} 到 GitHub 失败: ${github.stderr || github.stdout || '未知原因'}`);
+    }
+    log.ok(`已推送 ${branch} 到 GitHub`);
+
+    const gitee = run('git', ['push', ...pushArgs, GITEE_PUSH, ref], { allowFail: true });
+    if (gitee.status !== 0) {
+      log.warn(`Gitee 推送失败（不影响 GitHub）: ${gitee.stderr || gitee.stdout || '未知原因'}`);
+    } else {
+      log.ok(`已推送 ${branch} 到 Gitee`);
+    }
+  } finally {
+    cleanupWorktree(VERSION_WORKTREE);
   }
 }
 
@@ -374,6 +458,7 @@ function printSummary(target, { changed, sha }) {
 function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run') || args.includes('-d');
+  const force = args.includes('--force') || args.includes('-f');
 
   printBanner();
   try {
@@ -384,6 +469,9 @@ function main() {
     log.info(`代码包:   ${target.filename}（${(target.size / 1024).toFixed(1)} KB，md5 ${target.md5.slice(0, 8)}…）`);
 
     const { changed, sha } = syncZipBranch(dryRun, target);
+
+    // 推送 v{版本} 分支（基于当前 HEAD，移除 version.json）
+    pushVersionBranch(target.version, { dryRun, force });
 
     if (dryRun) {
       log.info(`[DRY-RUN] 标签: 创建并推送 ${withV(target.version)} -> ${sha}`);

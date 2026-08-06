@@ -5,7 +5,7 @@
   },
   "extension.js": {
     "size": 5235,
-    "md5": "c68b921e47c439bdde837cbaaaa526b9"
+    "md5": "97358d089d747c514720c58143bb3ce1"
   },
   "image/card/lit_diaoka.png": {
     "size": 4793,
@@ -185,23 +185,23 @@
   },
   "info.json": {
     "size": 240,
-    "md5": "bdc0b40810bf4eeef0c748bf52f85c83"
+    "md5": "483c9cb8f74a2d29fe1449fc4c43dbe0"
   },
   "LICENSE": {
     "size": 35475,
     "md5": "caa6fdf8e5816282515659907d639f09"
   },
   "source/card/lit_card/index.js": {
-    "size": 710,
-    "md5": "893e7a1945ba0969eb83e283fcf1a409"
+    "size": 738,
+    "md5": "1689384b7886881604d5fd3aaea9aa9c"
   },
   "source/card/lit_card/skills.js": {
     "size": 30988,
     "md5": "c879004b8cd9bccff7f4353de62583ad"
   },
   "source/card/lit_card/translate.js": {
-    "size": 3791,
-    "md5": "7dd3c754c88cff14019e4079e3b08eff"
+    "size": 3856,
+    "md5": "8a5916ee6d13202920029475c2e1ed65"
   },
   "source/character/lit/index.js": {
     "size": 3116,
@@ -396,12 +396,12 @@
     "md5": "cad7e1c9439e7dd9a853b94005f12991"
   },
   "source/mode/sandaohuanhua.js": {
-    "size": 59871,
-    "md5": "21e81c8481bf74549427a6ffaa3905dd"
+    "size": 61777,
+    "md5": "665aa48569d63f3eb66a2550a303294d"
   },
   "source/mode/sandaohuanhua_brawl.js": {
-    "size": 73326,
-    "md5": "d1d81ed66fc32bf74b59a337d04fb171"
+    "size": 74686,
+    "md5": "cab7b652d0264aed3cfd610b16825487"
   },
   "source/onlineFix/characterSelection.js": {
     "size": 14608,
@@ -488,8 +488,8 @@
     "md5": "6ccd71f2c33761a44821157dbd90377c"
   },
   "source/tool/pack/registry.js": {
-    "size": 7132,
-    "md5": "5611b4e10b8d75e0dc63152286cde933"
+    "size": 7302,
+    "md5": "2a17b2e0a47dfb869aca37b55f3fd347"
   },
   "source/tool/pack/rolePack.js": {
     "size": 1636,
@@ -556,24 +556,24 @@
     "md5": "1abc3b22c1c60e403c58dfe0753b1b98"
   },
   "style/css/cards.css": {
-    "size": 88,
-    "md5": "a6b6ea4aeea16a10d2c3090e4974c22e"
+    "size": 91,
+    "md5": "f51a9af2935ec413e98169ff9828f0ab"
   },
   "style/css/dialogManager.css": {
-    "size": 14255,
-    "md5": "a706105e2217c621a29212fc17f5c0df"
+    "size": 14902,
+    "md5": "f1993bf20d5c6e9eae1c39856489bfd4"
   },
   "style/css/extension.css": {
-    "size": 6264,
-    "md5": "381f0098d860e48e6003889e4b89a19d"
+    "size": 6493,
+    "md5": "4a125de1dc550afe68ae5920ff935357"
   },
   "style/html/help.html": {
-    "size": 16969,
-    "md5": "dfa2750b98cb99800ae74e7f6fbb5299"
+    "size": 17621,
+    "md5": "c1b83cd6a25479df66034a7b7642e22e"
   },
   "style/html/sandaohuanhua.html": {
-    "size": 8718,
-    "md5": "b320ac3d58fe4e5b6e66d4c8becc15c9"
+    "size": 8937,
+    "md5": "2e5a08831f9e53107a506916d668996a"
   },
   "style/html/update.html": {
     "size": 13528,
