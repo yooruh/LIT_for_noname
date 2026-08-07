@@ -497,18 +497,19 @@ class ExtensionUpdater {
 
         // 应用阶段（备份/解压/覆写）耗时较长，显示“请稍候”避免 UI 空窗
         const loading = await this.ui.showLoading('正在应用更新', '正在备份并覆写文件，请稍候...');
+        const report = (msg) => loading.updateText(msg);
 
         let backup = null;
         try {
             // 1) 解压并校验代码包到暂存目录 —— 此阶段不触碰正式目录
-            loading.updateText('正在解压并校验代码包...');
-            await this.prepareCodeStaging();
-            await this.verifyCodeStaging();
+            report('正在解压并校验代码包...');
+            await this.prepareCodeStaging(report);
+            await this.verifyCodeStaging(report);
 
             // 2) 备份当前版本（正式目录首次被触碰）
-            loading.updateText('正在备份当前版本...');
+            report('正在备份当前版本...');
             await this.state.setPhase('backing_up', true);
-            const backupResult = await this.backupManager.createBackup();
+            const backupResult = await this.backupManager.createBackup(report);
             if (!backupResult.success) {
                 console.warn('[备份] 创建失败，继续更新:', backupResult.error);
             } else {
@@ -516,16 +517,16 @@ class ExtensionUpdater {
             }
 
             // 3) 覆盖：先媒体（临时文件）后代码（已校验的暂存目录）
-            loading.updateText('正在覆写文件，请稍候...');
+            report('正在覆写文件，请稍候...');
             await this.state.setPhase('moving', true);
-            await this.applyDownloadedFiles();
-            await this.applyCodeFromStaging();
-            await this.postVerifyCode();
+            await this.applyDownloadedFiles(report);
+            await this.applyCodeFromStaging(report);
+            await this.postVerifyCode(report);
 
             // 4) 清理失效文件（按模式过滤）
-            loading.updateText('正在清理旧文件...');
+            report('正在清理旧文件...');
             const oldFileList = await this.readLocalDirectoryJson();
-            await this.removeObsoleteFiles(oldFileList, this.stagedManifestPaths);
+            await this.removeObsoleteFiles(oldFileList, this.stagedManifestPaths, report);
 
             // 5) 写回新清单、清理临时与暂存
             await this.refreshLocalDirectoryJson();
@@ -533,7 +534,7 @@ class ExtensionUpdater {
         } catch (error) {
             console.error('[应用更新] 失败:', error);
             // 回滚到备份，确保正式目录不被半更新状态破坏
-            if (backup) await this.rollback(backup);
+            if (backup) await this.rollback(backup, report);
             await this.state.setPhase('downloading', true);
             if (!error.updateStage) error.updateStage = 'apply';
             throw error;
@@ -543,7 +544,7 @@ class ExtensionUpdater {
     }
 
     // 将代码包解压到暂存目录（_temp_update），不触碰正式目录
-    async prepareCodeStaging() {
+    async prepareCodeStaging(onProgress = null) {
         await this.state.setPhase('staging', true);
         const codeZipTemp = `${this.tempDir}/${CONFIG.files.codeZip}`;
         const exists = await game.promises.checkFile(codeZipTemp);
@@ -584,6 +585,7 @@ class ExtensionUpdater {
                 const slashIdx = cleanName.lastIndexOf('/');
                 const dir = slashIdx >= 0 ? `${this.stagingDir}/${cleanName.slice(0, slashIdx)}` : this.stagingDir;
                 const fileName = cleanName.slice(slashIdx + 1);
+                if (typeof onProgress === 'function') onProgress(`正在解压 ${cleanName} ...`);
                 await game.promises.ensureDirectory(dir);
                 // writeFile 需要 ArrayBuffer/Buffer；取视图对应的精确字节
                 const ab = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
@@ -611,12 +613,13 @@ class ExtensionUpdater {
     }
 
     // 校验暂存树：代码文件齐全 + md5 与清单一致（写盘前的“缺必需文件”防线）
-    async verifyCodeStaging() {
+    async verifyCodeStaging(onProgress = null) {
         await this.state.setPhase('verifying', true);
         const missing = [];
         const mismatched = [];
         for (const path of this.stagedManifestPaths) {
             if (!utils.isCodePath(path)) continue; // 媒体不随代码包，跳过
+            if (typeof onProgress === 'function') onProgress(`正在校验代码包 ${path} ...`);
             if (!this.staged[path]) {
                 missing.push(path);
                 continue;
@@ -637,8 +640,9 @@ class ExtensionUpdater {
     }
 
     // 从暂存目录写入代码文件（暂存已整体校验通过）
-    async applyCodeFromStaging() {
+    async applyCodeFromStaging(onProgress = null) {
         for (const path of Object.keys(this.staged)) {
+            if (typeof onProgress === 'function') onProgress(`正在写入代码文件 ${path} ...`);
             const slashIdx = path.lastIndexOf('/');
             const dir = slashIdx >= 0 ? `${this.targetDir}/${path.slice(0, slashIdx)}` : this.targetDir;
             const fileName = path.slice(slashIdx + 1);
@@ -649,10 +653,11 @@ class ExtensionUpdater {
     }
 
     // 覆盖后复验：已写入的代码文件 md5 与清单一致，不符则回滚
-    async postVerifyCode() {
+    async postVerifyCode(onProgress = null) {
         for (const path of Object.keys(this.staged)) {
             const expected = this.stagedManifest[path]?.md5;
             if (!expected) continue; // Directory.json 自身等 md5 为 null 的文件跳过
+            if (typeof onProgress === 'function') onProgress(`正在校验 ${path} ...`);
             const local = await game.promises.readFile(`${this.targetDir}/${path}`);
             if (md5Hex(local) !== expected) {
                 const error = new Error(`覆盖后校验失败: ${path}`);
@@ -663,10 +668,10 @@ class ExtensionUpdater {
     }
 
     // 回滚到备份，并清理暂存目录
-    async rollback(backup) {
+    async rollback(backup, onProgress = null) {
         if (!backup || !backup.path) return;
         try {
-            const result = await this.backupManager.rollbackToBackup(backup);
+            const result = await this.backupManager.rollbackToBackup(backup, onProgress);
             if (result.success) {
                 console.log('[回滚] 已恢复到备份版本');
             } else {
@@ -702,7 +707,7 @@ class ExtensionUpdater {
     // 回退为清空式清理：删除本地所有不在新清单中的文件（等效"全部删除再重下"）
     // 新清单必须是完整清单（代码包内 Directory.json 的全部路径），且按模式过滤：
     // code 模式绝不触碰媒体文件。
-    async removeObsoleteFiles(oldFileList, newManifestPaths) {
+    async removeObsoleteFiles(oldFileList, newManifestPaths, onProgress = null) {
         const newSet = new Set(newManifestPaths || []);
         if (newSet.size === 0) {
             console.warn('[清理] 新版本文件清单为空，跳过清理');
@@ -726,6 +731,7 @@ class ExtensionUpdater {
 
         for (const relPath of candidates) {
             if (PROTECTED_FILES.has(relPath)) continue; // Directory.json / version.json 保护
+            if (typeof onProgress === 'function') onProgress(`正在清理旧文件 ${relPath} ...`);
             const target = `${this.targetDir}/${relPath}`;
             try {
                 const exists = await game.promises.checkFile(target);
@@ -806,7 +812,7 @@ class ExtensionUpdater {
         }
     }
 
-    async applyDownloadedFiles() {
+    async applyDownloadedFiles(onProgress = null) {
         const successFiles = this.state.data.files.filter(f => f.status === 'success' && f.tempVerified && !f.applied);
         for (const fileState of successFiles) {
             const task = this.tasks.find(t => t.remote === fileState.path);
@@ -814,6 +820,7 @@ class ExtensionUpdater {
             if (task.kind === 'zip') continue; // 代码包由 applyCodeFromStaging 处理
 
             try {
+                if (typeof onProgress === 'function') onProgress(`正在写入 ${fileState.path} ...`);
                 const content = await game.promises.readFile(task.temp);
                 const targetDir = task.target.substring(0, task.target.lastIndexOf('/'));
                 const targetName = task.target.split('/').pop();
@@ -882,7 +889,17 @@ class ExtensionUpdater {
             if (action.action === 'rollback') {
                 const confirmed = await this.ui.confirmRollback(action.backup);
                 if (confirmed) {
-                    const result = await this.backupManager.rollbackToBackup(action.backup);
+                    // 回退涉及整目录复制/删除，耗时较长，用加载框展示当前行为
+                    const loading = await this.ui.showLoading('正在回退版本', '正在备份当前版本...');
+                    let result;
+                    try {
+                        result = await this.backupManager.rollbackToBackup(
+                            action.backup,
+                            (msg) => loading.updateText(msg)
+                        );
+                    } finally {
+                        loading.close();
+                    }
                     if (result.success) {
                         await this.ui.alert('回退成功', '版本已回退，建议立即重启游戏');
                         if (await this.ui.confirm('重启确认', '是否立即重启？', '立即重启', '稍后')) {
@@ -900,10 +917,17 @@ class ExtensionUpdater {
                     '删除', '取消'
                 );
                 if (confirm) {
-                    for (const backup of action.backups) {
-                        await this.backupManager.deleteBackup(backup);
+                    const loading = await this.ui.showLoading('正在删除备份', '正在删除选中的备份...');
+                    let deleted = 0;
+                    try {
+                        for (const backup of action.backups) {
+                            loading.updateText(`正在删除 ${backup.name} ...`);
+                            if (await this.backupManager.deleteBackup(backup)) deleted++;
+                        }
+                    } finally {
+                        loading.close();
                     }
-                    await this.ui.alert('删除成功', `已删除 ${action.backups.length} 个备份`);
+                    await this.ui.alert('删除成功', `已删除 ${deleted} 个备份`);
                 }
             }
         }

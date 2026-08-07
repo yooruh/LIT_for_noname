@@ -36,9 +36,8 @@ window.lit.sdhhResetMissionUI = sdhhResetMissionUI;
 export let info = {
     name: "叁岛幻化",
     mode: "identity",
-    intro: `<button ` +
-        `onclick="window.lit.sdhhResetMissionUI()" ` +
-        `style="cursor:pointer">重置任务框位置</button><br>` +
+    intro: `<button class="lit-config-button" ` +
+        `onclick="window.lit.sdhhResetMissionUI()">重置任务框位置</button><br>` +
         `完成任务收灵力，灵力加持得技能，参悟卦象衡步履，起死回生逆乾坤！`,
 
     // 常量定义
@@ -187,7 +186,7 @@ export let info = {
         }
 
         const introLink = document.createElement("a");
-        introLink.className = "lit-link";
+        introLink.className = "lit-link lit-config-button";
         introLink.innerText = "点击查看【叁岛幻化】完整介绍及玩法建议";
         introLink.onclick = () => {
             try {
@@ -944,6 +943,9 @@ export let info = {
 
                         const lockIcon = document.createElement('span');
                         lockIcon.className = 'lock-icon';
+                        lockIcon.setAttribute('role', 'button');
+                        lockIcon.setAttribute('tabindex', '0');
+                        lockIcon.setAttribute('aria-label', dragState.isFixed ? '解锁任务框位置' : '锁定任务框位置');
                         lockIcon.textContent = dragState.isFixed ? '🔒' : '🔓';
 
                         container.append(textSpan, lockIcon);
@@ -1069,12 +1071,18 @@ export let info = {
                             container.toggleFixed();
                         });
                         lockIcon.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
+                        lockIcon.addEventListener('keydown', (e) => {
+                            if (e.key !== 'Enter' && e.key !== ' ') return;
+                            e.preventDefault();
+                            container.toggleFixed();
+                        });
 
                         // 公共API
                         container.setFixed = (fixed) => {
                             dragState.isFixed = fixed;
                             container.classList.toggle('fixed', fixed);
                             lockIcon.textContent = fixed ? '🔒' : '🔓';
+                            lockIcon.setAttribute('aria-label', fixed ? '解锁任务框位置' : '锁定任务框位置');
                             game.saveExtensionConfig('sandaohuanhua', 'uiFixed', fixed);
                             config.isFixed = fixed;
                         };
@@ -1112,8 +1120,8 @@ export let info = {
                         const me = game.me;
                         if (me?._toKill && me?._toSave && ui.sandaohuanhua?._textSpan) {
                             ui.sandaohuanhua._textSpan.innerHTML =
-                                `杀伤<span style='color:#ff5f56'>${get.translation(me._toKill)}(${me._toKill.identity})</span>，` +
-                                `保护<span style='color:#98fb98'>${get.translation(me._toSave)}(${me._toSave.identity})</span>`;
+                                `杀伤<span class='lit-sdhh-kill'>${get.translation(me._toKill)}(${me._toKill.identity})</span>，` +
+                                `保护<span class='lit-sdhh-save'>${get.translation(me._toSave)}(${me._toSave.identity})</span>`;
                         }
                     },
 
@@ -1134,6 +1142,7 @@ export let info = {
 
                     getSkillDialog: function (skills, prompt) {
                         const dialog = ui.create.dialog("hidden", "forcebutton");
+                        dialog.classList.add('lit-sdhh-skill-dialog');
 
                         const clickItem = function () {
                             const parent = this.parentNode;

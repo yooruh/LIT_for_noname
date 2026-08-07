@@ -55,9 +55,12 @@ const ConfigFlow = (() => {
         if (!finalConfirm) return;
 
         try {
-            dialogManager.loading('请稍候', '正在应用配置...');
-            await configService.loadAndApplyConfig(filename);
-            dialogManager.closeAll();
+            const loading = await dialogManager.loading('请稍候', '正在应用配置...');
+            try {
+                await configService.loadAndApplyConfig(filename);
+            } finally {
+                loading.close();
+            }
             await _showSuccessAndReload('配置应用成功！', displayName);
         } catch (applyError) {
             dialogManager.closeAll();
@@ -139,7 +142,7 @@ const ConfigFlow = (() => {
         while (true) {
             try {
                 if (!jsonFilePath) {
-                    dialogManager.loading('请稍候', '正在读取文件内容...');
+                    const loading = await dialogManager.loading('请稍候', '正在读取文件内容...');
 
                     try {
                         if (filePath.endsWith('.json')) {
@@ -152,7 +155,7 @@ const ConfigFlow = (() => {
                             isNewEdit = true;
                         }
                     } finally {
-                        dialogManager.closeAll();
+                        loading.close();
                     }
 
                     if (!jsonContent) {
@@ -266,17 +269,19 @@ const ConfigFlow = (() => {
 
     const _applyConfigFile = async (filePath) => {
         try {
-            dialogManager.loading('请稍候', '正在应用配置...');
-
-            if (filePath.endsWith('.json')) {
-                const jsonContent = await game.promises.readFileAsText(filePath);
-                const configData = JSON.parse(jsonContent);
-                await configService.applyConfigData(configData);
-            } else {
-                await configService.applyFromBackupFile(filePath);
+            const loading = await dialogManager.loading('请稍候', '正在应用配置...');
+            try {
+                if (filePath.endsWith('.json')) {
+                    const jsonContent = await game.promises.readFileAsText(filePath);
+                    const configData = JSON.parse(jsonContent);
+                    await configService.applyConfigData(configData);
+                } else {
+                    await configService.applyFromBackupFile(filePath);
+                }
+            } finally {
+                loading.close();
             }
 
-            dialogManager.closeAll();
             await _showSuccessAndReload('配置应用成功！');
         } catch (error) {
             dialogManager.closeAll();
@@ -296,14 +301,19 @@ const ConfigFlow = (() => {
 
         if (!confirm) return;
 
+        const loading = await dialogManager.loading('请稍候', '正在删除文件...');
         let successCount = 0;
-        for (const filePath of filePaths) {
-            try {
-                await game.promises.removeFile(filePath);
-                successCount++;
-            } catch (e) {
-                console.error(`删除文件失败: ${filePath}`, e);
+        try {
+            for (const filePath of filePaths) {
+                try {
+                    await game.promises.removeFile(filePath);
+                    successCount++;
+                } catch (e) {
+                    console.error(`删除文件失败: ${filePath}`, e);
+                }
             }
+        } finally {
+            loading.close();
         }
 
         await dialogManager.alert(

@@ -154,7 +154,7 @@ game.videoContent.cardInfo = function ({ eventInfo, cardInfo }) {
 	const node = ui.thrown.find(c => c.name === cardInfo.name && c.number === cardInfo.number && c.suit === cardInfo.suit)
 	if (node && node.node) {
 		if (!node.node.cardsetion) {
-			node.node.cardsetion = ui.create.div('.cardsetion', eventInfo, node)
+			node.node.cardsetion = ui.create.div('.cardsetion.lit-card-annotation', eventInfo, node)
 		} else {
 			node.node.cardsetion.innerHTML = eventInfo || playername
 		}

@@ -13,6 +13,17 @@ const RELEASES_PATH = resolve(PATHS.root, 'release', 'releases.json');
 const CONTENT_JS_PATH = resolve(PATHS.root, 'source', 'content.js');
 const CIRCLED_NUMBERS = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
 
+function extractThemeStyle(html) {
+  const match = html.match(/\/\* LIT_THEME_STYLE_START[\s\S]*?\/\* LIT_THEME_STYLE_END \*\//);
+  return match ? match[0] : '';
+}
+
+function preserveThemeStyle(renderedHtml, currentHtml) {
+  const themeStyle = extractThemeStyle(currentHtml);
+  if (!themeStyle) return renderedHtml;
+  return renderedHtml.replace('</style>', `${themeStyle}\n\t\t</style>`);
+}
+
 export function getReleaseManifestPath() {
   return RELEASES_PATH;
 }
@@ -326,7 +337,9 @@ export function patchVersionJsonZip(version, zipInfo) {
 }
 
 export function writeUpdateHtml(manifest, dryRun = false) {
-  return writeWholeFile(PATHS.updateHtml, renderUpdateHtml(manifest), dryRun);
+  const currentHtml = readFile(PATHS.updateHtml);
+  const renderedHtml = preserveThemeStyle(renderUpdateHtml(manifest), currentHtml);
+  return writeWholeFile(PATHS.updateHtml, renderedHtml, dryRun);
 }
 
 export function writeContentJs(manifest, dryRun = false) {

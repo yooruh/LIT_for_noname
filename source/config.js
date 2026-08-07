@@ -3,6 +3,7 @@ import { dialogManager } from './tool/ui/dialogManager.js'
 import { extensionUpdateManager } from './tool/update/index.js';
 import { configManager } from './tool/configuration/configManager.js'
 import { extensionPath } from './tool/utils/paths.js'
+import { themeManager } from './tool/ui/themeManager.js'
 
 // 本体菜单更新，未来可期
 // update(config, map) {
@@ -48,7 +49,7 @@ import { extensionPath } from './tool/utils/paths.js'
 
 export const config = {
 	lit_help: {
-		name: '<button>帮助文档</button>',
+		name: '<button class="lit-config-button">帮助文档</button>',
 		intro: "查看叁岛世界相关设置的完整帮助页面",
 		clear: true,
 		async onclick() {
@@ -63,8 +64,21 @@ export const config = {
 			}
 		}
 	},
+	lit_uiTheme: {
+		name: '扩展界面主题',
+		intro: '选择叁岛世界自身界面的配色；“跟随系统”会按设备浅色/深色偏好自动切换。',
+		init: 'system',
+		item: {
+			system: '跟随系统',
+			light: '浅色',
+			dark: '深色',
+		},
+		onclick: (theme) => {
+			themeManager.save(theme);
+		},
+	},
 	lit_updateOnline: {
-		name: '<button>在线更新扩展</button>',
+		name: '<button class="lit-config-button">在线更新扩展</button>',
 		intro: "从GitHub/Gitee在线获取扩展并更新",
 		clear: true,
 		async onclick() {
@@ -72,7 +86,7 @@ export const config = {
 		}
 	},
 	lit_recommendConfig: {
-		name: '<button>应用推荐的无名杀全局设置</button>',
+		name: '<button class="lit-config-button">应用推荐的无名杀全局设置</button>',
 		intro: "载入相对适配《叁岛世界》的“无名杀全局设置”，同时可备份当前配置到files目录",
 		clear: true,
 		async onclick() {
@@ -132,7 +146,7 @@ export const config = {
 		}
 	},
 	lit_fg0: {
-		name: "<font size='4'>&nbsp;-------&nbsp;联机修改&nbsp;-------</font>",
+		name: "<span class='lit-config-section'>—— 联机修改 ——</span>",
 		clear: true,
 		nopointer: true,
 	},
@@ -173,16 +187,26 @@ export const config = {
 	get setMima() {
 		if (lib.config['extension_叁岛世界_play_mima']) {
 			return {
-				name: '<button>设置密码</button>',
+				name: '<button class="lit-config-button">设置密码</button>',
 				intro: "",
 				clear: true,
-				onclick() {
-					game.prompt(`请输入要设置的密码<br>当前密码：${lib.config['叁岛世界mima'] || '无'}`, str => {
-						if (str) game.saveConfig('叁岛世界mima', str);
-						game.prompt(`给密码输入错误的玩家的提示<br>当前提示：${lib.config['叁岛世界_tip'] || '无'}`, str2 => {
-							if (str2) game.saveConfig('叁岛世界_tip', str2);
-						})
-					})
+				async onclick() {
+					const password = await dialogManager.input(
+						'设置房间密码',
+						`当前密码：${lib.config['叁岛世界mima'] || '无'}\n\n留空并确认不会修改当前密码。`,
+						'',
+						{ password: true, placeholder: '输入新密码', confirmText: '下一步' }
+					);
+					if (password === null) return;
+					if (password) game.saveConfig('叁岛世界mima', password);
+
+					const tip = await dialogManager.input(
+						'设置密码错误提示',
+						`当前提示：${lib.config['叁岛世界_tip'] || '无'}\n\n留空并确认不会修改当前提示。`,
+						'',
+						{ rows: 2, placeholder: '输入提示文字' }
+					);
+					if (tip) game.saveConfig('叁岛世界_tip', tip);
 				}
 			}
 		}

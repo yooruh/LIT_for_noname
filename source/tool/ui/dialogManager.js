@@ -1,5 +1,6 @@
 import { lib, game, ui, get, ai, _status } from '../../../../../noname.js';
 import { extensionPath } from '../utils/paths.js'
+import { themeManager } from './themeManager.js';
 
 /**
  * 样式隔离的对话框组件 - 重构版
@@ -19,9 +20,13 @@ const DialogManager = (() => {
         const style = document.createElement('style');
         style.id = 'lit-ui-fallback-styles';
         style.textContent = `
-            .lit-ui-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 50000;}
-            .lit-ui-dialog { position: relative; left: auto; top: auto; background: white; border-radius: 15px; padding: 25px; box-sizing: border-box; transition: none; color: black; text-shadow: none; display: flex; flex-direction: column; min-width: 320px; max-width: 90vw; max-height: 85vh;}
-            .lit-ui-content { font-size: 16px; line-height: 1.6; color: #444; display: block; position: relative; flex-grow: 1; flex-shrink: 1; overflow-y: auto; margin-bottom: 20px; white-space: pre-wrap; height: auto;}
+            .lit-ui-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.64); display: flex; align-items: center; justify-content: center; z-index: 50000; }
+            .lit-ui-dialog { position: relative; left: auto; top: auto; background: #f4fafa; border-radius: 28px; padding: 24px; box-sizing: border-box; color: #161d1d; text-shadow: none; display: flex; flex-direction: column; min-width: 320px; max-width: 90vw; max-height: 85vh; box-shadow: 0 8px 18px rgba(0,0,0,.28); }
+            .lit-ui-content { font: 400 16px/1.5 system-ui, sans-serif; color: #3f4849; display: block; position: relative; flex-grow: 1; flex-shrink: 1; overflow-y: auto; margin-bottom: 20px; white-space: pre-wrap; height: auto; }
+            .lit-ui-button { min-height: 40px; padding: 10px 20px; border: 0; border-radius: 20px; font-weight: 700; cursor: pointer; }
+            .lit-ui-button.primary { background: #00696f; color: white; }
+            .lit-ui-loading-spinner { width: 40px; height: 40px; margin: 4px auto 14px; border: 4px solid rgba(0, 105, 111, 0.2); border-top-color: #00696f; border-radius: 50%; animation: lit-spin 0.9s linear infinite; display: block !important; position: relative !important; }
+            @keyframes lit-spin { to { transform: rotate(360deg); } }
         `;
         document.head.appendChild(style);
         return true;
@@ -226,7 +231,7 @@ const DialogManager = (() => {
 
     const _createDialog = (title, message, options = {}) => {
         const dialog = document.createElement('div');
-        dialog.className = 'lit-ui-dialog';
+        dialog.className = 'lit-ui-dialog lit-material-surface';
 
         if (!options.titleSize) options.titleSize = '20px';
         if (options.width) dialog.style.width = `${options.width}`;
@@ -262,7 +267,7 @@ const DialogManager = (() => {
 
     const _createButton = (text, options = {}) => {
         const button = document.createElement('button');
-        button.className = `lit-ui-button ${options.isPrimary ? 'primary' : 'secondary'}`;
+        button.className = `lit-ui-button ${options.isPrimary ? 'primary' : 'secondary'}${options.isDestructive ? ' destructive' : ''}`;
         button.textContent = text;
 
         if (options.isCancel) button.dataset.cancel = 'true';
@@ -289,11 +294,13 @@ const DialogManager = (() => {
         configs.forEach(config => {
             const button = _createButton(config.text, {
                 isPrimary: config.isPrimary,
+                isDestructive: config.isDestructive,
                 minWidth: config.minWidth,
                 isCancel: config.isCancel || config.text === '取消' || config.text === 'Cancel',
                 onClick: config.onClick,
                 disabled: config.disabled
             });
+            if (config.action) button.dataset.action = config.action;
             row.appendChild(button);
         });
 
@@ -341,6 +348,7 @@ const DialogManager = (() => {
                 // 统一的关闭处理
                 const handleClose = (result) => {
                     if (overlay.exCleanup) overlay.exCleanup();
+                    if (dialog._themeCleanup) dialog._themeCleanup();
                     resolve(result);
                 }
 
@@ -402,13 +410,52 @@ const DialogManager = (() => {
             });
         },
 
-        async loading(title, message) {
-            return await this.createBaseDialog({
-                title,
-                message,
-                closeOnEsc: false,
-                closeOnBack: false,
-                closeOnOverlay: false
+        /**
+         * 转圈加载框：适用于没有进度回调、无法显示确定进度的场景。
+         * 与 complexLoading（确定进度条）区分开，避免显示不会更新的“假”进度条。
+         * 返回控制器 { updateText, close }；禁止遮罩/Esc/返回键关闭。
+         */
+        async loading(title, message, options = {}) {
+            await _initCSS();
+            return new Promise((resolve) => {
+                const overlay = _createOverlay();
+
+                const dialog = _createDialog(title, "", {
+                    width: options.width || 'min(420px, 90vw)',
+                    minHeight: options.minHeight || 'auto'
+                });
+                dialog.classList.add('lit-loading-dialog');
+
+                // 转圈加载动画（无进度语义，仅表示“处理中”）
+                const spinnerEl = document.createElement('div');
+                spinnerEl.className = 'lit-ui-loading-spinner';
+                dialog.appendChild(spinnerEl);
+
+                const msgEl = document.createElement('div');
+                msgEl.className = 'lit-ui-content lit-ui-message lit-loading-message';
+                msgEl.textContent = message || '';
+                dialog.appendChild(msgEl);
+
+                overlay.appendChild(dialog);
+                document.body.appendChild(overlay);
+
+                // 绑定事件（禁用所有关闭方式）
+                overlay._cleanup = _bindEvents(overlay, () => { }, {
+                    enableEsc: false,
+                    enableBack: false,
+                    enableOverlayClick: false,
+                });
+
+                // 添加到堆栈
+                _dialogStack.push({ overlay, config: { type: 'loading' } });
+                overlay.close = () => _close(overlay, () => { }, 'programmatic');
+
+                resolve({
+                    updateText: (text) => {
+                        msgEl.textContent = text;
+                    },
+                    close: overlay.close
+                });
             });
         },
 
@@ -528,6 +575,7 @@ const DialogManager = (() => {
 
                 // 添加到堆栈
                 _dialogStack.push({ overlay, config: { type: 'complexLoading' } });
+                overlay.close = () => _close(overlay, () => { }, 'programmatic');
 
                 // 内部状态
                 let currentProgress = 0;
@@ -739,9 +787,7 @@ const DialogManager = (() => {
 
                     getProgress: () => currentProgress,
 
-                    close: () => {
-                        _close(overlay, () => { }, 'programmatic');
-                    }
+                    close: overlay.close
                 });
             });
         },
@@ -929,7 +975,7 @@ const DialogManager = (() => {
             });
         },
 
-        async filesManager(title, message, items) {
+        async filesManager(title, message, items, options = {}) {
             return await this.createBaseDialog({
                 title,
                 message: null,
@@ -981,26 +1027,26 @@ const DialogManager = (() => {
                             if (isSelected) {
                                 selectedFiles.delete(item.value);
                                 checkbox.checked = false;
-                                itemEl.style.background = '';
+                                itemEl.classList.remove('selected');
                             } else {
                                 selectedFiles.add(item.value);
                                 checkbox.checked = true;
-                                itemEl.style.background = '#e8f4ff';
+                                itemEl.classList.add('selected');
                             }
 
-                            // 更新按钮状态
-                            const buttons = dialog.querySelectorAll('.lit-ui-button-row .lit-ui-button');
-                            const deleteBtn = buttons[0]; // 删除按钮
-                            const editBtn = buttons[1];   // 编辑按钮
-                            const applyBtn = buttons[2];  // 应用配置按钮
+                            // 更新按钮状态（按 data-action 定位，按钮数量可配置）
+                            const deleteBtn = dialog.querySelector('.lit-ui-button-row [data-action="delete"]');
+                            const editBtn = dialog.querySelector('.lit-ui-button-row [data-action="edit"]');
+                            const applyBtn = dialog.querySelector('.lit-ui-button-row [data-action="apply"]');
 
-                            if (deleteBtn && editBtn && applyBtn) {
+                            if (deleteBtn && applyBtn) {
                                 const count = selectedFiles.size;
                                 deleteBtn.disabled = count === 0;
-                                editBtn.disabled = count !== 1;
                                 applyBtn.disabled = count !== 1;
+                                if (editBtn) editBtn.disabled = count !== 1;
 
                                 [deleteBtn, editBtn, applyBtn].forEach(btn => {
+                                    if (!btn) return;
                                     btn.style.opacity = btn.disabled ? '0.5' : '1';
                                     btn.style.cursor = btn.disabled ? 'not-allowed' : 'pointer';
                                 });
@@ -1013,11 +1059,14 @@ const DialogManager = (() => {
                     dialog.appendChild(listContainer);
                 },
                 defaultResult: null,
-                buttons: [
+                buttons: (() => {
+                    const list = [
                     {
                         text: '删除',
+                        action: 'delete',
+                        isDestructive: true,
                         result: () => {
-                            let files = Array.from(document.querySelectorAll('.lit-ui-list-item input:checked'))
+                            let files = Array.from(dialog.querySelectorAll('.lit-ui-list-item input:checked'))
                                 .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value);
                             return ({
                                 action: 'delete',
@@ -1025,11 +1074,13 @@ const DialogManager = (() => {
                             });
                         },
                         disabled: true
-                    },
-                    {
+                    }];
+                    if (options.showEdit !== false) {
+                        list.push({
                         text: '编辑',
+                        action: 'edit',
                         result: () => {
-                            let files = Array.from(document.querySelectorAll('.lit-ui-list-item input:checked'))
+                            let files = Array.from(dialog.querySelectorAll('.lit-ui-list-item input:checked'))
                                 .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value);
                             return ({
                                 action: 'edit',
@@ -1037,12 +1088,14 @@ const DialogManager = (() => {
                             });
                         },
                         disabled: true
-                    },
-                    {
-                        text: '应用配置',
+                        });
+                    }
+                    list.push({
+                        text: options.applyText || '应用配置',
+                        action: 'apply',
                         isPrimary: true,
                         result: () => {
-                            let files = Array.from(document.querySelectorAll('.lit-ui-list-item input:checked'))
+                            let files = Array.from(dialog.querySelectorAll('.lit-ui-list-item input:checked'))
                                 .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value);
                             return ({
                                 action: 'apply',
@@ -1050,13 +1103,15 @@ const DialogManager = (() => {
                             });
                         },
                         disabled: true
-                    },
-                    {
+                    });
+                    list.push({
                         text: '取消',
                         isCancel: true,
+                        action: 'cancel',
                         result: null
-                    }
-                ],
+                    });
+                    return list;
+                })(),
             });
         },
 
@@ -1071,7 +1126,7 @@ const DialogManager = (() => {
                     maxHeight: '90vh'
                 },
                 buildContent: (dialog) => {
-                    dialog.className = 'lit-ui-dialog lit-doc-modal-dialog';
+                    dialog.className = 'lit-ui-dialog lit-material-surface lit-doc-modal-dialog';
 
                     const iframeContainer = document.createElement('div');
                     iframeContainer.className = 'lit-ui-content lit-doc-modal-content';
@@ -1081,6 +1136,12 @@ const DialogManager = (() => {
                     const iframe = document.createElement('iframe');
                     iframe.className = 'lit-doc-modal-iframe';
 
+                    const loadingTip = document.createElement('div');
+                    loadingTip.className = 'lit-ui-content lit-doc-modal-loading';
+                    loadingTip.textContent = '正在加载文档，请稍候...';
+
+                    iframe.style.display = 'none';
+                    iframeContainer.appendChild(loadingTip);
                     iframeContainer.appendChild(iframe);
                     dialog.appendChild(iframeContainer);
 
@@ -1100,23 +1161,29 @@ const DialogManager = (() => {
                         if (dataProcessor && typeof dataProcessor === 'function') {
                             content = dataProcessor(content);
                         }
-                        iframe.srcdoc = content;
-
+                        content = themeManager.injectThemeAttribute(content);
+                        loadingTip.remove();
+                        iframe.style.display = '';
                         iframe.onload = () => {
                             try {
-                                const doc = iframe.contentDocument;
-                                if (doc && doc.body) {
-                                    doc.body.style.background = 'none';
-                                }
+                                themeManager.registerDocumentFrame(iframe);
                             } catch (e) { }
                         };
+                        iframe.srcdoc = content;
                     });
 
                     oReq.addEventListener('error', (err) => {
                         console.error(`加载文档失败: ${url}`, err);
+                        loadingTip.textContent = '文档加载失败';
                         const overlay = dialog.closest('.lit-ui-overlay');
                         if (overlay && overlay.close) overlay.close();
                     });
+
+                    const previousCleanup = dialog._themeCleanup;
+                    dialog._themeCleanup = () => {
+                        previousCleanup?.();
+                        themeManager.unregisterDocumentFrame(iframe);
+                    };
 
                     oReq.open('GET', url);
                     oReq.send();

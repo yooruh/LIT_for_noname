@@ -162,7 +162,7 @@ const functions = {
 					ui.bulletScreen.css({ width: "100%", height: "100%", left: "0", top: "0", pointerEvents: "none", zIndex: "100" })
 				}
 				let top = document.body.clientHeight / 3
-				const danmu = ui.create.div('.danmumode', `${prefix}${name}：${str}`, ui.bulletScreen)
+				const danmu = ui.create.div('.danmumode.lit-danmumode', `${prefix}${name}：${str}`, ui.bulletScreen)
 				danmu.css({
 					left: '100%',
 					transition: 'left 20s cubic-bezier(0.45, 0.44, 0.55, 0.52) 0s',
@@ -286,7 +286,7 @@ const edits = {
 					})
 					if (some) return
 					if (!node.node.cardsetion) {
-						node.node.cardsetion = ui.create.div('.cardsetion', eventInfo, node)
+						node.node.cardsetion = ui.create.div('.cardsetion.lit-card-annotation', eventInfo, node)
 					} else {
 						node.node.cardsetion.innerHTML = eventInfo || playername
 					}
@@ -350,7 +350,7 @@ const edits = {
 				game.connectPlayers.push(player);
 			}
 	
-			let bar = ui.create.div(ui.window);
+			let bar = ui.create.div('.lit-online-room-bar', ui.window);
 			bar.style.height = "20px";
 			bar.style.width = "80%";
 			bar.style.left = "10%";
@@ -362,7 +362,7 @@ const edits = {
 			ipbar.style.position = "relative";
 	
 			let button = ui.create.div(
-				".menubutton.large.highlight.connectbutton.connectbutton1.pointerdiv",
+				".menubutton.large.highlight.connectbutton.lit-online-room-action.connectbutton1.pointerdiv",
 				game.online ? "退出联机" : "开始游戏",
 				ui.window,
 				function () {
@@ -402,7 +402,7 @@ const edits = {
 			);
 	
 			let shareButton = ui.create.div(
-				".menubutton.large.highlight.connectbutton.connectbutton2.pointerdiv",
+				".menubutton.large.highlight.connectbutton.lit-online-room-action.connectbutton2.pointerdiv",
 				"分享房间",
 				ui.window,
 				function () {

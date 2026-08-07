@@ -228,3 +228,43 @@ cS+p {
 	filter: grayscale(0.7) brightness(0.6);
 	opacity: 0.6;
 }
+
+/* ========== Extension-owned Material 3 UI ========== */
+#sdhh-mission-ui {
+	box-sizing: border-box;
+	min-height: 40px;
+	border: 1px solid color-mix(in srgb, var(--lit-primary) 45%, var(--lit-outline-variant));
+	border-radius: var(--lit-shape-lg);
+	background: color-mix(in srgb, var(--lit-surface-container-high) 84%, transparent);
+	color: var(--lit-on-surface);
+	font-family: var(--lit-font-plain);
+	font-weight: 700;
+	line-height: 1.45;
+	box-shadow: var(--lit-elevation-2);
+}
+#sdhh-mission-ui:hover { background: var(--lit-surface-highest); }
+#sdhh-mission-ui.fixed { background: color-mix(in srgb, var(--lit-primary-container) 74%, var(--lit-surface-container-high)); box-shadow: var(--lit-elevation-2), 0 0 0 1px var(--lit-primary); }
+#sdhh-mission-ui .lock-icon {
+	display: grid;
+	width: 1.8em;
+	height: 1.8em;
+	place-items: center;
+	border-radius: 50%;
+	background: var(--lit-surface-highest);
+	color: var(--lit-on-surface);
+	text-shadow: none;
+}
+#sdhh-mission-ui.fixed .lock-icon { background: var(--lit-primary); color: var(--lit-on-primary); filter: none; }
+#sdhh-mission-ui:not(.fixed) .lock-icon { opacity: .86; filter: none; }
+#sdhh-mission-ui .lit-sdhh-kill { color: var(--lit-error); }
+#sdhh-mission-ui .lit-sdhh-save { color: var(--lit-primary); }
+.lit-sdhh-skill-dialog .popup.pointerdiv {
+	box-sizing: border-box;
+	padding: 10px 12px;
+	border: 1px solid var(--lit-outline-variant);
+	border-radius: var(--lit-shape-md);
+	background: var(--lit-surface-container);
+	color: var(--lit-on-surface);
+}
+.lit-sdhh-skill-dialog .skill { color: var(--lit-primary); font-weight: 800; }
+.lit-sdhh-skill-dialog .info { margin: 8px 0; color: var(--lit-on-surface-variant); }

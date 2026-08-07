@@ -1,6 +1,6 @@
 {
   "Directory.json": {
-    "size": 16151,
+    "size": 16364,
     "md5": null
   },
   "extension.js": {
@@ -384,8 +384,8 @@
     "md5": "d359b6ce47eb01598a52a39829f65144"
   },
   "source/config.js": {
-    "size": 7941,
-    "md5": "013bac93c62f3f58e3ff0f05cba40389"
+    "size": 8786,
+    "md5": "7dacb10884b4d5dafacdf18719f1d6c3"
   },
   "source/content.js": {
     "size": 3964,
@@ -396,12 +396,12 @@
     "md5": "cad7e1c9439e7dd9a853b94005f12991"
   },
   "source/mode/sandaohuanhua.js": {
-    "size": 61777,
-    "md5": "665aa48569d63f3eb66a2550a303294d"
+    "size": 62358,
+    "md5": "6b1d607704629c09442ca9594b8ec126"
   },
   "source/mode/sandaohuanhua_brawl.js": {
-    "size": 74686,
-    "md5": "cab7b652d0264aed3cfd610b16825487"
+    "size": 75434,
+    "md5": "df282ebe6eb5c3333a819692d1767389"
   },
   "source/onlineFix/characterSelection.js": {
     "size": 14608,
@@ -412,8 +412,8 @@
     "md5": "a5dabaa6500dc21cc851dc0635d60f7c"
   },
   "source/onlineFix/function.js": {
-    "size": 14030,
-    "md5": "51779f1601ce00e968a064dab4bc8692"
+    "size": 14134,
+    "md5": "033a1db28b6cb863b74ba38c4f7b2133"
   },
   "source/onlineFix/handcards.js": {
     "size": 4903,
@@ -424,8 +424,8 @@
     "md5": "5014d43218d929d2df327bce4d00263e"
   },
   "source/onlineFix/lobby.js": {
-    "size": 6921,
-    "md5": "53aa41108d2adbc6599b5609ddebc390"
+    "size": 6947,
+    "md5": "9b4dfd28619465ea4ae0d3076dd80780"
   },
   "source/onlineFix/modeset.js": {
     "size": 10667,
@@ -460,20 +460,20 @@
     "md5": "68ab8119927f9365f225705df68823f5"
   },
   "source/onlineFix/video.js": {
-    "size": 5033,
-    "md5": "307693cbed80a57012016fdb2767554a"
+    "size": 5053,
+    "md5": "f753aa09cc2ecd4805367080006591f0"
   },
   "source/precontent.js": {
-    "size": 4501,
-    "md5": "bac38e967e531d5c7e7c9b8b0a7f65b9"
+    "size": 4646,
+    "md5": "9fbb636cdb2f1695e50ccc9adae82710"
   },
   "source/tool/ai/aiGuard.js": {
     "size": 3963,
     "md5": "a34b254cc29ee296e28e6d78596d019e"
   },
   "source/tool/configuration/configManager.js": {
-    "size": 15031,
-    "md5": "8004e6cc0e12de2a580428d1b7a5a918"
+    "size": 15371,
+    "md5": "a29ec6572464b87d5102a53336da1e1c"
   },
   "source/tool/configuration/configService.js": {
     "size": 12003,
@@ -496,16 +496,20 @@
     "md5": "2ae81ef03e8638d31cd5d8e27b8584d8"
   },
   "source/tool/ui/dialogManager.js": {
-    "size": 54446,
-    "md5": "42911d4df805f9a327642e765d8c8c62"
+    "size": 58443,
+    "md5": "4b153a6d5e8896067b93739bc3b2b4fc"
   },
   "source/tool/ui/poptips.js": {
     "size": 1606,
     "md5": "a8a9427532a0cde3059f354cc3103784"
   },
+  "source/tool/ui/themeManager.js": {
+    "size": 2465,
+    "md5": "a7de06a37e1dbe63eaa59037a1c329ab"
+  },
   "source/tool/update/backupManager.js": {
-    "size": 4804,
-    "md5": "ffc8e2bea8335b06c8b695cd9c16abe5"
+    "size": 5494,
+    "md5": "d2eda08349de559a1993650d7510085c"
   },
   "source/tool/update/config.js": {
     "size": 1919,
@@ -516,12 +520,12 @@
     "md5": "c8fd2ead1b1bf09dc45df615eb65e10c"
   },
   "source/tool/update/extensionUpdater.js": {
-    "size": 51560,
-    "md5": "a4ac5f798a6003eb9e2259322250fb56"
+    "size": 53122,
+    "md5": "8a00df697f4c3d19fa4ff71ba90a8018"
   },
   "source/tool/update/index.js": {
-    "size": 14488,
-    "md5": "10c95b64b374c69a0f661a5ed1df677b"
+    "size": 15464,
+    "md5": "b95d159f1ed3edc244b63284a21eb226"
   },
   "source/tool/update/md5.js": {
     "size": 3207,
@@ -536,8 +540,8 @@
     "md5": "cf67ed0302faf5f64d3c3943434dd807"
   },
   "source/tool/update/updateDialogs.js": {
-    "size": 31616,
-    "md5": "1ecaca442873a44a65aa17175d5cb4d2"
+    "size": 31685,
+    "md5": "5b31135098d96b7bf3bf187205a62b80"
   },
   "source/tool/update/utils.js": {
     "size": 5166,
@@ -556,28 +560,32 @@
     "md5": "1abc3b22c1c60e403c58dfe0753b1b98"
   },
   "style/css/cards.css": {
-    "size": 91,
-    "md5": "f51a9af2935ec413e98169ff9828f0ab"
+    "size": 958,
+    "md5": "20d52c4aa44200387487c8fc422f0893"
   },
   "style/css/dialogManager.css": {
-    "size": 15728,
-    "md5": "2ae8759c5fc4bee2db777e250ddcd3bc"
+    "size": 13345,
+    "md5": "73ef4758466c571353472bd6cc1332e7"
   },
   "style/css/extension.css": {
-    "size": 6493,
-    "md5": "4a125de1dc550afe68ae5920ff935357"
+    "size": 8213,
+    "md5": "1c96662acd7a7c13b193ab90acff4bed"
+  },
+  "style/css/materialTheme.css": {
+    "size": 5961,
+    "md5": "82291b8a2c0f11e603bca352b3511152"
   },
   "style/html/help.html": {
-    "size": 17621,
-    "md5": "c1b83cd6a25479df66034a7b7642e22e"
+    "size": 20136,
+    "md5": "9562ce70dc07b5cfb2520e6dd0890ffe"
   },
   "style/html/sandaohuanhua.html": {
-    "size": 8937,
-    "md5": "2e5a08831f9e53107a506916d668996a"
+    "size": 10412,
+    "md5": "fb046dfc6334c539586af50e9795ed45"
   },
   "style/html/update.html": {
-    "size": 13528,
-    "md5": "ed8830a47ad83c7f64b7fb7427714681"
+    "size": 14937,
+    "md5": "0768f50b0630e83f68861d0917fb326b"
   },
   "style/nncfg/android_wide11.0.nncfg": {
     "size": 3956,

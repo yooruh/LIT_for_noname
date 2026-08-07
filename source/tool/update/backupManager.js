@@ -39,7 +39,7 @@ class BackupManager {
         }
     }
 
-    async createBackup() {
+    async createBackup(onProgress = null) {
         const backupDir = `${this.filesDir}/backup_${Date.now()}`;
         try {
             const dirExists = await game.promises.checkDir(this.targetDir);
@@ -47,7 +47,8 @@ class BackupManager {
                 game.print(`[备份] 创建备份: ${backupDir}`);
                 await this.copyDirectoryRecursive(this.targetDir, backupDir, {
                     skipDirs: new Set(['_temp_downloading', CONFIG.files.stagingDir]),
-                    skipFiles: new Set([CONFIG.files.state])
+                    skipFiles: new Set([CONFIG.files.state]),
+                    onProgress
                 });
                 await this.cleanupOldBackups(CONFIG.limits.backupCount);
                 return { success: true, path: backupDir };
@@ -58,19 +59,23 @@ class BackupManager {
         }
     }
 
-    async rollbackToBackup(backup) {
+    async rollbackToBackup(backup, onProgress = null) {
         const tempBackup = `${this.filesDir}/rollback_temp_${Date.now()}`;
 
         try {
             const exists = await game.promises.checkDir(this.targetDir);
             if (exists === 1) {
-                await this.copyDirectoryRecursive(this.targetDir, tempBackup);
+                if (typeof onProgress === 'function') onProgress('正在备份当前版本，防止回滚失败...');
+                await this.copyDirectoryRecursive(this.targetDir, tempBackup, { onProgress });
             }
 
+            if (typeof onProgress === 'function') onProgress('正在移除当前版本...');
             await game.promises.removeDir(this.targetDir);
-            await this.copyDirectoryRecursive(backup.path, this.targetDir);
+            if (typeof onProgress === 'function') onProgress('正在恢复备份文件...');
+            await this.copyDirectoryRecursive(backup.path, this.targetDir, { onProgress });
 
             try {
+                if (typeof onProgress === 'function') onProgress('正在清理临时文件...');
                 await game.promises.removeDir(tempBackup);
             } catch (e) { }
 
@@ -78,8 +83,9 @@ class BackupManager {
         } catch (error) {
             // 回滚失败，恢复原状
             try {
+                if (typeof onProgress === 'function') onProgress('回滚失败，正在恢复原状...');
                 await game.promises.removeDir(this.targetDir);
-                await this.copyDirectoryRecursive(tempBackup, this.targetDir);
+                await this.copyDirectoryRecursive(tempBackup, this.targetDir, { onProgress });
                 await game.promises.removeDir(tempBackup);
             } catch (e) { }
 
@@ -112,12 +118,13 @@ class BackupManager {
     }
 
     async copyDirectoryRecursive(src, dest, options = {}) {
-        const { skipDirs = new Set(), skipFiles = new Set() } = options;
+        const { skipDirs = new Set(), skipFiles = new Set(), onProgress = null } = options;
         const [folders, files] = await game.promises.getFileList(src);
         await game.promises.createDir(dest);
 
         for (const file of files) {
             if (skipFiles.has(file)) continue;
+            if (typeof onProgress === 'function') onProgress(`正在复制 ${src}/${file}`);
             const content = await game.promises.readFile(`${src}/${file}`);
             await game.promises.writeFile(content, dest, file);
         }

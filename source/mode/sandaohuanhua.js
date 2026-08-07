@@ -192,7 +192,7 @@ export default () => {
 				restart: true,
 			},
 			sdhh_help: {
-				name: '<button>叁岛幻化完整介绍</button>',
+				name: '<button class="lit-config-button">叁岛幻化完整介绍</button>',
 				intro: "点击查看【叁岛幻化】完整介绍及玩法建议",
 				clear: true,
 				async onclick() {
@@ -208,7 +208,7 @@ export default () => {
 				},
 			},
 			sdhh_missionReset: {
-				name: '<button>重置任务框的位置</button>',
+				name: '<button class="lit-config-button">重置任务框的位置</button>',
 				intro: "点击重置任务框的显示位置",
 				clear: true,
 				onclick() {
@@ -545,8 +545,8 @@ export default () => {
 				const me = game.me;
 				if (me?._toKill && me?._toSave && ui.sandaohuanhua?._textSpan) {
 					ui.sandaohuanhua._textSpan.innerHTML =
-						`杀伤<span style='color:#ff5f56'>${get.translation(me._toKill)}(${me._toKill.identity})</span>，` +
-						`保护<span style='color:#98fb98'>${get.translation(me._toSave)}(${me._toSave.identity})</span>`;
+						`杀伤<span class='lit-sdhh-kill'>${get.translation(me._toKill)}(${me._toKill.identity})</span>，` +
+						`保护<span class='lit-sdhh-save'>${get.translation(me._toSave)}(${me._toSave.identity})</span>`;
 				}
 			},
 
@@ -1000,6 +1000,7 @@ export default () => {
 			// 获取技能列表对话框
 			skillDialog(skills, prompt) {
 				const dialog = ui.create.dialog("hidden", "forcebutton");
+				dialog.classList.add('lit-sdhh-skill-dialog');
 
 				const clickItem = function () {
 					const parent = this.parentNode;
@@ -1106,6 +1107,9 @@ export default () => {
 
 				const lockIcon = document.createElement('span');
 				lockIcon.className = 'lock-icon';
+				lockIcon.setAttribute('role', 'button');
+				lockIcon.setAttribute('tabindex', '0');
+				lockIcon.setAttribute('aria-label', dragState.isFixed ? '解锁任务框位置' : '锁定任务框位置');
 				lockIcon.textContent = dragState.isFixed ? '🔒' : '🔓';
 
 				container.append(textSpan, lockIcon);
@@ -1243,12 +1247,18 @@ export default () => {
 					container.toggleFixed();
 				});
 				lockIcon.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
+				lockIcon.addEventListener('keydown', (e) => {
+					if (e.key !== 'Enter' && e.key !== ' ') return;
+					e.preventDefault();
+					container.toggleFixed();
+				});
 
 				// 公共API
 				container.setFixed = (fixed) => {
 					dragState.isFixed = fixed;
 					container.classList.toggle('fixed', fixed);
 					lockIcon.textContent = fixed ? '🔒' : '🔓';
+					lockIcon.setAttribute('aria-label', fixed ? '解锁任务框位置' : '锁定任务框位置');
 					game.saveExtensionConfig('sandaohuanhua', 'uiFixed', fixed);
 					config.isFixed = fixed;
 				};

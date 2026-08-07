@@ -76,7 +76,16 @@
 			margin: 15px 0 25px;
 			font-family: monospace;
 		}
-	</style>
+	/* LIT_THEME_STYLE_START
+			 * Material 3 iframe theme bridge */
+			html[data-lit-theme="dark"] { color-scheme: dark; --lit-primary: rgb(128 212 219); --lit-surface: rgb(14 20 21); --lit-container: rgb(26 33 33); --lit-on-surface: rgb(221 228 228); --lit-on-variant: rgb(190 200 201); --lit-outline: rgb(63 72 73); }
+			@media (prefers-color-scheme: dark) { html[data-lit-theme="system"] { color-scheme: dark; --lit-primary: rgb(128 212 219); --lit-surface: rgb(14 20 21); --lit-container: rgb(26 33 33); --lit-on-surface: rgb(221 228 228); --lit-on-variant: rgb(190 200 201); --lit-outline: rgb(63 72 73); } }
+			:root { --lit-primary: rgb(0 105 111); --lit-surface: rgb(244 250 251); --lit-container: rgb(233 239 239); --lit-on-surface: rgb(22 29 29); --lit-on-variant: rgb(63 72 73); --lit-outline: rgb(190 200 201); }
+			body { background: var(--lit-surface); color: var(--lit-on-surface); font-family: "Microsoft YaHei", "Segoe UI", system-ui, sans-serif; }
+			.update-log { background: var(--lit-container); border: 1px solid var(--lit-outline); border-radius: 28px; box-shadow: 0 3px 10px rgb(0 0 0 / 18%); }
+			h1 { color: var(--lit-on-surface); } h3, .update-list li::before { color: var(--lit-primary); } .update-block { border-color: var(--lit-primary); } .update-list li { color: var(--lit-on-variant); } .notice-text p, .dash-line { color: var(--lit-on-variant); }
+			/* LIT_THEME_STYLE_END */
+		</style>
 </head>
 
 <body>

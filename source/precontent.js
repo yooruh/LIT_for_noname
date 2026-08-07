@@ -1,6 +1,7 @@
 import { lib, game, ui, get, ai, _status } from '../../../noname.js';
 import { loaderRuntime, setOnlineFixConfig } from './onlineFix/runtime.js';
 import { extensionPath } from './tool/utils/paths.js';
+import { themeManager } from './tool/ui/themeManager.js';
 import { loadPackRegistry } from './tool/pack/registry.js';
 import { CHARACTER_PACK_FILES, CARD_PACK_FILES } from './tool/pack/manifest.js';
 
@@ -53,6 +54,7 @@ export const lib_lit = {
 };
 
 function registerGroups() {
+	lib.init.css(`${extensionPath}/style/css`, 'materialTheme');
 	lib.init.css(`${extensionPath}/style/css`, 'extension');
 	game.addGroup('nine', '九', '九班', {});
 	game.addGroup('three', '叁', '叁岛', {});
@@ -100,6 +102,7 @@ export async function precontent(config, pack) {
 	lib.config.suiSetBandList ??= {};
 	lib.config.mimaList ??= [];
 	lib.lit = lib_lit;
+	themeManager.init();
 
 	registerGroups();
 	await registerSandaohuanhua();

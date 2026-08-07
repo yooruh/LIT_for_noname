@@ -67,7 +67,7 @@ export function createLobbyRuntime(suiSet) {
 			tipExtension(player) {
 				player.send(function (ext) {
 					if (!ui.extnode) {
-						ui.extnode = ui.create.div('.foomext', '扩展列表').css({
+						ui.extnode = ui.create.div('.foomext.lit-online-extension-list', '扩展列表').css({
 							backgroundColor: 'rgb(224 106 106 / 30%)'
 						})
 						ui.system2.appendChild(ui.extnode)

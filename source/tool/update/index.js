@@ -71,7 +71,12 @@ export const extensionUpdateManager = {
 
                 // 清理旧临时目录
                 if (resumeInfo.tempDir && config.mode !== 'retry_failed') {
-                    await updater.cleanup();
+                    const cleaning = await updater.ui.showLoading('正在清理', '正在清理旧的临时文件...');
+                    try {
+                        await updater.cleanup();
+                    } finally {
+                        cleaning.close();
+                    }
                 }
 
                 await updater.init(config.platform, config.mode);
@@ -123,7 +128,12 @@ export const extensionUpdateManager = {
                     '清空临时文件'
                 );
                 if (!canResume) {
-                    await updater.cleanup();
+                    const cleaning = await updater.ui.showLoading('正在清空', '正在清空临时文件...');
+                    try {
+                        await updater.cleanup();
+                    } finally {
+                        cleaning.close();
+                    }
                 }
             }
         }
@@ -294,8 +304,19 @@ export const extensionUpdateManager = {
                 return { success: false, tasks, failed: failedTasks, summary };
             }
 
-            await updater.applyDownloadedFiles();
-            await updater.cleanup();
+            if (silent) {
+                await updater.applyDownloadedFiles();
+                await updater.cleanup();
+            } else {
+                // 写入/清理阶段同样耗时，用加载框提示当前行为
+                const loading = await updater.ui.showLoading('正在应用下载', '正在写入文件...');
+                try {
+                    await updater.applyDownloadedFiles((msg) => loading.updateText(msg));
+                    await updater.cleanup();
+                } finally {
+                    loading.close();
+                }
+            }
 
             if (!silent) game.print('[快速下载] 完成');
             return { success: true, tasks, stats: updater.state?.data?.stats };

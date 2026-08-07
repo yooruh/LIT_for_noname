@@ -120,7 +120,12 @@ class UIManager {
         const result = await this.dialog.filesManager(
             '版本回退管理',
             '选择要恢复的备份（仅可选一个回退，可多选删除）：\n💡 回退会覆盖当前版本，请先确认已备份重要数据',
-            items
+            items,
+            {
+                // 备份目录不支持文本编辑，隐藏共享组件里的“编辑”按钮，避免误点后静默退出
+                showEdit: false,
+                applyText: '恢复此版本'
+            }
         );
 
         if (!result) return null;
@@ -557,7 +562,7 @@ class UIManager {
                 list.style.maxHeight = '360px';
 
                 const highlight = (el, on) => {
-                    el.style.background = on ? '#e8f4ff' : '';
+                    el.classList.toggle('selected', on);
                 };
 
                 versions.forEach((v, i) => {
@@ -655,17 +660,13 @@ class UIManager {
         return null;
     }
 
-    // 显示不可交互的“处理中，请稍候”模态框（循环动画），返回 { close, updateText } 控制器。
+    // 显示不可交互的“处理中，请稍候”模态框（转圈动画），返回 { close, updateText } 控制器。
     // 用于版本信息请求、文件清单下载、更新覆写等耗时阶段，避免 UI 空窗让用户误以为卡死。
+    // 这些阶段没有进度回调，使用转圈加载框（loading），而不是 complexLoading 的确定进度条。
     async showLoading(title, message) {
-        const controller = await this.dialog.complexLoading(title, message, {
-            width: 'min(420px, 90vw)',
-            indeterminate: true,
-            initialStatus: '处理中...'
+        return await this.dialog.loading(title, message, {
+            width: 'min(420px, 90vw)'
         });
-        // 隐藏“0%”等确定性进度元素，仅保留循环动画条，语义为“处理中”
-        controller.setIndeterminate(true, '处理中...');
-        return controller;
     }
 
     async alert(title, message) {
