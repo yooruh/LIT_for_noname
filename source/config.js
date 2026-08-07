@@ -64,19 +64,6 @@ export const config = {
 			}
 		}
 	},
-	lit_uiTheme: {
-		name: '扩展界面主题',
-		intro: '选择叁岛世界自身界面的配色；“跟随系统”会按设备浅色/深色偏好自动切换。',
-		init: 'system',
-		item: {
-			system: '跟随系统',
-			light: '浅色',
-			dark: '深色',
-		},
-		onclick: (theme) => {
-			themeManager.save(theme);
-		},
-	},
 	lit_updateOnline: {
 		name: '<button class="lit-config-button">在线更新扩展</button>',
 		intro: "从GitHub/Gitee在线获取扩展并更新",
@@ -92,6 +79,35 @@ export const config = {
 		async onclick() {
 			await configManager.showUI();
 		}
+	},
+	lit_uiTheme: {
+		name: '扩展界面主题',
+		intro: '选择叁岛世界自身界面的配色；“跟随系统”会按设备浅色/深色偏好自动切换。',
+		init: 'system',
+		item: {
+			system: '跟随系统',
+			light: '浅色',
+			dark: '深色',
+		},
+		onclick: (theme) => {
+			themeManager.save(theme);
+		},
+	},
+	lit_uiOpacity: {
+		name: 'UI不透明度',
+		intro: '调整叁岛世界界面（对话框、按钮）背景的不透明度；文字保持不透明。',
+		init: '100',
+		item: {
+			'100': '不透明 100%',
+			'90': '90%',
+			'75': '75%',
+			'60': '60%',
+			'50': '50%',
+			'25': '25%',
+		},
+		onclick: (opacity) => {
+			themeManager.saveOpacity(opacity);
+		},
 	},
 	lit_dkwsl: {
 		name: "吊卡无势力限制",

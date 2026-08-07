@@ -3,8 +3,16 @@ import { game } from '../../../../../noname.js';
 const THEME_CONFIG_KEY = 'lit_uiTheme';
 const THEME_VALUES = new Set(['system', 'light', 'dark']);
 
+const OPACITY_CONFIG_KEY = 'lit_uiOpacity';
+const OPACITY_PRESETS = ['100', '90', '75', '60', '50', '25'];
+const OPACITY_PERCENT = { '100': 1, '90': 0.9, '75': 0.75, '60': 0.6, '50': 0.5, '25': 0.25 };
+
 function normalizeTheme(theme) {
     return THEME_VALUES.has(theme) ? theme : 'system';
+}
+
+function normalizeOpacity(opacity) {
+    return OPACITY_PRESETS.includes(String(opacity)) ? String(opacity) : '100';
 }
 
 function applyThemeAttribute(target, theme) {
@@ -12,8 +20,14 @@ function applyThemeAttribute(target, theme) {
     target.dataset.litTheme = normalizeTheme(theme);
 }
 
+function applyOpacityVar(target, percent) {
+    if (!target) return;
+    target.style.setProperty('--lit-ui-opacity', String(percent));
+}
+
 const ThemeManager = (() => {
     let currentTheme = 'system';
+    let currentOpacity = '100';
     const documentFrames = new Set();
 
     const refreshFrames = () => {
@@ -23,6 +37,7 @@ const ThemeManager = (() => {
                 return;
             }
             applyThemeAttribute(iframe.contentDocument?.documentElement, currentTheme);
+            applyOpacityVar(iframe.contentDocument?.documentElement, OPACITY_PERCENT[currentOpacity]);
         });
     };
 
@@ -30,6 +45,8 @@ const ThemeManager = (() => {
         init() {
             const savedTheme = game.getExtensionConfig('叁岛世界', THEME_CONFIG_KEY);
             this.apply(savedTheme);
+            const savedOpacity = game.getExtensionConfig('叁岛世界', OPACITY_CONFIG_KEY);
+            this.applyOpacity(savedOpacity);
         },
 
         apply(theme) {
@@ -49,10 +66,28 @@ const ThemeManager = (() => {
             return currentTheme;
         },
 
+        applyOpacity(opacity) {
+            currentOpacity = normalizeOpacity(opacity);
+            applyOpacityVar(document.documentElement, OPACITY_PERCENT[currentOpacity]);
+            refreshFrames();
+            return currentOpacity;
+        },
+
+        saveOpacity(opacity) {
+            const normalizedOpacity = this.applyOpacity(opacity);
+            game.saveExtensionConfig('叁岛世界', OPACITY_CONFIG_KEY, normalizedOpacity);
+            return normalizedOpacity;
+        },
+
+        getOpacity() {
+            return currentOpacity;
+        },
+
         registerDocumentFrame(iframe) {
             if (!iframe) return;
             documentFrames.add(iframe);
             applyThemeAttribute(iframe.contentDocument?.documentElement, currentTheme);
+            applyOpacityVar(iframe.contentDocument?.documentElement, OPACITY_PERCENT[currentOpacity]);
         },
 
         unregisterDocumentFrame(iframe) {
@@ -61,6 +96,7 @@ const ThemeManager = (() => {
 
         applyThemeToDocument(documentNode) {
             applyThemeAttribute(documentNode?.documentElement, currentTheme);
+            applyOpacityVar(documentNode?.documentElement, OPACITY_PERCENT[currentOpacity]);
         },
 
         injectThemeAttribute(html) {
@@ -77,4 +113,4 @@ const ThemeManager = (() => {
 })();
 
 export const themeManager = ThemeManager;
-export { THEME_CONFIG_KEY, normalizeTheme };
+export { THEME_CONFIG_KEY, normalizeTheme, OPACITY_CONFIG_KEY, normalizeOpacity };

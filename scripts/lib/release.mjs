@@ -160,30 +160,36 @@ export function renderUpdateHtml(manifest) {
 
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>叁岛世界更新日志</title>
 	<style>
+		*, *::before, *::after { box-sizing: border-box; }
+		html, body { width: 100%; min-width: 0; min-height: 100%; margin: 0; overflow-x: hidden; }
 		.update-log {
 			font-family: "Microsoft YaHei", Arial, sans-serif;
-			width: 90%;
-			max-width: 1200px;
-			margin: 20px auto;
-			padding: 30px 40px;
+			width: 100%;
+			max-width: none;
+			margin: 0;
+			padding: clamp(16px, 3vw, 30px) clamp(16px, 4vw, 40px);
 			background: #fff;
-			border-radius: 12px;
-			box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+			border-radius: 0;
+			box-shadow: none;
 		}
 
 		body {
 			margin: 0;
-			padding: 20px;
-			min-width: 320px;
+			padding: 0;
+			min-width: 0;
 			background: #f5f7f9;
 		}
 
+		.update-list { overflow-wrap: anywhere; }
+		.update-list li { min-width: 0; }
 		.update-block {
-			margin-bottom: 35px;
+			min-width: 0;
+			margin-bottom: 28px;
 			border-left: 3px solid #3498db;
-			padding-left: 20px;
+			padding-left: clamp(12px, 2vw, 20px);
 		}
 
 		h1 {

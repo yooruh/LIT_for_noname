@@ -3,30 +3,36 @@
 
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>叁岛世界更新日志</title>
 	<style>
+		*, *::before, *::after { box-sizing: border-box; }
+		html, body { width: 100%; min-width: 0; min-height: 100%; margin: 0; overflow-x: hidden; }
 		.update-log {
 			font-family: "Microsoft YaHei", Arial, sans-serif;
-			width: 90%;
-			max-width: 1200px;
-			margin: 20px auto;
-			padding: 30px 40px;
+			width: 100%;
+			max-width: none;
+			margin: 0;
+			padding: clamp(16px, 3vw, 30px) clamp(16px, 4vw, 40px);
 			background: #fff;
-			border-radius: 12px;
-			box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+			border-radius: 0;
+			box-shadow: none;
 		}
 
 		body {
 			margin: 0;
-			padding: 20px;
-			min-width: 320px;
+			padding: 0;
+			min-width: 0;
 			background: #f5f7f9;
 		}
 
+		.update-list { overflow-wrap: anywhere; }
+		.update-list li { min-width: 0; }
 		.update-block {
-			margin-bottom: 35px;
+			min-width: 0;
+			margin-bottom: 28px;
 			border-left: 3px solid #3498db;
-			padding-left: 20px;
+			padding-left: clamp(12px, 2vw, 20px);
 		}
 
 		h1 {
@@ -78,11 +84,11 @@
 		}
 	/* LIT_THEME_STYLE_START
 			 * Material 3 iframe theme bridge */
-			html[data-lit-theme="dark"] { color-scheme: dark; --lit-primary: rgb(128 212 219); --lit-surface: rgb(14 20 21); --lit-container: rgb(26 33 33); --lit-on-surface: rgb(221 228 228); --lit-on-variant: rgb(190 200 201); --lit-outline: rgb(63 72 73); }
-			@media (prefers-color-scheme: dark) { html[data-lit-theme="system"] { color-scheme: dark; --lit-primary: rgb(128 212 219); --lit-surface: rgb(14 20 21); --lit-container: rgb(26 33 33); --lit-on-surface: rgb(221 228 228); --lit-on-variant: rgb(190 200 201); --lit-outline: rgb(63 72 73); } }
-			:root { --lit-primary: rgb(0 105 111); --lit-surface: rgb(244 250 251); --lit-container: rgb(233 239 239); --lit-on-surface: rgb(22 29 29); --lit-on-variant: rgb(63 72 73); --lit-outline: rgb(190 200 201); }
+			html[data-lit-theme="dark"] { color-scheme: dark; --lit-primary: rgb(134 209 233); --lit-surface: rgb(37 43 45); --lit-container: rgb(48 54 56); --lit-on-surface: rgb(222 227 230); --lit-on-variant: rgb(191 200 203); --lit-outline: rgb(64 72 75); }
+			@media (prefers-color-scheme: dark) { html[data-lit-theme="system"] { color-scheme: dark; --lit-primary: rgb(134 209 233); --lit-surface: rgb(37 43 45); --lit-container: rgb(48 54 56); --lit-on-surface: rgb(222 227 230); --lit-on-variant: rgb(191 200 203); --lit-outline: rgb(64 72 75); } }
+			:root { --lit-primary: rgb(52 152 219); --lit-surface: rgb(255 255 255); --lit-container: rgb(245 247 249); --lit-on-surface: rgb(44 62 80); --lit-on-variant: rgb(85 85 85); --lit-outline: rgb(221 221 221); }
 			body { background: var(--lit-surface); color: var(--lit-on-surface); font-family: "Microsoft YaHei", "Segoe UI", system-ui, sans-serif; }
-			.update-log { background: var(--lit-container); border: 1px solid var(--lit-outline); border-radius: 28px; box-shadow: 0 3px 10px rgb(0 0 0 / 18%); }
+			.update-log { background: var(--lit-container); border: 0; border-radius: 0; box-shadow: none; }
 			h1 { color: var(--lit-on-surface); } h3, .update-list li::before { color: var(--lit-primary); } .update-block { border-color: var(--lit-primary); } .update-list li { color: var(--lit-on-variant); } .notice-text p, .dash-line { color: var(--lit-on-variant); }
 			/* LIT_THEME_STYLE_END */
 		</style>

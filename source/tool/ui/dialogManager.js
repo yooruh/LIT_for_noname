@@ -20,12 +20,12 @@ const DialogManager = (() => {
         const style = document.createElement('style');
         style.id = 'lit-ui-fallback-styles';
         style.textContent = `
-            .lit-ui-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.64); display: flex; align-items: center; justify-content: center; z-index: 50000; }
-            .lit-ui-dialog { position: relative; left: auto; top: auto; background: #f4fafa; border-radius: 28px; padding: 24px; box-sizing: border-box; color: #161d1d; text-shadow: none; display: flex; flex-direction: column; min-width: 320px; max-width: 90vw; max-height: 85vh; box-shadow: 0 8px 18px rgba(0,0,0,.28); }
-            .lit-ui-content { font: 400 16px/1.5 system-ui, sans-serif; color: #3f4849; display: block; position: relative; flex-grow: 1; flex-shrink: 1; overflow-y: auto; margin-bottom: 20px; white-space: pre-wrap; height: auto; }
-            .lit-ui-button { min-height: 40px; padding: 10px 20px; border: 0; border-radius: 20px; font-weight: 700; cursor: pointer; }
-            .lit-ui-button.primary { background: #00696f; color: white; }
-            .lit-ui-loading-spinner { width: 40px; height: 40px; margin: 4px auto 14px; border: 4px solid rgba(0, 105, 111, 0.2); border-top-color: #00696f; border-radius: 50%; animation: lit-spin 0.9s linear infinite; display: block !important; position: relative !important; }
+            .lit-ui-overlay { position: fixed; inset: 0; margin: 0; padding: 24px; box-sizing: border-box; background: rgba(0, 0, 0, 0.72); display: flex; align-items: center; justify-content: center; z-index: 50000; }
+            .lit-ui-dialog { position: relative; left: auto; top: auto; background: linear-gradient(#3e3e3e, #2a2a2a); border: 1px solid #111; border-radius: 8px; padding: 20px; box-sizing: border-box; color: #f8f8f8; text-shadow: #000 0 1px 1px; display: flex; flex-direction: column; min-width: 320px; max-width: 90vw; max-height: 85vh; box-shadow: 0 0 0 1px rgba(0,0,0,.8), 0 8px 22px rgba(0,0,0,.66); }
+            .lit-ui-content { font: 400 16px/1.5 system-ui, sans-serif; color: #d4d4d4; display: block; position: relative; flex-grow: 1; flex-shrink: 1; overflow-y: auto; margin-bottom: 20px; white-space: pre-wrap; height: auto; }
+            .lit-ui-button { min-height: 34px; padding: 7px 17px; border: 1px solid #111; border-radius: 4px; background: linear-gradient(#545454, #383838); color: #f8f8f8; text-shadow: #000 0 1px 1px; font-weight: 700; cursor: pointer; }
+            .lit-ui-button.primary { background: linear-gradient(#4589c9, #2f6596); color: white; }
+            .lit-ui-loading-spinner { width: 40px; height: 40px; margin: 4px auto 14px; border: 4px solid rgba(255,255,255,.18); border-top-color: #4285c5; border-radius: 50%; animation: lit-spin 0.9s linear infinite; display: block !important; position: relative !important; }
             @keyframes lit-spin { to { transform: rotate(360deg); } }
         `;
         document.head.appendChild(style);
@@ -1122,7 +1122,7 @@ const DialogManager = (() => {
                 dialogOptions: {
                     titleSize: 24,
                     titleCenter: true,
-                    width: 'min(1200px, 90vw)',
+                    width: 'min(96vw, 1200px)',
                     maxHeight: '90vh'
                 },
                 buildContent: (dialog) => {
