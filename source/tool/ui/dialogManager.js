@@ -415,6 +415,8 @@ const DialogManager = (() => {
         async complexLoading(title, message, options = {}) {
             await _initCSS();
             return new Promise((resolve) => {
+                // 百分比固定为最宽（100%）的宽度，用空格占位，避免数字变化时画面跳动
+                const padPercent = (n) => `${String(n).padStart(3, ' ')}%`;
                 const overlay = _createOverlay();
 
                 const dialog = _createDialog(title, "", {
@@ -443,7 +445,7 @@ const DialogManager = (() => {
                 infoRow.className = 'lit-complex-loading-info';
                 const percentEl = document.createElement('span');
                 percentEl.className = 'lit-complex-loading-percent';
-                percentEl.textContent = '0%';
+                percentEl.textContent = padPercent(0);
                 const statusEl = document.createElement('span');
                 statusEl.className = 'lit-complex-loading-status';
                 statusEl.textContent = options.initialStatus || '准备就绪';
@@ -490,7 +492,13 @@ const DialogManager = (() => {
 
                 const fileLabelEl = document.createElement('div');
                 fileLabelEl.className = 'lit-complex-loading-file-label';
-                if (options.fileBar && options.initialFileName) fileLabelEl.textContent = options.initialFileName;
+                const fileNameEl = document.createElement('div');
+                fileNameEl.className = 'lit-complex-loading-file-name';
+                const fileInfoEl = document.createElement('div');
+                fileInfoEl.className = 'lit-complex-loading-file-info';
+                fileLabelEl.appendChild(fileNameEl);
+                fileLabelEl.appendChild(fileInfoEl);
+                if (options.fileBar && options.initialFileName) fileNameEl.textContent = options.initialFileName;
                 fileSection.appendChild(fileLabelEl);
 
                 const fileBarContainer = document.createElement('div');
@@ -549,7 +557,7 @@ const DialogManager = (() => {
 
                         if (!isIndeterminate) {
                             progressFill.style.width = `${percent}%`;
-                            percentEl.textContent = `${percent}%`;
+                            percentEl.textContent = padPercent(percent);
                             percentEl.style.display = 'block';
                         } else {
                             percentEl.style.display = 'none';
@@ -580,8 +588,10 @@ const DialogManager = (() => {
                             fileBarFill.style.width = `${currentFileProgress}%`;
                         }
                         if (opts.fileName !== undefined) {
-                            fileLabelEl.textContent = opts.fileName;
-                            fileLabelEl.style.display = opts.fileName ? 'block' : 'none';
+                            fileNameEl.textContent = opts.fileName;
+                        }
+                        if (opts.fileInfo !== undefined) {
+                            fileInfoEl.textContent = opts.fileInfo;
                         }
                     },
 
@@ -597,7 +607,7 @@ const DialogManager = (() => {
                             indeterminateBar.style.display = 'none';
                             percentEl.style.display = 'block';
                             progressFill.style.width = `${currentProgress}%`;
-                            percentEl.textContent = `${currentProgress}%`;
+                            percentEl.textContent = padPercent(currentProgress);
                         }
                     },
 
@@ -608,7 +618,7 @@ const DialogManager = (() => {
                         percentEl.style.display = 'block';
                         currentProgress = 100;
                         progressFill.style.width = '100%';
-                        percentEl.textContent = '100%';
+                        percentEl.textContent = padPercent(100);
                         progressFill.classList.add('lit-state-success');
                         percentEl.classList.add('lit-state-success');
                         if (options.fileBar) fileBarFill.style.width = '100%';
@@ -663,9 +673,15 @@ const DialogManager = (() => {
                     },
 
                     // 更新次级进度条：文件名标签与当前文件进度百分比（均可选）
-                    setFileBar: (name, percent, opts = {}) => {
-                        if (name !== undefined && name !== null) {
-                            fileLabelEl.textContent = String(name);
+                    setFileBar: (label, percent, opts = {}) => {
+                        // label 支持结构化 { name, info }：第一行文件名、第二行进度信息，由本方法合并渲染
+                        if (label !== undefined && label !== null) {
+                            if (typeof label === 'object') {
+                                if (label.name != null) fileNameEl.textContent = String(label.name);
+                                if (label.info != null) fileInfoEl.textContent = String(label.info);
+                            } else {
+                                fileNameEl.textContent = String(label);
+                            }
                             fileLabelEl.style.display = 'block';
                         }
                         if (percent !== undefined && percent !== null) {

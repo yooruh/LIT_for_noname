@@ -339,9 +339,28 @@
     font-size: 13px;
     font-weight: 500;
     line-height: 1.4;
+    min-height: 2.8em; /* 固定占两行：等待开始(1行)↔真实两行 切换时不跳高 */
+    /* 抵消全局 div{position:absolute;display:inline-block}，恢复文档流与块级 */
+    position: relative !important;
+    display: block !important;
+    transition: none !important;
+}
+.lit-complex-loading-file-name {
+    min-height: 1.4em;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap; /* 第一行：文件名，超长省略号 */
+    /* 抵消全局 div{position:absolute;display:inline-block}，恢复文档流与块级 */
+    position: relative !important;
+    display: block !important;
+    transition: none !important;
+}
+.lit-complex-loading-file-info {
+    min-height: 1.4em;
+    font-family: monospace; /* 第二行：等宽字体，数字 padding 生效 */
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     /* 抵消全局 div{position:absolute;display:inline-block}，恢复文档流与块级 */
     position: relative !important;
     display: block !important;

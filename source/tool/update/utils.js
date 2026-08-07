@@ -10,6 +10,16 @@ const utils = {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     },
 
+    // 百分比固定为最宽（100%）的宽度，用空格占位，避免数字变化时画面跳动（如 "  1%"、" 12%"、"100%"）
+    padPercent(n) {
+        return String(n).padStart(3, ' ') + '%';
+    },
+
+    // 字节数固定宽度（parseSize 最大输出 "1023.99 GB" 为 10 字符），等宽字体下列对齐
+    padSize(bytes) {
+        return this.parseSize(bytes).padStart(10, ' ');
+    },
+
     formatTime(seconds) {
         if (!isFinite(seconds) || seconds < 0) return '计算中...';
         if (seconds < 60) return Math.ceil(seconds) + '秒';

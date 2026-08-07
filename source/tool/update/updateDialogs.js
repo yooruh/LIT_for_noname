@@ -191,7 +191,7 @@ class UIManager {
                 indeterminate: false,
                 initialStatus: '连接中...',
                 initialDetail: totalBytes > 0
-                    ? `已下载 0 B / 共 ${utils.parseSize(totalBytes)} · 剩余 ${utils.parseSize(totalBytes)}`
+                    ? `已下载 ${utils.padSize(0)} / 共 ${utils.padSize(totalBytes)} · 剩余 ${utils.padSize(totalBytes)}`
                     : `共 ${totalFiles} 个文件 · 大小未知`,
                 fileBar: true,
                 initialFileName: '等待开始...'
@@ -259,13 +259,22 @@ class UIManager {
             }, 180000);
         };
 
+        // 取路径最后一段作为文件名，长路径被截断时关键信息仍保持可见
+        const basenameOf = (name) => name.slice(Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\')) + 1);
+
+        // 进度信息拆为「文件名」「百分比/大小」两个独立字符串，由 UI 合并渲染为两行（不再拼接 \n）
         const formatFileLabel = (file, percent = file.percent) => {
             const total = file.total || file.size;
-            if (total <= 0) return `${percent}% · 大小未知 · ${file.name}`;
-            const received = Math.min(Math.max(0, file.received), total);
-            const remaining = Math.max(0, total - received);
-            // 将百分比和剩余大小放在文件名下一行，长路径被截断时关键信息仍保持可见
-            return `${file.name} \n ${percent}% · 剩余 ${utils.parseSize(remaining)} · ${utils.parseSize(received)} / ${utils.parseSize(total)}`;
+            const name = `${basenameOf(file.name)}: ${file.name}`;
+            let info;
+            if (total <= 0) {
+                info = `${utils.padPercent(percent)} · 大小未知`;
+            } else {
+                const received = Math.min(Math.max(0, file.received), total);
+                const remaining = Math.max(0, total - received);
+                info = `${utils.padPercent(percent)} · 剩余 ${utils.padSize(remaining)} · ${utils.padSize(received)} / ${utils.padSize(total)}`;
+            }
+            return { name, info };
         };
 
         const processQueue = async () => {
@@ -306,7 +315,7 @@ class UIManager {
                         controller.waitForFileBar(100).catch(() => { });
                     } else {
                         const reason = file.timedOut ? '进度等待超时' : '下载失败';
-                        controller.setFileBar(`${reason} · ${file.name}`, file.percent);
+                        controller.setFileBar({ name: `${reason} · ${basenameOf(file.name)}`, info: file.name }, file.percent);
                     }
 
                     queue.shift();
@@ -377,6 +386,8 @@ class UIManager {
                 let totalPercent;
                 let status;
                 let detail;
+                // 文件计数固定宽度，避免数字变化时画面跳动
+                const paddedIndex = String(currentFileIndex).padStart(String(totalFilesCount).length, ' ');
 
                 if (normalizedTotal === 0) {
                     totalPercent = totalFilesCount > 0
@@ -385,8 +396,8 @@ class UIManager {
                     const remainingFiles = Math.max(0, totalFilesCount - currentFileIndex);
                     const avgTimePerFile = elapsed > 0 && currentFileIndex > 0 ? elapsed / currentFileIndex : 0;
                     const eta = avgTimePerFile > 0 ? remainingFiles * avgTimePerFile : 0;
-                    status = `文件 ${currentFileIndex}/${totalFilesCount}` + (eta > 0 ? ` · 剩余 ${utils.formatTime(eta)}` : '');
-                    detail = `已完成 ${currentFileIndex}/${totalFilesCount} 个文件 · 大小未知`;
+                    status = `文件 ${paddedIndex}/${totalFilesCount}` + (eta > 0 ? ` · 剩余 ${utils.formatTime(eta)}` : '');
+                    detail = `已完成 ${paddedIndex}/${totalFilesCount} 个文件 · 大小未知`;
                 } else {
                     totalPercent = Math.min(100, Math.round((normalizedReceived / normalizedTotal) * 100));
                     const speedDeltaTime = (now - lastSpeedTime) / 1000;
@@ -399,9 +410,9 @@ class UIManager {
                     const remainingBytes = Math.max(0, normalizedTotal - normalizedReceived);
                     const eta = sampledSpeed > 0 ? remainingBytes / sampledSpeed : 0;
                     status = sampledSpeed > 0
-                        ? `${utils.parseSize(sampledSpeed)}/s · 剩余 ${utils.formatTime(eta)} · 文件 ${currentFileIndex}/${totalFilesCount}`
-                        : `文件 ${currentFileIndex}/${totalFilesCount}`;
-                    detail = `已下载 ${utils.parseSize(normalizedReceived)} / 共 ${utils.parseSize(normalizedTotal)} · 剩余 ${utils.parseSize(remainingBytes)}`;
+                        ? `${utils.padSize(sampledSpeed)}/s · 剩余 ${utils.formatTime(eta)} · 文件 ${paddedIndex}/${totalFilesCount}`
+                        : `文件 ${paddedIndex}/${totalFilesCount}`;
+                    detail = `已下载 ${utils.padSize(normalizedReceived)} / 共 ${utils.padSize(normalizedTotal)} · 剩余 ${utils.padSize(remainingBytes)}`;
                 }
 
                 controller.updateProgress({ percent: totalPercent, status, detail });

@@ -496,8 +496,8 @@
     "md5": "2ae81ef03e8638d31cd5d8e27b8584d8"
   },
   "source/tool/ui/dialogManager.js": {
-    "size": 53268,
-    "md5": "1912f67a8f3ad28f47083a7f827a7042"
+    "size": 54446,
+    "md5": "42911d4df805f9a327642e765d8c8c62"
   },
   "source/tool/ui/poptips.js": {
     "size": 1606,
@@ -536,12 +536,12 @@
     "md5": "cf67ed0302faf5f64d3c3943434dd807"
   },
   "source/tool/update/updateDialogs.js": {
-    "size": 30937,
-    "md5": "61d809ad7c6a71298f43b7c18054f9ef"
+    "size": 31616,
+    "md5": "1ecaca442873a44a65aa17175d5cb4d2"
   },
   "source/tool/update/utils.js": {
-    "size": 4744,
-    "md5": "0b86bd65adae0a5050fd6ff21cec06b5"
+    "size": 5166,
+    "md5": "2a91bbc0ec241cd36df720332ce91dac"
   },
   "source/tool/update/versionChecker.js": {
     "size": 2878,
@@ -560,8 +560,8 @@
     "md5": "f51a9af2935ec413e98169ff9828f0ab"
   },
   "style/css/dialogManager.css": {
-    "size": 14902,
-    "md5": "f1993bf20d5c6e9eae1c39856489bfd4"
+    "size": 15728,
+    "md5": "2ae8759c5fc4bee2db777e250ddcd3bc"
   },
   "style/css/extension.css": {
     "size": 6493,
