@@ -709,7 +709,16 @@ const DialogManager = (() => {
                     },
 
                     nextFrame: () => new Promise(resolveFrame => {
-                        requestAnimationFrame(() => requestAnimationFrame(resolveFrame));
+                        // 双 rAF 建立动画起点；后台标签页 rAF 会被挂起，
+                        // 加超时兜底避免文件动画队列在此处永久卡住。
+                        let done = false;
+                        const finish = () => {
+                            if (done) return;
+                            done = true;
+                            resolveFrame();
+                        };
+                        requestAnimationFrame(() => requestAnimationFrame(finish));
+                        setTimeout(finish, 120);
                     }),
 
                     getProgress: () => currentProgress,
@@ -856,6 +865,11 @@ const DialogManager = (() => {
                     onCancel();
                     return false;
                 },
+                // 倒计时重启属于关键操作收尾，只允许通过按钮取消，
+                // 防止点到遮罩空白处/Esc/返回键时静默取消重启。
+                closeOnEsc: false,
+                closeOnBack: false,
+                closeOnOverlay: false,
                 buttons: [
                     {
                         text: '立即重启',

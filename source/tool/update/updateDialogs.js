@@ -200,7 +200,6 @@ class UIManager {
 
         const files = new Map();
         const queue = [];
-        const drainWaiters = [];
         const startTime = Date.now();
         let lastSpeedTime = startTime;
         let lastSpeedBytes = 0;
@@ -210,11 +209,6 @@ class UIManager {
         let processing = false;
         let closed = false;
         let msgStarted = false;
-
-        const resolveDrain = (force = false) => {
-            if (!force && (processing || queue.length > 0)) return;
-            drainWaiters.splice(0).forEach(resolve => resolve());
-        };
 
         const notify = (file) => {
             file.waiters.splice(0).forEach(resolve => resolve());
@@ -307,11 +301,12 @@ class UIManager {
                         file.received = file.total || file.size || file.received;
                         file.percent = 100;
                         controller.setFileBar(formatFileLabel(file, 100), 100);
-                        await controller.waitForFileBar(100);
+                        // 动画只负责展示，不阻塞流程：不等 transition 结束就继续下一个文件，
+                        // 避免“主进度条已完成、子进度条动画未播完”时整体卡住。
+                        controller.waitForFileBar(100).catch(() => { });
                     } else {
                         const reason = file.timedOut ? '进度等待超时' : '下载失败';
                         controller.setFileBar(`${reason} · ${file.name}`, file.percent);
-                        await new Promise(resolve => setTimeout(resolve, 300));
                     }
 
                     queue.shift();
@@ -322,7 +317,6 @@ class UIManager {
                 activeName = null;
                 activeReady = false;
                 processing = false;
-                resolveDrain();
             }
         };
 
@@ -333,7 +327,6 @@ class UIManager {
                 activeName = null;
                 activeReady = false;
                 processing = false;
-                resolveDrain(true);
             });
         };
 
@@ -348,7 +341,6 @@ class UIManager {
             activeName = null;
             activeReady = false;
             processing = false;
-            resolveDrain(true);
             controller.close();
         };
 
@@ -444,18 +436,13 @@ class UIManager {
                 scheduleQueue();
             },
 
-            drain: () => {
-                if (!processing && queue.length === 0) return Promise.resolve();
-                return new Promise(resolve => drainWaiters.push(resolve));
-            },
+            // 排空仅表示“下载数据已全部处理完”。动画队列是装饰性的，
+            // 调用方（extensionUpdater/index）都在下载全部结束后才调用，
+            // 因此立即返回，避免下一步等子进度条动画播完。
+            drain: () => Promise.resolve(),
 
             setError: (msg) => controller.setError(msg),
-            complete: async (msg, delay) => {
-                await (processing || queue.length > 0
-                    ? new Promise(resolve => drainWaiters.push(resolve))
-                    : Promise.resolve());
-                controller.complete(msg, delay);
-            },
+            complete: (msg, delay) => controller.complete(msg, delay),
             close,
             showRetry: (onRetry) => {
                 controller.setError('部分文件下载失败', true, onRetry);

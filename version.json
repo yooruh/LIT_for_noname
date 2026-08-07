@@ -2,7 +2,7 @@
   "defaultBranch": "main",
   "versions": [
     {
-      "extensionVersion": "26.8.7.1",
+      "extensionVersion": "26.8.7.2",
       "gameVersion": ">=1.11.2",
       "branch": "main",
       "description": "支持无名杀1.11.2及以上的版本",
@@ -15,11 +15,11 @@
         "重构角色包和卡牌包的加载结构，将角色配置和技能等文件按角色拆分；统一版本、更新日志与在线更新清单的构建流程，便于后续维护与发布。"
       ],
       "zip": {
-        "filename": "26.8.7.1-code.zip",
-        "size": 335832,
-        "md5": "6bbc886091ca9058818761a38458c1fc",
+        "filename": "26.8.7.2-code.zip",
+        "size": 336212,
+        "md5": "41067e14a7f860e8299f2358a00ed521",
         "branch": "zips",
-        "tag": "v26.8.7.1-code-zip"
+        "tag": "v26.8.7.2-code-zip"
       }
     }
   ]
