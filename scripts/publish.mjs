@@ -4,7 +4,7 @@
  * 叁岛世界 发布脚本 —— 将代码包提交到 zips 分支并创建 GitHub Release
  *
  * 前置条件:
- *   1. 已执行 npm run build（生成 {版本}叁岛世界(一班杀)-code.zip 到 ../_others/，
+ *   1. 已执行 npm run build（生成 {版本}-code.zip 到 ../_others/，
  *      并把 zip 元数据写入 version.json）
  *   2. 已安装并登录 GitHub CLI（gh auth login）
  *
@@ -72,7 +72,7 @@ function run(cmd, args, { allowFail = false, cwd } = {}) {
 function printBanner() {
   console.log(`
 \x1b[35m╔══════════════════════════════════╗
-║  叁岛世界 发布脚本（zips+Release）║
+║叁岛世界 发布脚本（zips+Release）║
 ╚══════════════════════════════════╝\x1b[0m
 `);
 }

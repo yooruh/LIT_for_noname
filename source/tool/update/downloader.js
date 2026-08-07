@@ -71,7 +71,8 @@ class SmartDownloader {
             return { type: 'disk', recoverable: false };
         }
         if (msg.includes('NOT_FOUND') || msg.includes('404')) {
-            return { type: 'not_found', recoverable: false };
+            // 404 只代表当前源没有该文件，继续尝试下一镜像，不应中断整条下载链
+            return { type: 'not_found', recoverable: true };
         }
         if (msg.includes('MD5校验失败') || msg.includes('MD5')) {
             return { type: 'md5', recoverable: true };

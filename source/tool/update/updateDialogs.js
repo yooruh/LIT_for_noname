@@ -270,8 +270,8 @@ class UIManager {
             if (total <= 0) return `${percent}% · 大小未知 · ${file.name}`;
             const received = Math.min(Math.max(0, file.received), total);
             const remaining = Math.max(0, total - received);
-            // 将百分比和剩余大小放在文件名前，长路径被截断时关键信息仍保持可见。
-            return `${percent}% · 剩余 ${utils.parseSize(remaining)} · ${utils.parseSize(received)} / ${utils.parseSize(total)} · ${file.name}`;
+            // 将百分比和剩余大小放在文件名前，长路径被截断时关键信息仍保持可见
+            return `${file.name} \n ${percent}% · 剩余 ${utils.parseSize(remaining)} · ${utils.parseSize(received)} / ${utils.parseSize(total)}`;
         };
 
         const processQueue = async () => {

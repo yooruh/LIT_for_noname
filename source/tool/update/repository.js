@@ -164,6 +164,7 @@ class GitAdapter {
 
         if (this.platform === 'github') {
             urls.push(`https://raw.githubusercontent.com/${this.owner}/${this.repo}/${branch}/release/code/${url}`);
+            urls.push(`https://gitee.com/${this.owner}/${this.repo}/raw/${branch}/release/code/${url}`);
             urls.push(`https://cdn.jsdelivr.net/gh/${this.owner}/${this.repo}@${branch}/release/code/${url}`);
         } else {
             urls.push(`https://gitee.com/${this.owner}/${this.repo}/raw/${branch}/release/code/${url}`);
@@ -171,11 +172,11 @@ class GitAdapter {
             urls.push(`https://cdn.jsdelivr.net/gh/${this.owner}/${this.repo}@${branch}/release/code/${url}`);
         }
 
-        // 备用：release 资产（需要 version.json 提供 tag；无 tag 则跳过）
+        // 备用：GitHub Release 资产（发布脚本只建 GitHub Release，资产名与 zip.filename 同名；
+        // 代码包改 ASCII 名后此 URL 与资产一致；Gitee 无 Release，不生成对应 URL）
         const tag = zipMeta.tag;
         if (tag) {
             urls.push(`https://github.com/${this.owner}/${this.repo}/releases/download/${tag}/${url}`);
-            urls.push(`https://gitee.com/${this.owner}/${this.repo}/releases/download/${tag}/${url}`);
         }
         return urls;
     }

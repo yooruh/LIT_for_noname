@@ -43,7 +43,7 @@ const ROOT = resolve(__dirname, '..');
 const SELF_PATH = fileURLToPath(import.meta.url);
 const OUT_DIR = resolve(ROOT, '..', '_others');
 const PACK_SUFFIX = '叁岛世界(一班杀).zip';
-const CODE_SUFFIX = '叁岛世界(一班杀)-code.zip';
+const CODE_SUFFIX = '-code.zip';
 // 专门存储代码包的 git 分支（客户端按 version.json 的 zip.branch 读取）
 const ZIP_BRANCH = 'zips';
 
