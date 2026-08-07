@@ -24,7 +24,7 @@
 import { spawnSync } from 'node:child_process';
 import {
   existsSync, statSync, readFileSync, copyFileSync, mkdirSync,
-  writeFileSync, rmSync, mkdtempSync,
+  writeFileSync, rmSync, mkdtempSync, readSync,
 } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve, dirname, join } from 'node:path';
@@ -72,7 +72,7 @@ function run(cmd, args, { allowFail = false, cwd } = {}) {
 function printBanner() {
   console.log(`
 \x1b[35m╔══════════════════════════════════╗
-║叁岛世界 发布脚本（zips+Release）║
+║ 叁岛世界 发布脚本（zips+Release）║
 ╚══════════════════════════════════╝\x1b[0m
 `);
 }
@@ -107,6 +107,49 @@ function checkPrereqs(dryRun) {
     throw new Error('gh 未登录。请先执行 `gh auth login` 授权后重试。');
   }
   return true;
+}
+
+/** 检测工作区是否有未提交的更改（git status --porcelain） */
+function getUncommittedChanges() {
+  const res = run('git', ['status', '--porcelain'], { allowFail: true });
+  if (res.status !== 0) return [];
+  return res.stdout.split('\n').filter(Boolean);
+}
+
+/** 同步读取一行 stdin（非交互环境立即返回空串） */
+function readLineSync() {
+  const buf = Buffer.alloc(4096);
+  try {
+    const n = readSync(0, buf, 0, buf.length, null);
+    return buf.toString('utf-8', 0, Math.max(0, n)).replace(/\r?\n$/, '');
+  } catch {
+    return '';
+  }
+}
+
+/** 检测到未提交内容时询问是否继续发布；dry-run 仅警告不询问 */
+function confirmIfDirty(dryRun) {
+  const changes = getUncommittedChanges();
+  if (changes.length === 0) return;
+
+  log.warn(`检测到 ${changes.length} 项未提交的更改：`);
+  for (const line of changes.slice(0, 20)) {
+    console.log(`  ${line}`);
+  }
+  if (changes.length > 20) {
+    console.log(`  ...（其余 ${changes.length - 20} 项略）`);
+  }
+  if (dryRun) {
+    log.warn('dry-run 仅预览，不执行写操作，跳过确认');
+    return;
+  }
+
+  process.stdout.write('未提交的更改不会随本次发布推送。是否仍要发布？[y/N] ');
+  const answer = readLineSync().trim().toLowerCase();
+  if (answer !== 'y' && answer !== 'yes') {
+    console.log('已取消发布：请先提交或撤销未提交的更改。');
+    process.exit(0);
+  }
 }
 
 function md5Hex(buf) {
@@ -465,6 +508,7 @@ function main() {
   try {
     const hasGh = checkPrereqs(dryRun);
     const target = resolveTarget();
+    confirmIfDirty(dryRun);
 
     // 护栏：version.json 的 zip.tag 必须与发布标签一致，否则客户端按 tag 下载会 404
     if (target.tag && target.tag !== releaseTag(target.version)) {

@@ -5,7 +5,7 @@
   },
   "extension.js": {
     "size": 5235,
-    "md5": "a4c4bae7178c5b7e1db9ec2b6bd4d8e4"
+    "md5": "60edf3e3b5a7de4915caa60b41cdca91"
   },
   "image/card/lit_diaoka.png": {
     "size": 4793,
@@ -185,7 +185,7 @@
   },
   "info.json": {
     "size": 240,
-    "md5": "5df814f729043309adf624b267a520c7"
+    "md5": "1d6d33fd9fe6aebe0b471c7bced92d0b"
   },
   "LICENSE": {
     "size": 35475,
@@ -516,8 +516,8 @@
     "md5": "c8fd2ead1b1bf09dc45df615eb65e10c"
   },
   "source/tool/update/extensionUpdater.js": {
-    "size": 50262,
-    "md5": "fe11fa52ff92cc33a293de1675ca20f0"
+    "size": 51560,
+    "md5": "a4ac5f798a6003eb9e2259322250fb56"
   },
   "source/tool/update/index.js": {
     "size": 14488,
@@ -536,8 +536,8 @@
     "md5": "cf67ed0302faf5f64d3c3943434dd807"
   },
   "source/tool/update/updateDialogs.js": {
-    "size": 30530,
-    "md5": "15cb19dc649a3c0c0a11c8c51778dc05"
+    "size": 31246,
+    "md5": "46dcdfd152676a9b1ca8d68984876cb8"
   },
   "source/tool/update/utils.js": {
     "size": 4744,

@@ -495,13 +495,18 @@ class ExtensionUpdater {
             throw error;
         }
 
+        // 应用阶段（备份/解压/覆写）耗时较长，显示“请稍候”避免 UI 空窗
+        const loading = await this.ui.showLoading('正在应用更新', '正在备份并覆写文件，请稍候...');
+
         let backup = null;
         try {
             // 1) 解压并校验代码包到暂存目录 —— 此阶段不触碰正式目录
+            loading.updateText('正在解压并校验代码包...');
             await this.prepareCodeStaging();
             await this.verifyCodeStaging();
 
             // 2) 备份当前版本（正式目录首次被触碰）
+            loading.updateText('正在备份当前版本...');
             await this.state.setPhase('backing_up', true);
             const backupResult = await this.backupManager.createBackup();
             if (!backupResult.success) {
@@ -511,12 +516,14 @@ class ExtensionUpdater {
             }
 
             // 3) 覆盖：先媒体（临时文件）后代码（已校验的暂存目录）
+            loading.updateText('正在覆写文件，请稍候...');
             await this.state.setPhase('moving', true);
             await this.applyDownloadedFiles();
             await this.applyCodeFromStaging();
             await this.postVerifyCode();
 
             // 4) 清理失效文件（按模式过滤）
+            loading.updateText('正在清理旧文件...');
             const oldFileList = await this.readLocalDirectoryJson();
             await this.removeObsoleteFiles(oldFileList, this.stagedManifestPaths);
 
@@ -530,6 +537,8 @@ class ExtensionUpdater {
             await this.state.setPhase('downloading', true);
             if (!error.updateStage) error.updateStage = 'apply';
             throw error;
+        } finally {
+            loading.close();
         }
     }
 
@@ -903,30 +912,46 @@ class ExtensionUpdater {
     // 全新下载：版本检查、自选版本、文件列表准备与确认
     async prepareFreshDownload() {
         const gameVer = lib.version || '1.0.0';
-        const versions = await new VersionChecker(this.repo, this.tokens, this.envType).list(gameVer);
+
+        // 阶段一：请求版本信息（version.json）—— 网络耗时，显示“请稍候”避免 UI 空窗
+        const loadInfo = await this.ui.showLoading('正在获取更新信息', '正在请求更新信息，请稍候...');
         let verInfo = null;
-
-        if (versions.length > 0) {
-            let candidates = versions.filter(v => v.compatible);
-            if (candidates.length === 0) candidates = versions; // 无兼容版本时列出全部
-            verInfo = candidates[0]; // 默认选最新兼容版本
-
-            // 交互路径且存在多个候选时允许自选版本
-            if (this.versionSelect && candidates.length > 1) {
-                const picked = await this.ui.showVersionSelect(candidates);
-                if (!picked) {
-                    await this.cleanup();
-                    return { cancelled: true };
-                }
-                verInfo = picked;
+        let candidates = null;
+        try {
+            const versions = await new VersionChecker(this.repo, this.tokens, this.envType).list(gameVer);
+            if (versions.length > 0) {
+                candidates = versions.filter(v => v.compatible);
+                if (candidates.length === 0) candidates = versions; // 无兼容版本时列出全部
+                verInfo = candidates[0]; // 默认选最新兼容版本
             }
+        } finally {
+            loadInfo.close();
+        }
+
+        // 交互路径且存在多个候选时允许自选版本（loading 已关闭）
+        if (this.versionSelect && candidates && candidates.length > 1) {
+            const picked = await this.ui.showVersionSelect(candidates);
+            if (!picked) {
+                await this.cleanup();
+                return { cancelled: true };
+            }
+            verInfo = picked;
         }
 
         if (verInfo && verInfo.branch && verInfo.branch !== this.repo.branch) {
             this.repo.switchBranch(verInfo.branch);
         }
 
-        const { fileCount, skipCount, totalBytes, zipSize } = await this.prepareFileList(undefined, verInfo);
+        // 阶段二：下载文件清单并建立任务（Directory.json）—— 同样耗时，显示“请稍候”
+        const loadList = await this.ui.showLoading('正在准备更新清单', '正在下载文件清单，请稍候...');
+        let prepared;
+        try {
+            prepared = await this.prepareFileList(undefined, verInfo);
+        } finally {
+            loadList.close();
+        }
+
+        const { fileCount, skipCount, totalBytes, zipSize } = prepared;
 
         const confirmed = await this.ui.confirmStart({
             version: verInfo?.extensionVersion,

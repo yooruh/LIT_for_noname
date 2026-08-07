@@ -270,7 +270,7 @@ class UIManager {
             if (total <= 0) return `${percent}% · 大小未知 · ${file.name}`;
             const received = Math.min(Math.max(0, file.received), total);
             const remaining = Math.max(0, total - received);
-            // 将百分比和剩余大小放在文件名前，长路径被截断时关键信息仍保持可见
+            // 将百分比和剩余大小放在文件名下一行，长路径被截断时关键信息仍保持可见
             return `${file.name} \n ${percent}% · 剩余 ${utils.parseSize(remaining)} · ${utils.parseSize(received)} / ${utils.parseSize(total)}`;
         };
 
@@ -655,6 +655,19 @@ class UIManager {
             if (token) return token;
         }
         return null;
+    }
+
+    // 显示不可交互的“处理中，请稍候”模态框（循环动画），返回 { close, updateText } 控制器。
+    // 用于版本信息请求、文件清单下载、更新覆写等耗时阶段，避免 UI 空窗让用户误以为卡死。
+    async showLoading(title, message) {
+        const controller = await this.dialog.complexLoading(title, message, {
+            width: 'min(420px, 90vw)',
+            indeterminate: true,
+            initialStatus: '处理中...'
+        });
+        // 隐藏“0%”等确定性进度元素，仅保留循环动画条，语义为“处理中”
+        controller.setIndeterminate(true, '处理中...');
+        return controller;
     }
 
     async alert(title, message) {

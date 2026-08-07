@@ -1,6 +1,6 @@
 {
   "name": "lit-for-noname",
-  "version": "26.8.7.0",
+  "version": "26.8.7.1",
   "description": "叁岛世界 - 无名杀游戏扩展构建脚本",
   "private": true,
   "type": "module",
@@ -13,22 +13,25 @@
     "zip": "node scripts/zip.mjs",
     "zip:dry": "node scripts/zip.mjs --dry-run",
     "zip:check": "node scripts/zip.mjs --check",
+
+    "version": "node scripts/build.mjs --current",
+    "changelog": "node scripts/changelog.mjs show",
     "build:dry": "node scripts/build.mjs --dry-run",
     "publish:dry": "node scripts/publish.mjs --dry-run",
+
+    "opt:png": "node scripts/opt-png.mjs",
+    "opt:png:dry": "node scripts/opt-png.mjs --dry-run",
+    "opt:png:check": "node scripts/opt-png.mjs --check",
+    "opt:png:lossy": "node scripts/opt-png.mjs --lossy",
 
     "purge:zips": "node scripts/purge-zips.mjs",
     "purge:zips:dry": "node scripts/purge-zips.mjs --dry-run",
     "purge:zips:local": "node scripts/purge-zips.mjs --local",
 
-    "version": "node scripts/build.mjs --current",
-    "changelog": "node scripts/changelog.mjs show",
-    "changelog:path": "node scripts/changelog.mjs path",
-    "changelog:scaffold": "node scripts/changelog.mjs scaffold",
-  
-    "opt:png": "node scripts/opt-png.mjs",
-    "opt:png:dry": "node scripts/opt-png.mjs --dry-run",
-    "opt:png:check": "node scripts/opt-png.mjs --check",
-    "opt:png:lossy": "node scripts/opt-png.mjs --lossy",
+    "purge:version-branch": "node scripts/purge-version-branch.mjs",
+    "purge:version-branch:dry": "node scripts/purge-version-branch.mjs --dry-run",
+    "purge:version-branch:list": "node scripts/purge-version-branch.mjs --list",
+    "purge:version-branch:local": "node scripts/purge-version-branch.mjs --local",
 
     "publish": "node scripts/publish.mjs"
   },
