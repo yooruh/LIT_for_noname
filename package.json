@@ -24,6 +24,9 @@
     "opt:png:check": "node scripts/opt-png.mjs --check",
     "opt:png:lossy": "node scripts/opt-png.mjs --lossy",
 
+    "check:invisible": "node scripts/check-invisible.mjs",
+    "check:invisible:check": "node scripts/check-invisible.mjs --check",
+
     "purge:zips": "node scripts/purge-zips.mjs",
     "purge:zips:dry": "node scripts/purge-zips.mjs --dry-run",
     "purge:zips:local": "node scripts/purge-zips.mjs --local",

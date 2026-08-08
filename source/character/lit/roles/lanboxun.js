@@ -1,4 +1,4 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
+import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'ybs';
 export const title = `扒牌·顺风压制·${styleText('g', "易")}`;

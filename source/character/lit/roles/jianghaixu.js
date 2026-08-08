@@ -1,4 +1,4 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
+import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 // 启用 characterSubstitute 示例时同时取消下一行的注释。
 // import { extensionPath } from '../../../tool/utils/paths.js';
 

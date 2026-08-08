@@ -1,4 +1,4 @@
-﻿import { lib, game, ui, get, ai, _status } from '../shared.js';
+import { lib, game, ui, get, ai, _status } from '../shared.js';
 
 export const sort = 'jbs';
 export const character = {

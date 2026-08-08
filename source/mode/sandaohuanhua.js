@@ -1940,8 +1940,8 @@ export default () => {
 			sdhh_fudichouxin_info: "出牌阶段，对一名角色使用，随机弃置其一个技能。",
 			nei: " ",
 			nei2: " ",
-			refresh‌: "刷新",
-			refresh‌_info: "消耗1点灵力值，刷新上述技能",
+			refresh: "刷新",
+			refresh_info: "消耗1点灵力值，刷新上述技能",
 		},
 	};
 	return mode;

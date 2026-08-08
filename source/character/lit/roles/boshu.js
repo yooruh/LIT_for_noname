@@ -1,4 +1,4 @@
-﻿import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
+import { lib, game, ui, get, ai, _status, X, Y, Z, styleText, B } from '../shared.js';
 
 export const sort = 'sdp';
 export const title = `辅助·反伤·过牌·${styleText('o', "较难")}`;

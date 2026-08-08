@@ -683,8 +683,8 @@ export let info = {
                         sdhh_fudichouxin: "釜底抽薪",
                         sdhh_toulianghuanzhu_info: "出牌阶段，对一名角色使用，随机更换其一个技能。可重铸。",
                         sdhh_fudichouxin_info: "出牌阶段，对一名角色使用，随机弃置其一个技能。",
-                        refresh‌: "刷新",
-                        refresh‌_info: "消耗1点灵力值，刷新上述技能",
+                        refresh: "刷新",
+                        refresh_info: "消耗1点灵力值，刷新上述技能",
                     },
                 },
                 get: {
@@ -1342,8 +1342,8 @@ export let info = {
                                     sdhh_fudichouxin: "釜底抽薪",
                                     sdhh_toulianghuanzhu_info: "出牌阶段，对一名角色使用，随机更换其一个技能。可重铸。",
                                     sdhh_fudichouxin_info: "出牌阶段，对一名角色使用，随机弃置其一个技能。",
-                                    refresh‌: "刷新",
-                                    refresh‌_info: "消耗1点灵力值，刷新上述技能",
+                                    refresh: "刷新",
+                                    refresh_info: "消耗1点灵力值，刷新上述技能",
                                 },
                             });
                         });
