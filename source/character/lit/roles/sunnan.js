@@ -116,6 +116,7 @@ export const skill = {
     },
     lit_zhishu: {
         forced: true,
+        popup: "枝疏·生枝",
         mark: true,
         marktext: "枝",
         intro: {
@@ -154,6 +155,7 @@ export const skill = {
             },
             use: {
                 enable: "phaseUse",
+                popup: "枝疏·酒杀",
                 filter(event, player) {
                     return !player.hasSkill("lit_zhishu_used") && player.getExpansions("lit_zhishu").length >= 3;
                 },
@@ -317,6 +319,7 @@ export const skill = {
                 sourceSkill: "lit_zhishu",
             },
             sha: {
+                popup: "枝疏·剪枝",
                 trigger: {
                     global: "useCardAfter",
                 },

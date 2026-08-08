@@ -27,7 +27,7 @@ export const skill = {
             }
             player.setStorage("lit_shengji", 0);
             // 人数不足5或身份为主公，直接升级
-            if (lib.lit.getPlayers() < 5 || player.isZhu || player === game.zhu) {
+            if (lib.lit.getPlayers() < 5 || player.isZhu && game.roundNumber === 0) {
                 player.useSkill('lit_shengji');
             }
         },

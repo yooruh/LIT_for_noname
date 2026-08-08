@@ -68,12 +68,13 @@ export const skill = {
             },
             // 结交"闺蜜"
             tie: {
+                unique: true,
+                forced: true,
+                popup: "闺蜜·结交",
                 trigger: {
                     global: ["dieAfter", "gameDrawBefore"],
                     player: ["revive", "enterGame", "showCharacterAfter"],
                 },
-                unique: true,
-                forced: true,
                 filter: (event, player) => {
                     if (event.name === "showCharacter") return !player.getStorage("lit_guimi_tie");
                     if (game.hasPlayer(current => {
@@ -158,15 +159,15 @@ export const skill = {
             },
             // "闺蜜"受伤回血
             recover: {
+                silent: true,
                 trigger: {
                     player: "damageEnd",
                 },
-                silent: true,
                 filter: (event, player) => {
                     return player.hasMark('lit_guimi') && player.getHistory("damage").indexOf(event) === 0;
                 },
                 async content(event, trigger, player) {
-                    player.popup("lit_guimi");
+                    player.popup("闺蜜·回血");
                     await player.getStorage("lit_guimi_total")?.logSkill("lit_guimi");
                     await player.recover();
                 },
@@ -239,10 +240,11 @@ export const skill = {
             // "闺蜜"救"闺蜜"来源
             save: {
                 log: false,
-                prepare(cards, player, targets) {
+                enable: "chooseToUse",
+                precontent(cards, player, targets) {
+                    player.popup("闺蜜·救援");
                     player.getStorage("lit_guimi_total")?.logSkill("lit_guimi");
                 },
-                enable: "chooseToUse",
                 viewAsFilter(player) {
                     var target = undefined;
                     if (player.hasMark('lit_guimi')) target = player.getStorage("lit_guimi_total");
@@ -326,10 +328,11 @@ export const skill = {
         },
         subSkill: {
             damage: {
+                forced: true,
+                popup: "易碎·免伤",
                 trigger: {
                     player: "damageBegin4",
                 },
-                forced: true,
                 filter: (event, player) => {
                     if (event.num <= 0) return false;
                     return game.hasPlayer(current => {
@@ -358,10 +361,11 @@ export const skill = {
                 sourceSkill: "lit_yisui",
             },
             die: {
+                forced: true,
+                popup: "易碎·共死",
                 trigger: {
                     global: "die",
                 },
-                forced: true,
                 filter: (event, player) => {
                     var target = event.player;
                     if (!target.hasMark('lit_guimi') || target.hasMark('lit_guimi') && target.getStorage("lit_guimi_total") !== player) return false;
@@ -379,9 +383,16 @@ export const skill = {
     },
     lit_yisuiV2: {
         inherit: 'lit_yisui',
-        group: "lit_yisui_damage",
+        group: "lit_yisuiV2_damage",
         init: (player) => {
             if (player.hasSkill('lit_yisui')) player.removeSkill('lit_yisui');
+        },
+        subSkill: {
+            damage: {
+                inherit: "lit_yisui_damage",
+                sub: true,
+                sourceSkill: "lit_yisuiV2",
+            },
         },
     },
 };

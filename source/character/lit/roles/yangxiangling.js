@@ -95,6 +95,7 @@ export const skill = {
         group: ["lit_xiaosa_damage", "lit_xiaosa_losehp"],
         subSkill: {
             damage: {
+                popup: "潇洒·翻面",
                 trigger: {
                     global: "dying",
                 },
@@ -187,6 +188,7 @@ export const skill = {
                 sourceSkill: "lit_xiaosa",
             },
             backup: {
+                popup: "潇洒·强杀",
                 filterCard(card) {
                     return get.type(card) === "equip";
                 },

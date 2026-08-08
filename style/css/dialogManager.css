@@ -222,8 +222,9 @@
 .lit-doc-modal-dialog {
     width: min(96vw, 1200px) !important;
     max-width: min(96vw, 1200px) !important;
-    height: 90vh;
-    max-height: 90vh;
+    height: 95vh;
+    min-width: min(600px, 96vw);
+    max-height: 95vh;
     padding: 8px 8px 0;
 }
 .lit-doc-modal-content { flex: 1; min-width: 0; width: 100%; margin: 0; overflow: hidden; }
@@ -268,5 +269,5 @@
     .lit-ui-content { font-size: 14px; }
     .lit-ui-input { font-size: 16px; }
     .lit-ui-loading-spinner { width: 34px; height: 34px; }
-    .lit-doc-modal-dialog { height: 94vh; }
+    .lit-doc-modal-dialog { height: 95vh; }
 }

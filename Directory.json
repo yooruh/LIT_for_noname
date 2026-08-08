@@ -5,7 +5,7 @@
   },
   "extension.js": {
     "size": 5235,
-    "md5": "f8bd1012a29e50eafbe20491c55fa92a"
+    "md5": "9fa49515358f4631c307569a2008acfa"
   },
   "image/card/lit_diaoka.png": {
     "size": 4793,
@@ -185,7 +185,7 @@
   },
   "info.json": {
     "size": 240,
-    "md5": "48d0aabfda2a8906a9a6112924ef7bab"
+    "md5": "3131fc42a0d3f4a00f55e3a00e9bb011"
   },
   "LICENSE": {
     "size": 35475,
@@ -196,8 +196,8 @@
     "md5": "1689384b7886881604d5fd3aaea9aa9c"
   },
   "source/card/lit_card/skills.js": {
-    "size": 30988,
-    "md5": "c879004b8cd9bccff7f4353de62583ad"
+    "size": 31021,
+    "md5": "caf03197972fca7fc285032b9da62c41"
   },
   "source/card/lit_card/translate.js": {
     "size": 3856,
@@ -208,8 +208,8 @@
     "md5": "03c2f0ba5733303d958419215c9e89de"
   },
   "source/character/lit/roles/boshu.js": {
-    "size": 21221,
-    "md5": "b7f2991a4c0a2dbc2b86a324cb3d1ca4"
+    "size": 21601,
+    "md5": "957d16c07fc9a6eeb7b834e2ec36c748"
   },
   "source/character/lit/roles/chenke.js": {
     "size": 8012,
@@ -264,8 +264,8 @@
     "md5": "ca8bb7b34e0e72393fdbe2a566051a85"
   },
   "source/character/lit/roles/sunnan.js": {
-    "size": 20376,
-    "md5": "b43db70ddd3353baa5a6b68049a5b995"
+    "size": 20494,
+    "md5": "fd2e22660f21eae7fa684a3bc115c53c"
   },
   "source/character/lit/roles/wangcan9.js": {
     "size": 6605,
@@ -280,16 +280,16 @@
     "md5": "f2000bb384a7304b0cb9c1d49fc3b4ea"
   },
   "source/character/lit/roles/yangxiangling.js": {
-    "size": 16492,
-    "md5": "e28625c9bc7b6267df503a07a7b97056"
+    "size": 16576,
+    "md5": "2b4170428cd8408438f6285074d56f3a"
   },
   "source/character/lit/roles/yutong.js": {
-    "size": 9333,
-    "md5": "1635ade77b9406d84c2f5dfe8e96938b"
+    "size": 9557,
+    "md5": "e79098693697f90e96c6a4feb50ea151"
   },
   "source/character/lit/roles/zengpinjia.js": {
-    "size": 22836,
-    "md5": "d481ece9ae682bd813a5bec479a2c78e"
+    "size": 22896,
+    "md5": "b14224f8f59ef51cc21ae9376f6df2e4"
   },
   "source/character/lit/roles/zhangchi.js": {
     "size": 12913,
@@ -316,12 +316,12 @@
     "md5": "0add8cdd1458d9ed19ef7ad35ad90870"
   },
   "source/character/lit/roles/zhongyutong.js": {
-    "size": 12047,
-    "md5": "5e94ffd90ce6ed476cf75c5c92360a61"
+    "size": 15958,
+    "md5": "8b7c6427d7a81fd07fddbd9ca8bd9b4f"
   },
   "source/character/lit/roles/zigao.js": {
-    "size": 22246,
-    "md5": "500c42fd19fdeb63ad72107820cba13f"
+    "size": 22345,
+    "md5": "4d7cacd9aa3b885ece11d83f777ebbdc"
   },
   "source/character/lit/shared.js": {
     "size": 869,
@@ -336,8 +336,8 @@
     "md5": "4175b4114a8ab19c00282fe0fbb0773e"
   },
   "source/character/lit/_shengji.js": {
-    "size": 10198,
-    "md5": "74b7c54b6ca77b0fb0a637fe90690736"
+    "size": 10201,
+    "md5": "18f6de86a97035f42afd0664530220ae"
   },
   "source/character/lit_gz/index.js": {
     "size": 3624,
@@ -388,20 +388,20 @@
     "md5": "708cc1c696183d19f536aa4ad486296f"
   },
   "source/content.js": {
-    "size": 3964,
-    "md5": "c9641fdd947feb98082e34a2a255afe0"
+    "size": 4045,
+    "md5": "96c69afecfa8d8ff7a7591b6b23bcfc8"
   },
   "source/help.js": {
     "size": 3755,
     "md5": "cad7e1c9439e7dd9a853b94005f12991"
   },
   "source/mode/sandaohuanhua.js": {
-    "size": 62358,
-    "md5": "6b1d607704629c09442ca9594b8ec126"
+    "size": 63865,
+    "md5": "fe6810e2d9ccd3616184a1f7c3d9d35d"
   },
   "source/mode/sandaohuanhua_brawl.js": {
-    "size": 75434,
-    "md5": "df282ebe6eb5c3333a819692d1767389"
+    "size": 75362,
+    "md5": "383c1d982aab031479b47be33b43137b"
   },
   "source/onlineFix/characterSelection.js": {
     "size": 14608,
@@ -497,7 +497,7 @@
   },
   "source/tool/ui/dialogManager.js": {
     "size": 58706,
-    "md5": "5951dfa3e3980b9d816b281088f455b6"
+    "md5": "c54493e1fc6179c78d68ec23f3e20bf2"
   },
   "source/tool/ui/poptips.js": {
     "size": 1606,
@@ -560,16 +560,16 @@
     "md5": "1abc3b22c1c60e403c58dfe0753b1b98"
   },
   "style/css/cards.css": {
-    "size": 958,
-    "md5": "20d52c4aa44200387487c8fc422f0893"
+    "size": 448,
+    "md5": "1b1ba53e476ae3ea3f0762224b50876d"
   },
   "style/css/dialogManager.css": {
-    "size": 14296,
-    "md5": "b76db7f9ef2e44a4c6ebb188c26ce7ce"
+    "size": 14329,
+    "md5": "5fb847b79e8145d1c03716b217734f95"
   },
   "style/css/extension.css": {
-    "size": 8167,
-    "md5": "71939d539c9fb0164bdc2771ff44f703"
+    "size": 6497,
+    "md5": "8b32b3d17d64f58277d1338407140550"
   },
   "style/css/materialTheme.css": {
     "size": 13513,
@@ -584,8 +584,8 @@
     "md5": "f3989765fd152d8ff31808c266d8f07b"
   },
   "style/html/update.html": {
-    "size": 15210,
-    "md5": "ef0fa1d52578fd7c3b1ff635615eef1b"
+    "size": 15300,
+    "md5": "99fe721d3043d6de959067d30c0ebb2e"
   },
   "style/nncfg/android_wide11.0.nncfg": {
     "size": 3956,

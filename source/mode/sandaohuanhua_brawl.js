@@ -1120,8 +1120,8 @@ export let info = {
                         const me = game.me;
                         if (me?._toKill && me?._toSave && ui.sandaohuanhua?._textSpan) {
                             ui.sandaohuanhua._textSpan.innerHTML =
-                                `杀伤<span class='lit-sdhh-kill'>${get.translation(me._toKill)}(${me._toKill.identity})</span>，` +
-                                `保护<span class='lit-sdhh-save'>${get.translation(me._toSave)}(${me._toSave.identity})</span>`;
+                                `杀伤<span style='color:#ff5f56'>${get.translation(me._toKill)}(${me._toKill.identity})</span>，` +
+                                `保护<span style='color:#98fb98'>${get.translation(me._toSave)}(${me._toSave.identity})</span>`;
                         }
                     },
 
@@ -1142,7 +1142,6 @@ export let info = {
 
                     getSkillDialog: function (skills, prompt) {
                         const dialog = ui.create.dialog("hidden", "forcebutton");
-                        dialog.classList.add('lit-sdhh-skill-dialog');
 
                         const clickItem = function () {
                             const parent = this.parentNode;

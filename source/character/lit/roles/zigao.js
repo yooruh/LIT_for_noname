@@ -365,8 +365,10 @@ export const skill = {
             }, true);
         },
         async content(event, trigger, player) {
-            if (event.triggername === 'phaseZhunbei') await player.recover();
-            else {
+            if (event.triggername === 'phaseZhunbei') {
+                player.say("要是本回合无人受伤，我铲踏儿！");
+                await player.recover();
+            } else {
                 await player.draw(2);
                 await player.loseHp();
             }

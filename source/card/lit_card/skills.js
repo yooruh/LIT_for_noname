@@ -738,12 +738,13 @@ export const skill = {
             }
             let count = player.getStorage("lit_caichendekuangre_mark", 0);
             player.setStorage("lit_caichendekuangre_mark", ++count, true);
-            player.insertPhase(event.skill);
+            player.insertPhase(event.name);
         },
         subSkill: {
             mark: {
                 silent: true,
                 firstDo: true,
+                charlotte: true,
                 mark: true,
                 marktext: "热",
                 intro: {

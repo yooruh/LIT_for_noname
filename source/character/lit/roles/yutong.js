@@ -132,26 +132,30 @@ export const skill = {
                 trigger: { player: 'lit_trigger_pobi_use' },
                 async content(event, trigger, player) {
                     player.awakenSkill('lit_pobi');
-
+                    // 加遣返牌
                     for (const other of game.filterPlayer(p => p !== player)) {
                         if (!other.hasJudge('lit_qianfanpai')) {
                             await other.addJudge({ name: 'lit_qianfanpai' });
                         }
                     }
-                    const shengjiCount = player.countMark('lit_shengji');
+                    // 保留前角色的数据
+                    const shengji = {
+                        done: player.hasSkill("lit_chixin"),
+                        count: player.countMark('lit_shengji') ?? 0,
+                    };
                     const targetName = (get.mode() === 'guozhan' && lib.character['gz_lit_zhongyutong钟雨桐'])
                         ? 'gz_lit_zhongyutong钟雨桐' : 'lit_zhongyutong钟雨桐';
                     game.log(player, "将自己的角色牌变更为了", targetName);
                     await player.reinit(player.name, targetName, [Math.min(lib.character[targetName].hp, player.maxHp), player.maxHp]);
                     await player.changeGroup('one', false);
-                    player.setMark('lit_shengji', shengjiCount);
-
-                    // 手动触发 enterGame，让传说等入场技生效
-                    await game.triggerEnter(player);
-                    if (player.hasSkill('lit_chixin')) {
+                    if (shengji.done) {
                         player.addSkill('lit_chixin');
                         player.removeSkill('lit_shengjizyt');
                     }
+                    if (player.hasSkill("lit_shengji")) player.setMark('lit_shengji', shengji.count);
+
+                    // 手动触发 enterGame，让传说等入场技生效
+                    await game.triggerEnter(player);
                 },
                 sub: true,
                 sourceSkill: "lit_pobi",

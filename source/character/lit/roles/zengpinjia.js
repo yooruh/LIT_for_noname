@@ -164,7 +164,8 @@ export const skill = {
                         const hints = [];
                         if (target.hasSkill("lit_yisui", null, false, true)) {
                             const hasGuimi = game.hasPlayer(p => p.hasMark('lit_guimi') && p.getStorage("lit_guimi_total") === target && p.hp === p.maxHp);
-                            if (hasGuimi) hints.push("反弹伤害");
+                            // if (hasGuimi) hints.push("反弹伤害");
+                            hints.push("可能免伤");
                         }
                         if (target.hasSkillTag('nothunder') || target.hasSkillTag('nodamage')) hints.push("可能免伤");
                         else {

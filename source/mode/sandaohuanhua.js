@@ -545,8 +545,8 @@ export default () => {
 				const me = game.me;
 				if (me?._toKill && me?._toSave && ui.sandaohuanhua?._textSpan) {
 					ui.sandaohuanhua._textSpan.innerHTML =
-						`杀伤<span class='lit-sdhh-kill'>${get.translation(me._toKill)}(${me._toKill.identity})</span>，` +
-						`保护<span class='lit-sdhh-save'>${get.translation(me._toSave)}(${me._toSave.identity})</span>`;
+						`杀伤<span style='color:#ff5f56'>${get.translation(me._toKill)}(${me._toKill.identity})</span>，` +
+						`保护<span style='color:#98fb98'>${get.translation(me._toSave)}(${me._toSave.identity})</span>`;
 				}
 			},
 
@@ -600,6 +600,38 @@ export default () => {
 				} while (current && current !== game.zhu);
 			},
 
+			_addSeatSelector(dialog) {
+				if (!dialog) return;
+				dialog.add("选择座位").classList.add("add-setting");
+				const seats = document.createElement("div");
+				seats.classList.add("add-setting");
+				seats.style.margin = "0";
+				seats.style.width = "100%";
+				seats.style.position = "relative";
+				for (let i = 1; i <= game.players.length; i++) {
+					const td = ui.create.div(".shadowed.reduce_radius.pointerdiv.tdnode");
+					td.innerHTML = get.cnNumber(i, true);
+					td.link = i; // 目标 _hSeat 号位
+					if (i === game.me._hSeat) td.classList.add("bluebg"); // 当前座位高亮
+					seats.appendChild(td);
+					td.addEventListener(lib.config.touchscreen ? "touchend" : "click", function () {
+						if (_status.dragged || _status.justdragged) return;
+						const seat = this.link;
+						if (seat === game.me._hSeat) return; // 点当前座位无操作
+						// 只改自己的座位号：不移动任何玩家，仅把编号锚点移到
+						// 玩家前方 (seat-1) 步的玩家（新 1 号位/先手），再重新编号
+						let anchor = game.me;
+						for (let s = 1; s < seat; s++) anchor = anchor.previous;
+						game.zhu = anchor;
+						game._initSeats();
+						const current = this.parentNode.querySelector(".bluebg");
+						if (current) current.classList.remove("bluebg");
+						this.classList.add("bluebg");
+					});
+				}
+				dialog.content.appendChild(seats);
+			},
+
 			chooseCharacter() {
 				const next = game.createEvent("chooseCharacter");
 				next.showConfig = true;
@@ -611,10 +643,10 @@ export default () => {
 					// ==================== 选择角色 ====================
 					const chooseNum = Math.min(8, (characterlist.length - game.countPlayer() + 1));
 					const chooseList = characterlist.randomRemove(chooseNum);
-					const result = await game.me.chooseButton(
-						["请选择角色形象", [chooseList, "character"]],
-						true
-					).set("onfree", true).forResult();
+					const charDialog = ui.create.dialog("请选择角色形象", "hidden", [chooseList, "character"]);
+					game._addSeatSelector(charDialog); // 选将弹窗内选择座位号
+					const result = await game.me.chooseButton(charDialog, true)
+						.set("onfree", true).forResult();
 					characterlist.addArray(chooseList.filter(e => e != result.links[0]));
 
 					game.me.init(result.links[0]);
@@ -1000,7 +1032,6 @@ export default () => {
 			// 获取技能列表对话框
 			skillDialog(skills, prompt) {
 				const dialog = ui.create.dialog("hidden", "forcebutton");
-				dialog.classList.add('lit-sdhh-skill-dialog');
 
 				const clickItem = function () {
 					const parent = this.parentNode;

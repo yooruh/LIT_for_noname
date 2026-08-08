@@ -1123,7 +1123,7 @@ const DialogManager = (() => {
                     titleSize: 24,
                     titleCenter: true,
                     width: 'min(96vw, 1200px)',
-                    maxHeight: '90vh'
+                    maxHeight: '95vh'
                 },
                 buildContent: (dialog) => {
                     dialog.className = 'lit-ui-dialog lit-material-surface lit-doc-modal-dialog';
