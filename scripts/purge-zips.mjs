@@ -51,12 +51,23 @@ function hasOriginZips() {
 }
 
 /**
+ * 远端 zips 分支是否真实存在（ls-remote 直查，不依赖可能过期的跟踪引用）。
+ * @returns {boolean|null} true=存在 / false=确认不存在 / null=查询失败（网络波动，无法确认）
+ */
+function remoteZipsExistsLive() {
+  const res = run('git', ['ls-remote', '--heads', 'origin', `refs/heads/${ZIP_BRANCH}`], { allowFail: true });
+  if (res.status !== 0) return null;
+  return res.stdout.trim().length > 0;
+}
+
+/**
  * 收集「仅挂在 zips 上」的标签：可从 zips 到达、但不可从 main 到达。
  * 发布标签指向 zips 的「发布 v{版本} 代码包」提交，通常满足此条件。
+ * @param {string} [ref] 计算合并标签所用的 zips 引用；默认本地分支，本地缺失时传 origin/zips
  * @returns {string[]}
  */
-function zipsOnlyTags() {
-  const fromZips = git(['tag', '--merged', ZIP_BRANCH]).stdout.split('\n').filter(Boolean);
+function zipsOnlyTags(ref = ZIP_BRANCH) {
+  const fromZips = git(['tag', '--merged', ref], { allowFail: true }).stdout.split('\n').filter(Boolean);
   const fromMain = new Set(
     git(['tag', '--merged', MAIN_BRANCH]).stdout.split('\n').filter(Boolean)
   );
@@ -175,27 +186,51 @@ async function chooseVersion(versions) {
 
 /** 整体清除 zips 分支（本地 + GitHub/Gitee 远端，物理抹除） */
 async function purgeAll({ dryRun, localOnly, skipConfirm }) {
-  if (!hasZipsBranch()) {
-    log.warn(`${ZIP_BRANCH} 本地分支不存在，无法整体清除`);
+  const hasLocal = hasZipsBranch();
+  // 远端存在性：ls-remote 直查为权威；查询失败（网络波动）返回 null，视为“可能存在”，宁可多试一次删除
+  const remoteLive = remoteZipsExistsLive();
+  const remoteConfirmedAbsent = remoteLive === false && !hasOriginZips();
+
+  // 即使本地分支不存在，只要远端还存在（或查询失败无法确认）就继续，避免“本地删了但远端没删掉”
+  if (!hasLocal && remoteConfirmedAbsent) {
+    log.warn(`${ZIP_BRANCH} 分支不存在（本地与远端均无），无需清除`);
     return;
   }
+  if (!hasLocal) {
+    log.info(`${ZIP_BRANCH} 本地分支不存在，将清理远端残留（GitHub + Gitee）`);
+  }
 
-  // ① 若当前在 zips 上，先切到 main（git 不允许删除当前分支）
-  if (currentBranch() === ZIP_BRANCH) {
+  // 标签计算基准：优先本地分支，其次远端跟踪引用（本地缺失时仍可枚举）
+  const tagRef = hasLocal ? ZIP_BRANCH : (hasOriginZips() ? `origin/${ZIP_BRANCH}` : null);
+
+  // ① 若当前在 zips 上，先切到 main（git 不允许删除当前分支；本地不存在时不可能在其上）
+  if (hasLocal && currentBranch() === ZIP_BRANCH) {
     log.info(`当前在 ${ZIP_BRANCH} 上，先切换到 ${MAIN_BRANCH}（若失败请先处理工作区改动）`);
     act('切换到 main', ['switch', MAIN_BRANCH], { execute: !dryRun });
   }
 
   // ② 收集仅挂在 zips 上的发布标签
-  const tags = zipsOnlyTags();
+  const tags = tagRef ? zipsOnlyTags(tagRef) : [];
   if (tags.length > 0) {
     log.info(`发现 ${tags.length} 个仅挂在 ${ZIP_BRANCH} 上的标签: ${tags.join(', ')}`);
   } else {
     log.info(`未发现仅挂在 ${ZIP_BRANCH} 上的标签`);
   }
 
+  // 不可逆确认（在任何删除动作之前；dry-run 不确认）
+  const scope = localOnly ? '本地' : (hasLocal ? '本地 + GitHub/Gitee 远端' : 'GitHub/Gitee 远端（本地分支已不存在）');
+  if (!dryRun && !skipConfirm) {
+    const ok = await confirm(
+      `确认彻底清除 ${ZIP_BRANCH} 及其提交（${scope}）？此操作不可逆`
+    );
+    if (!ok) {
+      log.warn('已取消，未执行任何删除');
+      return;
+    }
+  }
+
   // ③ 先删远端标签/分支（防止 fetch 自动同步回本地），再删本地
-  if (!localOnly) {
+  if (!localOnly && (remoteLive === true || remoteLive === null)) {
     for (const t of tags) {
       act(`删除远端标签 ${t}（GitHub + Gitee）`, ['push', 'origin', '--delete', `refs/tags/${t}`], {
         execute: !dryRun,
@@ -206,17 +241,23 @@ async function purgeAll({ dryRun, localOnly, skipConfirm }) {
       execute: !dryRun,
       allowFail: true,
     });
+  } else if (!localOnly && remoteLive === false && hasOriginZips()) {
+    log.info(`远端已无 ${ZIP_BRANCH} 分支，仅清理本地残留跟踪引用`);
   }
 
-  // ④ 删除本地标签、分支与远端跟踪引用
+  // ④ 删除本地标签、分支与远端跟踪引用（本地缺失时只清理跟踪引用）
   if (tags.length > 0) {
     act('删除本地标签', ['tag', '-d', ...tags], { execute: !dryRun });
   }
-  act(`删除本地分支 ${ZIP_BRANCH}`, ['branch', '-D', ZIP_BRANCH], { execute: !dryRun });
-  act(`删除远端跟踪引用 origin/${ZIP_BRANCH}`, ['branch', '-rd', `origin/${ZIP_BRANCH}`], {
-    execute: !dryRun,
-    allowFail: true,
-  });
+  if (hasLocal) {
+    act(`删除本地分支 ${ZIP_BRANCH}`, ['branch', '-D', ZIP_BRANCH], { execute: !dryRun });
+  }
+  if (hasOriginZips()) {
+    act(`删除远端跟踪引用 origin/${ZIP_BRANCH}`, ['branch', '-rd', `origin/${ZIP_BRANCH}`], {
+      execute: !dryRun,
+      allowFail: true,
+    });
+  }
 
   // ⑤ 过期全部 reflog + 强制 GC，物理抹掉不可达对象（不可逆）
   act('过期全部 reflog', ['reflog', 'expire', '--expire=now', '--all'], { execute: !dryRun });
@@ -227,18 +268,6 @@ async function purgeAll({ dryRun, localOnly, skipConfirm }) {
     return;
   }
 
-  // 不可逆确认
-  if (!skipConfirm) {
-    const ok = await confirm(
-      `确认彻底清除 ${ZIP_BRANCH} 及其提交${localOnly ? '（本地）' : '（本地 + GitHub/Gitee 远端）'}？此操作不可逆`
-    );
-    if (!ok) {
-      log.warn('已取消，未执行任何删除');
-      return;
-    }
-  }
-
-  const scope = localOnly ? '本地' : '本地 + GitHub/Gitee 远端';
   log.ok(`${ZIP_BRANCH} 已彻底清除（${scope}），不可达提交已物理抹除`);
 }
 
@@ -394,9 +423,10 @@ async function main() {
   }
 
   const hasLocal = hasZipsBranch();
-  const hasRemote = hasOriginZips();
-  if (!hasLocal && !hasRemote) {
-    log.warn('zips 分支不存在（本地与远端均无），无需清理');
+  const hasTracking = hasOriginZips();
+  const remoteLive = remoteZipsExistsLive();
+  if (!hasLocal && !hasTracking && remoteLive !== true) {
+    log.warn('zips 分支不存在（本地与远端均无，或远端查询失败），无需清理');
     return;
   }
 
@@ -438,10 +468,6 @@ async function main() {
     }
 
     if (mode === 'all') {
-      if (!hasLocal) {
-        log.warn('zips 本地分支不存在，无法整体清除（可用 --version 按版本清理远端文件）');
-        return;
-      }
       await purgeAll({ dryRun, localOnly, skipConfirm });
     } else {
       await purgeVersion(version, { dryRun, localOnly, skipConfirm });

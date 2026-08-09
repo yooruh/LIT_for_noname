@@ -26,7 +26,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { log, stripV, withV, isValidVersion } from './lib/shared.mjs';
-import { run, git, currentBranch, ask, confirm, closePrompts, getRepoSlug } from './lib/git-cli.mjs';
+import { run, git, currentBranch, ask, confirm, closePrompts, getRepoSlug, remoteBranchExists } from './lib/git-cli.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -102,12 +102,17 @@ function branchProtection(branch) {
 function deleteVersionBranch(branch, { dryRun, localOnly }) {
   const hasLocal = git(['rev-parse', '--verify', '-q', `refs/heads/${branch}`], { allowFail: true }).status === 0;
   const hasRemoteTrack = git(['rev-parse', '--verify', '-q', `refs/remotes/origin/${branch}`], { allowFail: true }).status === 0;
-  const remoteExists = run('git', ['ls-remote', '--heads', 'origin', `refs/heads/${branch}`], { allowFail: true }).stdout.trim().length > 0;
+  // 远端存在性：ls-remote 直查为权威；查询失败（网络波动）返回 null，视为“可能存在”，宁可多试一次 push
+  const remoteLive = remoteBranchExists(branch);
+  const remoteExists = remoteLive === true;
+  const remoteNeedsDelete = !localOnly && (remoteLive === true || remoteLive === null);
 
   if (dryRun) {
     if (hasLocal) log.info(`[DRY-RUN] git branch -D ${branch}`);
     if (hasRemoteTrack) log.info(`[DRY-RUN] git branch -rd origin/${branch}`);
-    if (!localOnly && remoteExists) log.info(`[DRY-RUN] git push origin --delete refs/heads/${branch}（GitHub + Gitee）`);
+    if (remoteNeedsDelete) {
+      log.info(`[DRY-RUN] git push origin --delete refs/heads/${branch}（GitHub + Gitee）${remoteLive === null ? '；远端存在性未知，将尝试删除' : ''}`);
+    }
     return hasLocal || remoteExists;
   }
 
@@ -130,13 +135,13 @@ function deleteVersionBranch(branch, { dryRun, localOnly }) {
   }
 
   if (!localOnly) {
-    if (remoteExists) {
+    if (remoteNeedsDelete) {
       const res = run('git', ['push', 'origin', '--delete', `refs/heads/${branch}`], { allowFail: true });
       if (res.status === 0) {
         log.ok(`已删除远端分支 ${branch}（GitHub + Gitee）`);
         removedAny = true;
       } else {
-        log.warn(`远端分支删除失败（可能受保护/只读，或远端已不存在）: ${res.stderr || res.stdout || ''}`);
+        log.warn(`远端分支删除失败（可能受保护/只读、远端已不存在，或网络异常）: ${res.stderr || res.stdout || ''}`);
         const repo = getRepoSlug();
         if (repo && /protected|rejected|non-fast-forward|deny|permission/i.test(res.stderr + res.stdout)) {
           log.warn(`提示: gh api repos/${repo}/branches/${branch}/protection 可查看保护规则`);
@@ -206,9 +211,11 @@ async function chooseVersionBranch(list) {
 async function purgeOne(version, { dryRun, localOnly, skipConfirm }) {
   const branch = withV(version);
   const hasLocal = git(['rev-parse', '--verify', '-q', `refs/heads/${branch}`], { allowFail: true }).status === 0;
-  const remoteExists = run('git', ['ls-remote', '--heads', 'origin', `refs/heads/${branch}`], { allowFail: true }).stdout.trim().length > 0;
+  // 远端存在性：ls-remote 直查；查询失败（网络波动）返回 null，视为可能存在并继续尝试删除
+  const remoteLive = remoteBranchExists(branch);
 
-  if (!hasLocal && !remoteExists) {
+  // 仅当“本地无 且 确认远端无”才跳过；查询失败时仍继续，避免网络波动导致远端残留
+  if (!hasLocal && remoteLive === false) {
     log.warn(`未找到版本分支 ${branch}（本地与远端均无）`);
     return;
   }
@@ -237,7 +244,7 @@ async function purgeOne(version, { dryRun, localOnly, skipConfirm }) {
   if (dryRun) {
     log.info('将删除:');
     if (hasLocal) log.info('  本地分支');
-    if (remoteExists && !localOnly) log.info('  远端分支（GitHub + Gitee）');
+    if ((remoteLive === true || remoteLive === null) && !localOnly) log.info('  远端分支（GitHub + Gitee）');
     log.info('并顺带清理该版本的代码包与 GitHub Release/标签（如有）');
     log.info('删除后将清理无引用的 git 提交（reflog expire + gc --prune=now）');
     cleanupZipVersionViaSubprocess(version, { dryRun: true, localOnly }); // 转发子脚本 dry-run 计划

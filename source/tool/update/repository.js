@@ -91,6 +91,7 @@ class GitAdapter {
         this.raw = null;
         this.api = null;
         this.fallback = null;
+        this.mirror = null; // 跨平台维护镜像（github → gitee raw），用于 github 不可达/证书失败或 CDN 旧缓存时兜底
         this.platform = null;
         this.owner = null;
         this.repo = null;
@@ -128,10 +129,13 @@ class GitAdapter {
             this.raw = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
             this.api = `https://api.github.com/repos/${owner}/${repo}/contents/`;
             this.fallback = `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}/`;
+            // gitee 为同内容维护镜像（项目同时推送 github/gitee），优先于可能旧缓存的 jsdelivr
+            this.mirror = `https://gitee.com/${owner}/${repo}/raw/${branch}/`;
         } else {
             this.raw = `https://gitee.com/${owner}/${repo}/raw/${branch}/`;
             this.api = `https://gitee.com/api/v5/repos/${owner}/${repo}/contents/`;
             this.fallback = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
+            this.mirror = null;
         }
     }
 
@@ -146,6 +150,10 @@ class GitAdapter {
 
     getFallbackURL(path = '') {
         return this.fallback + path.replace(/^\/+/, '');
+    }
+
+    getMirrorURL(path = '') {
+        return this.mirror ? this.mirror + path.replace(/^\/+/, '') : null;
     }
 
     /**

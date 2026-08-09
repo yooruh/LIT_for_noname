@@ -86,6 +86,14 @@ class SmartDownloader {
         return { type: 'unknown', recoverable: true };
     }
 
+    // TLS 证书校验类错误（UNABLE_TO_VERIFY_LEAF_SIGNATURE / CERT_* 等）。
+    // 常见于国内网络/代理中间证书场景下访问 raw.githubusercontent.com 等站点，
+    // 是 downloadViaNode 降级为宽松校验重试的触发条件。
+    isCertError(error) {
+        const code = error?.code || '';
+        return /^(UNABLE_TO_VERIFY_LEAF_SIGNATURE|DEPTH_ZERO_SELF_SIGNED_CERT|SELF_SIGNED_CERT_IN_CHAIN|ERR_TLS_CERT_ALTNAME_INVALID|CERT_)/.test(code);
+    }
+
     async emitProgress(onProgress, received, total) {
         if (!onProgress) return;
         try {
@@ -95,7 +103,7 @@ class SmartDownloader {
         }
     }
 
-    async downloadViaNode(url, tempPath, onProgress, redirectsLeft = 5) {
+    async downloadViaNode(url, tempPath, onProgress, redirectsLeft = 5, relaxTls = false) {
         const require = window.require;
         const fs = require('fs');
         const path = require('path');
@@ -127,14 +135,28 @@ class SmartDownloader {
                 parsed = new URL(url);
                 const transport = parsed.protocol === 'https:' ? require('https') : require('http');
                 request = transport.get(parsed, {
-                    headers: { 'User-Agent': 'AppleWebkit' }
+                    headers: { 'User-Agent': 'AppleWebkit' },
+                    // 默认严格校验证书；relaxTls（证书错误降级）时关闭，保证国内网络/代理下仍可下载
+                    ...(parsed.protocol === 'https:' ? { rejectUnauthorized: !relaxTls } : {})
                 });
             } catch (error) {
                 fail(error);
                 return;
             }
 
-            request.once('error', fail);
+            request.once('error', (error) => {
+                // TLS 证书校验失败 → 清理后以宽松校验对该 URL 重试一次
+                if (!relaxTls && this.isCertError(error)) {
+                    updateLogger.warn('下载', `证书校验失败，自动降级为宽松校验重试: ${url}`);
+                    if (request && !request.destroyed) request.destroy();
+                    cleanupFile().then(() => {
+                        this.downloadViaNode(url, tempPath, onProgress, redirectsLeft, true)
+                            .then(resolve, reject);
+                    });
+                    return;
+                }
+                fail(error);
+            });
             request.setTimeout(CONFIG.limits.timeout, () => {
                 const error = new Error(`下载超时: ${url}`);
                 error.code = 'ETIMEDOUT';
@@ -153,7 +175,7 @@ class SmartDownloader {
                     settled = true;
                     request.destroy();
                     cleanupFile()
-                        .then(() => this.downloadViaNode(new URL(location, parsed).href, tempPath, onProgress, redirectsLeft - 1))
+                        .then(() => this.downloadViaNode(new URL(location, parsed).href, tempPath, onProgress, redirectsLeft - 1, relaxTls))
                         .then(resolve, reject);
                     return;
                 }
@@ -246,10 +268,11 @@ class SmartDownloader {
     async download(task, onProgress, stateManager = null) {
         if (this.isCancelled) throw new Error('下载已取消');
 
-        // 显式 URL 列表（代码包哨兵）或默认的 raw + 备用源
+        // 显式 URL 列表（代码包哨兵）或默认的 raw + 镜像 + 备用源
+        // （github 平台：raw.githubusercontent → gitee 镜像 → jsdelivr；gitee 平台：gitee raw → github raw）
         const urls = task.urls && task.urls.length > 0
             ? task.urls.slice()
-            : [this.repo.getURL(task.remote), this.repo.getFallbackURL(task.remote)];
+            : [this.repo.getURL(task.remote), this.repo.getMirrorURL(task.remote), this.repo.getFallbackURL(task.remote)];
         const attempts = [...new Set(urls.filter(Boolean))];
 
         if (stateManager) {

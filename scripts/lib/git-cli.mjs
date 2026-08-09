@@ -45,6 +45,17 @@ export function currentBranch() {
   return git(['rev-parse', '--abbrev-ref', 'HEAD']).stdout;
 }
 
+/**
+ * 远端分支是否真实存在（ls-remote 直查，不依赖可能过期的跟踪引用）。
+ * @param {string} branch 分支名（不带 refs/heads/ 前缀）
+ * @returns {boolean|null} true=存在 / false=确认不存在 / null=查询失败（网络波动等，无法确认）
+ */
+export function remoteBranchExists(branch) {
+  const res = run('git', ['ls-remote', '--heads', 'origin', `refs/heads/${branch}`], { allowFail: true });
+  if (res.status !== 0) return null;
+  return res.stdout.trim().length > 0;
+}
+
 let _rl = null;
 let _inputQueue = [];
 const _inputWaiters = [];

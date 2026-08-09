@@ -516,8 +516,8 @@
     "md5": "dfbe227c7859c8a6d894f3712fe51023"
   },
   "source/tool/update/downloader.js": {
-    "size": 14298,
-    "md5": "2902449dddefd49d7487b948f0ba070a"
+    "size": 15872,
+    "md5": "5838f7cc80295c23c190edf469ae0592"
   },
   "source/tool/update/extensionUpdater.js": {
     "size": 65973,
@@ -536,8 +536,8 @@
     "md5": "4a161a893a949751a2b1aa3a85de8fee"
   },
   "source/tool/update/repository.js": {
-    "size": 6614,
-    "md5": "915ebe9e5cc95de2261d2090a6589808"
+    "size": 7104,
+    "md5": "2492f475d0af3d886f528e1649864f08"
   },
   "source/tool/update/stateManager.js": {
     "size": 9476,
