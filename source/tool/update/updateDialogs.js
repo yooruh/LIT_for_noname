@@ -32,10 +32,7 @@ class UIManager {
     }
 
     async showMainMenu(resumeInfo, hasToken) {
-        const buttons = ['检查更新'];
-        if (resumeInfo.canResume) buttons.push(resumeInfo.hasPendingApply ? '📦 继续应用已下载文件' : '⏸️ 继续上次更新');
-        if (resumeInfo.hasFailures) buttons.push('🔄 仅重试失败文件');
-        buttons.push('🔑 Token管理', '💾 版本回退', '取消');
+        const buttons = ['📋 更新菜单', '🔑 Token管理', '💾 版本回退', '取消'];
 
         const envText = this.env === 'node'
             ? '🖥️ 当前环境: Node.js（使用本体下载能力）\n'
@@ -58,11 +55,50 @@ class UIManager {
 
         const choice = buttons[index];
         if (choice === '取消' || !choice) return null;
-        if (choice.includes('继续上次') || choice.includes('继续应用已下载文件')) return 'resume';
-        if (choice.includes('重试失败')) return 'retry_failed';
+        if (choice.includes('更新菜单')) return 'update-menu';
         if (choice.includes('Token')) return 'token';
         if (choice.includes('版本回退')) return 'rollback';
-        return 'check';
+        return null;
+    }
+
+    // 二级菜单：更新菜单（检查更新 / 更新至预览版 / 更新至发布版 / 继续上次 / 重试失败）
+    async showUpdateMenu(resumeInfo, hasToken) {
+        const buttons = ['🔍 检查更新', '⬇️ 更新至预览版', '🚀 更新至发布版'];
+        if (resumeInfo.canResume) buttons.push(resumeInfo.hasPendingApply ? '📦 继续应用已下载文件' : '⏸️ 继续上次更新');
+        if (resumeInfo.hasFailures) buttons.push('🔄 仅重试失败文件');
+        buttons.push('返回');
+
+        const envText = this.env === 'node'
+            ? '🖥️ 当前环境: Node.js（使用本体下载能力）\n'
+            : this.env === 'cordova'
+                ? '📱 当前环境: Cordova（使用本体移动端下载能力）\n'
+                : this.env === 'electron-renderer'
+                    ? '🖥️ 当前环境: Electron（使用本体下载能力）\n'
+                    : '⚠️ 当前环境: 浏览器（文件接口受限，请谨慎更新）\n';
+
+        const index = await this.dialog.choice(
+            `${CONFIG.name} 更新菜单`,
+            `请选择操作：\n\n` +
+            envText +
+            `🔍 检查更新：仅比对本地与线上文件，不下载\n` +
+            `⬇️ 更新至预览版：main 分支最新代码，差异仅警告\n` +
+            `🚀 更新至发布版：已发布版本（可选更新模式）\n` +
+            `${resumeInfo.hasPendingApply ? '📦 发现已下载但尚未应用的更新文件\n' : ''}` +
+            `${resumeInfo.canResume && !resumeInfo.hasPendingApply ? '⏸️ 发现未完成的下载任务\n' : ''}` +
+            `${resumeInfo.hasFailures ? '⚠️ 存在上次下载失败的文件\n' : ''}` +
+            `${!hasToken.github && !hasToken.gitee && this.env === 'browser' ? '💡 提示: 浏览器环境可能更容易失败\n' : ''}`,
+            buttons
+        );
+
+        const choice = buttons[index];
+        if (choice === '返回' || !choice) return null;
+        if (choice.includes('检查更新')) return 'check';
+        if (choice.includes('预览版')) return 'preview';
+        if (choice.includes('发布版')) return 'update';
+        if (choice.includes('继续应用已下载文件')) return 'resume';
+        if (choice.includes('继续上次')) return 'resume';
+        if (choice.includes('重试失败')) return 'retry_failed';
+        return null;
     }
 
     async showTokenManager(tokens) {
@@ -152,11 +188,17 @@ class UIManager {
         );
     }
 
-    async showUpdateConfig(platform, hasResume, hasFailed) {
+    // 选择更新源（Gitee / GitHub），取消返回 null
+    async selectPlatform() {
         const platforms = ['Gitee（国内推荐）', 'GitHub（国际）'];
         const platIndex = await this.dialog.choice('选择更新源', '请选择下载服务器：', platforms);
         if (platIndex === -1) return null;
-        const selectedPlatform = platIndex === 0 ? 'gitee' : 'github';
+        return platIndex === 0 ? 'gitee' : 'github';
+    }
+
+    async showUpdateConfig(platform, hasResume, hasFailed) {
+        const selectedPlatform = await this.selectPlatform();
+        if (!selectedPlatform) return null;
 
         let modeMessage =
             '自动选择：代码整包校验后更新；媒体按 MD5 比对，未改动的媒体跳过下载（省流量）\n' +
@@ -600,7 +642,7 @@ class UIManager {
     }
 
     async confirmStart(info) {
-        const { version, description, highlights, branch, platform, mode, fileCount, skipCount, totalSize, envType } = info;
+        const { version, description, highlights, branch, platform, mode, fileCount, skipCount, totalSize, envType, preview } = info;
 
         const modeText = mode === 'auto' ? '自动选择（代码整包 + 媒体按需）'
             : mode === 'code' ? '仅代码（媒体不动）'
@@ -616,12 +658,23 @@ class UIManager {
                     : '浏览器文件接口';
 
         let message = `📋 更新详情确认\n\n`;
-        if (version) message += `目标版本: ${version}\n`;
+        if (preview) {
+            // 预览版警示横幅：逐文件、跳过整包校验、版本/md5 差异仅警告
+            message += `⚠️ 预览版（main 分支最新代码）\n` +
+                `・ 未经完整测试，可能不稳定\n` +
+                `・ 逐文件下载，跳过代码包整包校验\n` +
+                `・ 版本兼容性与文件 md5 差异仅作警告，不强制中断\n\n`;
+        }
+        if (version) {
+            message += preview
+                ? `目标版本: 预览版（main 分支最新，version.json 反映最近一次发布）\n`
+                : `目标版本: ${version}\n`;
+        }
         message += `版本分支: ${branch}\n` +
             `更新平台: ${platformText}\n` +
             `运行环境: ${envText}\n` +
             `更新模式: ${modeText}\n`;
-        if (info.zipSize) message += `代码包: ${utils.parseSize(info.zipSize)}（整包校验后原子更新）\n`;
+        if (info.zipSize && !preview) message += `代码包: ${utils.parseSize(info.zipSize)}（整包校验后原子更新）\n`;
         message += `文件总数: ${fileCount}个`;
 
         if (skipCount > 0) message += `（将跳过${skipCount}个未改动的媒体文件）`;

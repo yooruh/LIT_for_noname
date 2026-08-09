@@ -24,7 +24,8 @@ const DialogManager = (() => {
             .lit-ui-dialog { position: relative; left: auto; top: auto; background: linear-gradient(#3e3e3e, #2a2a2a); border: 1px solid #111; border-radius: 8px; padding: 20px; box-sizing: border-box; color: #f8f8f8; text-shadow: #000 0 1px 1px; display: flex; flex-direction: column; min-width: 320px; max-width: 90vw; max-height: 85vh; box-shadow: 0 0 0 1px rgba(0,0,0,.8), 0 8px 22px rgba(0,0,0,.66); }
             .lit-ui-content { font: 400 16px/1.5 system-ui, sans-serif; color: #d4d4d4; display: block; position: relative; flex-grow: 1; flex-shrink: 1; overflow-y: auto; margin-bottom: 20px; white-space: pre-wrap; height: auto; }
             .lit-ui-button { min-height: 34px; padding: 7px 17px; border: 1px solid #111; border-radius: 4px; background: linear-gradient(#545454, #383838); color: #f8f8f8; text-shadow: #000 0 1px 1px; font-weight: 700; cursor: pointer; }
-            .lit-ui-button.primary { background: linear-gradient(#4589c9, #2f6596); color: white; }
+            .lit-ui-button.primary,
+            .lit-ui-button[data-cancel="true"] { background: linear-gradient(#4589c9, #2f6596); color: white; }
             .lit-ui-loading-spinner { width: 40px; height: 40px; margin: 4px auto 14px; border: 4px solid rgba(255,255,255,.18); border-top-color: #4285c5; border-radius: 50%; animation: lit-spin 0.9s linear infinite; display: block !important; position: relative !important; }
             @keyframes lit-spin { to { transform: rotate(360deg); } }
         `;
@@ -292,11 +293,13 @@ const DialogManager = (() => {
         row.className = 'lit-ui-button-row';
 
         configs.forEach(config => {
+            // 取消类按钮（文本含“取消”或被显式标记）统一走「返回」式强调样式
+            const isCancel = config.isCancel || config.text === 'Cancel' || String(config.text).includes('取消');
             const button = _createButton(config.text, {
                 isPrimary: config.isPrimary,
                 isDestructive: config.isDestructive,
                 minWidth: config.minWidth,
-                isCancel: config.isCancel || config.text === '取消' || config.text === 'Cancel',
+                isCancel,
                 onClick: config.onClick,
                 disabled: config.disabled
             });

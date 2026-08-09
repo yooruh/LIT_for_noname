@@ -96,18 +96,23 @@
 }
 .lit-ui-button:hover { background: var(--lit-button-secondary-hover); }
 .lit-ui-button:active { background: var(--lit-button-secondary-active); transform: none; }
-.lit-ui-button.primary { color: var(--lit-on-primary); background: var(--lit-button-primary-bg); }
-.lit-ui-button.primary:hover { background: var(--lit-button-primary-hover); outline: 2px solid rgb(0 133 255); outline-offset: 1px; }
-.lit-ui-button.primary:active { background: var(--lit-button-primary-active); }
-.lit-ui-button.secondary,
-.lit-ui-button[data-cancel="true"] { color: var(--lit-button-secondary-text); background: var(--lit-button-secondary-bg); }
+/* 取消类按钮与「返回」（token 管理菜单）等强调操作保持一致 */
+.lit-ui-button.primary,
+.lit-ui-button[data-cancel="true"] { color: var(--lit-on-primary); background: var(--lit-button-primary-bg); }
+.lit-ui-button.primary:hover,
+.lit-ui-button[data-cancel="true"]:hover { background: var(--lit-button-primary-hover); outline: 2px solid rgb(0 133 255); outline-offset: 1px; }
+.lit-ui-button.primary:active,
+.lit-ui-button[data-cancel="true"]:active { background: var(--lit-button-primary-active); }
+.lit-ui-button.secondary { color: var(--lit-button-secondary-text); background: var(--lit-button-secondary-bg); }
 .lit-ui-button.destructive { color: var(--lit-on-error-container); background: var(--lit-button-destructive-bg); }
 .lit-ui-button.destructive:hover { background: var(--lit-button-destructive-hover); }
 .lit-ui-button.destructive:active { background: var(--lit-button-destructive-active); }
 .lit-ui-button:disabled { opacity: .45 !important; cursor: not-allowed !important; box-shadow: none; }
-:root[data-lit-theme="light"] .lit-ui-button.primary { box-shadow: 0 4px 12px rgb(33 150 243 / 30%); }
+:root[data-lit-theme="light"] .lit-ui-button.primary,
+:root[data-lit-theme="light"] .lit-ui-button[data-cancel="true"] { box-shadow: 0 4px 12px rgb(33 150 243 / 30%); }
 @media (prefers-color-scheme: light) {
-    :root[data-lit-theme="system"] .lit-ui-button.primary { box-shadow: 0 4px 12px rgb(33 150 243 / 30%); }
+    :root[data-lit-theme="system"] .lit-ui-button.primary,
+    :root[data-lit-theme="system"] .lit-ui-button[data-cancel="true"] { box-shadow: 0 4px 12px rgb(33 150 243 / 30%); }
 }
 
 .lit-ui-input-container { position: relative !important; display: block !important; width: 100%; margin-bottom: 20px; }

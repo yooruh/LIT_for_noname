@@ -496,8 +496,8 @@
     "md5": "2ae81ef03e8638d31cd5d8e27b8584d8"
   },
   "source/tool/ui/dialogManager.js": {
-    "size": 58706,
-    "md5": "c54493e1fc6179c78d68ec23f3e20bf2"
+    "size": 58912,
+    "md5": "0febe9bcfd087e6eb1378fab8614fbd7"
   },
   "source/tool/ui/poptips.js": {
     "size": 1606,
@@ -512,20 +512,20 @@
     "md5": "d2eda08349de559a1993650d7510085c"
   },
   "source/tool/update/config.js": {
-    "size": 1919,
-    "md5": "c62add50c95f50518622fc116e5f11ed"
+    "size": 2035,
+    "md5": "5c4c920a757ea0e97eda92d5ca52bae6"
   },
   "source/tool/update/downloader.js": {
-    "size": 12884,
-    "md5": "c8fd2ead1b1bf09dc45df615eb65e10c"
+    "size": 13528,
+    "md5": "e80885710a39eddb19e21d9750c59e4c"
   },
   "source/tool/update/extensionUpdater.js": {
-    "size": 53122,
-    "md5": "8a00df697f4c3d19fa4ff71ba90a8018"
+    "size": 61791,
+    "md5": "6f634b76880b7df4655cc04dbe43738c"
   },
   "source/tool/update/index.js": {
-    "size": 15464,
-    "md5": "b95d159f1ed3edc244b63284a21eb226"
+    "size": 19535,
+    "md5": "049ec7cd2619f4fae240d39773ec4cb7"
   },
   "source/tool/update/md5.js": {
     "size": 3207,
@@ -536,12 +536,12 @@
     "md5": "bdb2fc5547ae883552c360810ac51080"
   },
   "source/tool/update/stateManager.js": {
-    "size": 9615,
-    "md5": "cf67ed0302faf5f64d3c3943434dd807"
+    "size": 9760,
+    "md5": "ed43bc7e4f2b4a2f9d9e3aa0028c1ba2"
   },
   "source/tool/update/updateDialogs.js": {
-    "size": 31685,
-    "md5": "5b31135098d96b7bf3bf187205a62b80"
+    "size": 34614,
+    "md5": "e1e166d9bd6f858dde9cf4287cf6ff00"
   },
   "source/tool/update/utils.js": {
     "size": 5166,
@@ -564,8 +564,8 @@
     "md5": "1b1ba53e476ae3ea3f0762224b50876d"
   },
   "style/css/dialogManager.css": {
-    "size": 14329,
-    "md5": "5fb847b79e8145d1c03716b217734f95"
+    "size": 14639,
+    "md5": "c33cc92bbe338d93746693a30967602c"
   },
   "style/css/extension.css": {
     "size": 6497,

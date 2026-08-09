@@ -30,6 +30,8 @@ class SmartDownloader {
         this.env = Environment.getEnvironmentType();
         this.activeRequests = new Set();
         this.isCancelled = false;
+        this.lenientMd5 = false;          // 预览模式：md5 不一致仅警告，不删临时文件、不失败
+        this.lenientMismatches = [];      // 宽松模式下被接受的 md5 不符文件（供汇总警告）
     }
 
     cancelAll() {
@@ -260,12 +262,18 @@ class SmartDownloader {
                 await this.removeTempFile(task.temp);
                 const result = await this.downloadViaGame(currentUrl, task.temp, onProgress);
 
-                // 内容完整性校验：与清单 md5 不一致视为失败（媒体逐文件与代码包共用此钩子）
+                // 内容完整性校验：与清单 md5 不一致视为失败（媒体逐文件与代码包共用此钩子）。
+                // 预览模式（lenientMd5）下不一致仅警告并接受，不强制中断。
                 if (task.md5) {
                     const actual = md5Hex(result.data);
                     if (actual !== task.md5) {
-                        await this.removeTempFile(task.temp);
-                        throw new Error(`MD5校验失败: ${task.remote}`);
+                        if (this.lenientMd5) {
+                            console.warn(`[预览] MD5 与清单不一致（仅警告，继续使用）: ${task.remote}`);
+                            this.lenientMismatches.push(task.remote);
+                        } else {
+                            await this.removeTempFile(task.temp);
+                            throw new Error(`MD5校验失败: ${task.remote}`);
+                        }
                     }
                 }
 

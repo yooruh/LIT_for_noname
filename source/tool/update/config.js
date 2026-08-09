@@ -29,6 +29,7 @@ const CONFIG = {
         codeZipSentinel: '~code.zip',   // 状态任务中代表代码包的哨兵 remote（不落盘）
         stagingDir: '_temp_update'      // 代码包解压/校验暂存目录（扩展目录内）
     },
+    previewBranch: 'main',              // 预览版固定使用的分支（main 最新代码，非已发布版）
     limits: {
         maxRetries: 3,
         retryDelay: 1000,

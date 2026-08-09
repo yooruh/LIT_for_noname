@@ -35,6 +35,9 @@ class ExtensionUpdater {
         this.stagedManifest = null; // 代码包内 Directory.json 解析结果
         this.stagedManifestPaths = []; // 代码包内新版本完整路径清单
         this.versionSelect = false; // 交互路径是否允许自选更新版本
+        this.checkOnly = false;    // “检查更新”仅检查：已最新则短路，有差异则报告不下载
+        this.previewMode = false;  // “更新至预览版”：固定 main 分支，版本/md5 差异仅警告
+        this.fileCheck = null;     // 本地文件与清单 md5 比对结果（检查更新/预览使用）
         this.startTime = 0;
         this.shouldCleanup = true;
         this.totalBytes = 0;
@@ -64,11 +67,12 @@ class ExtensionUpdater {
         this.tempDir = `${this.targetDir}/${this.fixedTempDirName}`;
         this.state = new StateManager(this.tempDir);
         this.downloader = new SmartDownloader(this.repo, this.tokens);
+        this.downloader.lenientMd5 = !!this.previewMode; // 预览模式：md5 不一致仅警告
         this.shouldCleanup = true;
         this.totalBytes = 0;
         this.tasks = [];
 
-        console.log(`[更新器] 初始化: 平台=${platform}, 环境=${this.envType}, 模式=${mode}`);
+        console.log(`[更新器] 初始化: 平台=${platform}, 环境=${this.envType}, 模式=${mode}${this.previewMode ? ', 预览版(main)' : ''}`);
     }
 
     async resumeFromState(tempDir) {
@@ -89,7 +93,10 @@ class ExtensionUpdater {
             this.repo = new GitAdapter(CONFIG.urls[loaded.repo.platform]);
             this.repo.switchBranch(loaded.repo.branch);
             this.mode = normalizeMode(loaded.mode);
+            // 恢复预览模式标记，保证续传后的应用阶段仍走预览路径（不要求代码包）
+            this.previewMode = !!loaded.previewMode;
             this.downloader = new SmartDownloader(this.repo, this.tokens);
+            this.downloader.lenientMd5 = !!this.previewMode;
 
             // 恢复代码包元数据（断点续传时不重新下载 version.json）
             this.codeZipMeta = loaded.zipMeta || null;
@@ -135,6 +142,10 @@ class ExtensionUpdater {
                 }
 
                 this.tasks.push(task);
+            }
+            // 预览模式恢复完整路径清单（供清理失效文件用；Directory.json 受保护无需列入）
+            if (this.previewMode) {
+                this.stagedManifestPaths = this.tasks.map(t => t.remote);
             }
             // 修正统计
             this.totalBytes = this.tasks.reduce((sum, t) => sum + (t.skip ? 0 : (t.size || 0)), 0);
@@ -199,6 +210,40 @@ class ExtensionUpdater {
         this.state.data.stats = stats;
     }
 
+    // 将清单中所有含 md5 的文件（代码 + 媒体等全部条目）与本地比对，
+    // 用于“检查更新”的已最新判定与预览版的差异警告/跳过复用。
+    async compareLocalFiles(directory) {
+        const mismatched = [];
+        const missing = [];
+        const matchedPaths = new Set();
+        let checked = 0;
+        for (const [path, info] of Object.entries(directory)) {
+            if (!info?.md5) continue; // 清单无 md5（如 Directory.json 自身）跳过
+            try {
+                if (await game.promises.checkFile(`${this.targetDir}/${path}`) === 1) {
+                    const local = await game.promises.readFile(`${this.targetDir}/${path}`);
+                    checked++;
+                    if (md5Hex(local) === info.md5) {
+                        matchedPaths.add(path);
+                    } else {
+                        mismatched.push(path);
+                    }
+                } else {
+                    missing.push(path);
+                }
+            } catch (e) {
+                missing.push(path);
+            }
+        }
+        return {
+            checked,
+            mismatched,
+            missing,
+            matchedPaths,
+            upToDate: mismatched.length === 0 && missing.length === 0
+        };
+    }
+
     async prepareFileList(targetBranch = null, verInfo = null) {
         if (targetBranch) this.repo.switchBranch(targetBranch);
         // 下载文件列表
@@ -234,6 +279,11 @@ class ExtensionUpdater {
             throw new Error('Directory.json文件列表格式错误');
         }
 
+        // 检查更新 / 预览 / 交互式“更新至发布版·自动”：比对清单中全部含 md5 的文件与本地，
+        // 供已最新判定与差异警告/跳过复用。（quickUpdate 等非交互路径不计算，保持原行为）
+        this.fileCheck = (this.checkOnly || this.previewMode || (this.mode === 'auto' && this.versionSelect))
+            ? await this.compareLocalFiles(directory) : null;
+
         // 解析文件列表
         const excludes = {
             dirs: ['.git', '.vscode', 'node_modules', '__temp__'],
@@ -257,8 +307,11 @@ class ExtensionUpdater {
             const cleanPath = parts.join('/');
 
             // 代码文件随代码包整包更新；媒体（image/audio）走逐文件任务。
-            // code 模式不建立任何逐文件任务。
-            if (utils.isCodePath(cleanPath) || this.mode === 'code') continue;
+            // code 模式不建立任何逐文件任务。预览模式例外：代码逐文件下载。
+            if (!this.previewMode && (utils.isCodePath(cleanPath) || this.mode === 'code')) continue;
+
+            // 预览模式：Directory.json 已下载到临时目录，不重复建任务，由 refreshLocalDirectoryJson 统一写回
+            if (this.previewMode && cleanPath === CONFIG.files.directory) continue;
 
             const type = utils.getFileType(fileName);
             const size = info?.size || 0;
@@ -289,14 +342,19 @@ class ExtensionUpdater {
                     }
                 } catch (e) { }
             }
+            // 预览模式：代码逐文件下载，本地 md5 与清单一致则跳过（复用已算好的比对结果）
+            if (this.previewMode && utils.isCodePath(cleanPath) && this.fileCheck?.matchedPaths?.has(cleanPath)) {
+                task.skip = true;
+            }
 
             this.tasks.push(task);
             if (!task.skip) this.totalBytes += size;
         }
 
-        // 代码包哨兵任务（三种模式都走代码包；priority -1 保证最先下载）
+        // 代码包哨兵任务（正常模式走代码包；priority -1 保证最先下载）。
+        // 预览模式没有对应当前 main 代码的发布代码包，代码改为逐文件下载。
         const zipMeta = verInfo?.zip || null;
-        if (zipMeta && zipMeta.filename) {
+        if (!this.previewMode && zipMeta && zipMeta.filename) {
             this.codeZipMeta = zipMeta;
             this.codeZipAvailable = true;
             this.tasks.push(new DownloadTask({
@@ -316,8 +374,14 @@ class ExtensionUpdater {
             this.codeZipAvailable = false;
         }
 
-        if (!this.codeZipAvailable) {
+        if (!this.codeZipAvailable && !this.previewMode) {
             throw new Error('未找到代码包信息（version.json 缺少 zip 元数据），暂无法在线更新，请等待版本发布完整');
+        }
+
+        // 预览模式：以 main 分支清单作为新版本完整路径清单（供清理失效文件用）
+        if (this.previewMode) {
+            this.stagedManifest = directory;
+            this.stagedManifestPaths = Object.keys(directory);
         }
 
         // 按优先级排序（关键文件优先，代码包最先）
@@ -327,13 +391,14 @@ class ExtensionUpdater {
         });
 
         const skipCount = this.tasks.filter(t => t.skip).length;
-        await this.state.init(this.repo, this.repo.branch, this.mode, this.tasks, this.codeZipMeta);
+        await this.state.init(this.repo, this.repo.branch, this.mode, this.tasks, this.codeZipMeta, this.previewMode);
 
         return {
             fileCount: this.tasks.length,
             skipCount,
             totalBytes: this.totalBytes,
-            zipSize: this.codeZipMeta?.size || 0
+            zipSize: this.codeZipMeta?.size || 0,
+            fileCheck: this.fileCheck
         };
     }
 
@@ -487,12 +552,15 @@ class ExtensionUpdater {
     }
 
     async applyUpdate() {
-        // 代码包未就绪时禁止应用（即使勾选“忽略失败”），杜绝本次事故的“缺必需文件继续覆盖”
-        const zipState = this.state.data?.files?.find(f => f.kind === 'zip');
-        if (!zipState || zipState.status !== 'success' || !zipState.tempVerified) {
-            const error = new Error('代码包未就绪（下载失败或未完成），无法应用更新，请重试下载');
-            error.updateStage = 'apply';
-            throw error;
+        // 代码包未就绪时禁止应用（即使勾选“忽略失败”），杜绝本次事故的“缺必需文件继续覆盖”。
+        // 预览模式无代码包（逐文件下载），跳过该硬性检查。
+        if (!this.previewMode) {
+            const zipState = this.state.data?.files?.find(f => f.kind === 'zip');
+            if (!zipState || zipState.status !== 'success' || !zipState.tempVerified) {
+                const error = new Error('代码包未就绪（下载失败或未完成），无法应用更新，请重试下载');
+                error.updateStage = 'apply';
+                throw error;
+            }
         }
 
         // 应用阶段（备份/解压/覆写）耗时较长，显示“请稍候”避免 UI 空窗
@@ -501,10 +569,12 @@ class ExtensionUpdater {
 
         let backup = null;
         try {
-            // 1) 解压并校验代码包到暂存目录 —— 此阶段不触碰正式目录
-            report('正在解压并校验代码包...');
-            await this.prepareCodeStaging(report);
-            await this.verifyCodeStaging(report);
+            // 1) 解压并校验代码包到暂存目录 —— 此阶段不触碰正式目录（预览模式跳过）
+            if (!this.previewMode) {
+                report('正在解压并校验代码包...');
+                await this.prepareCodeStaging(report);
+                await this.verifyCodeStaging(report);
+            }
 
             // 2) 备份当前版本（正式目录首次被触碰）
             report('正在备份当前版本...');
@@ -516,12 +586,15 @@ class ExtensionUpdater {
                 backup = backupResult;
             }
 
-            // 3) 覆盖：先媒体（临时文件）后代码（已校验的暂存目录）
+            // 3) 覆盖：先媒体（临时文件）后代码（已校验的暂存目录）。
+            //    预览模式无代码包，代码已作为逐文件任务由 applyDownloadedFiles 一并写入。
             report('正在覆写文件，请稍候...');
             await this.state.setPhase('moving', true);
             await this.applyDownloadedFiles(report);
-            await this.applyCodeFromStaging(report);
-            await this.postVerifyCode(report);
+            if (!this.previewMode) {
+                await this.applyCodeFromStaging(report);
+                await this.postVerifyCode(report);
+            }
 
             // 4) 清理失效文件（按模式过滤）
             report('正在清理旧文件...');
@@ -942,11 +1015,25 @@ class ExtensionUpdater {
         let verInfo = null;
         let candidates = null;
         try {
-            const versions = await new VersionChecker(this.repo, this.tokens, this.envType).list(gameVer);
-            if (versions.length > 0) {
-                candidates = versions.filter(v => v.compatible);
-                if (candidates.length === 0) candidates = versions; // 无兼容版本时列出全部
-                verInfo = candidates[0]; // 默认选最新兼容版本
+            if (this.previewMode) {
+                // 预览版：固定 main 分支，版本信息仅作兼容性警告，不据此选版本
+                this.repo.switchBranch(CONFIG.previewBranch);
+                const versions = await new VersionChecker(this.repo, this.tokens, this.envType).list(gameVer);
+                verInfo = versions.find(v => v.branch === CONFIG.previewBranch) || versions[0] || null;
+                if (!verInfo || !verInfo.compatible) {
+                    const reason = verInfo
+                        ? `预览版（main 分支）声明的兼容游戏版本为 ${verInfo.gameVersion}，与当前无名杀版本（${gameVer}）不一致`
+                        : '获取预览版版本信息失败（可能 version.json 暂缺）';
+                    game.print(`[警告] ${reason}，仅警告不中断`);
+                    await this.ui.alert('预览版兼容性警告', `${reason}。\n\n预览版仅作警示，可继续下载，但可能无法正常运行。`);
+                }
+            } else {
+                const versions = await new VersionChecker(this.repo, this.tokens, this.envType).list(gameVer);
+                if (versions.length > 0) {
+                    candidates = versions.filter(v => v.compatible);
+                    if (candidates.length === 0) candidates = versions; // 无兼容版本时列出全部
+                    verInfo = candidates[0]; // 默认选最新兼容版本
+                }
             }
         } finally {
             loadInfo.close();
@@ -962,7 +1049,8 @@ class ExtensionUpdater {
             verInfo = picked;
         }
 
-        if (verInfo && verInfo.branch && verInfo.branch !== this.repo.branch) {
+        // 预览模式强制 main 分支，不随版本信息切换
+        if (!this.previewMode && verInfo && verInfo.branch && verInfo.branch !== this.repo.branch) {
             this.repo.switchBranch(verInfo.branch);
         }
 
@@ -975,7 +1063,37 @@ class ExtensionUpdater {
             loadList.close();
         }
 
-        const { fileCount, skipCount, totalBytes, zipSize } = prepared;
+        const { fileCount, skipCount, totalBytes, zipSize, fileCheck } = prepared;
+
+        // “检查更新”入口：全部含 md5 的文件均与清单一致 → 已是最新，不下载
+        if (this.checkOnly && fileCheck?.upToDate) {
+            await this.cleanup();
+            return { upToDate: true, fileCheck };
+        }
+        // “检查更新”入口：存在差异 → 仅报告，不下载（是否更新由用户决定）
+        if (this.checkOnly) {
+            await this.cleanup();
+            return { needsUpdate: true, fileCheck };
+        }
+        // 预览版：md5 差异仅警告，继续下载
+        if (this.previewMode && fileCheck && !fileCheck.upToDate) {
+            const { mismatched, missing } = fileCheck;
+            const diffLines = [
+                ...mismatched.slice(0, 5).map(p => `・ ${p}（md5 不一致）`),
+                ...missing.slice(0, 5).map(p => `・ ${p}（缺失）`),
+            ];
+            const totalDiff = mismatched.length + missing.length;
+            const more = totalDiff > diffLines.length ? `\n...等 ${totalDiff} 个文件` : '';
+            game.print(`[警告] 预览版：${mismatched.length} 个文件与 main 清单不一致，${missing.length} 个文件缺失（仅警告，继续下载）`);
+            console.warn(`[预览] 与 main 清单差异：\n${diffLines.join('\n')}${more}`);
+        }
+
+        // “更新至发布版·自动”：全部含 md5 的文件均与清单一致 → 已是最新，不下载。
+        // 仅交互式自动模式生效；仅代码/完整覆写仍强制更新（checkOnly 分支已先行处理）。
+        if (this.mode === 'auto' && this.versionSelect && fileCheck?.upToDate) {
+            await this.cleanup();
+            return { upToDate: true, fileCheck };
+        }
 
         const confirmed = await this.ui.confirmStart({
             version: verInfo?.extensionVersion,
@@ -988,7 +1106,8 @@ class ExtensionUpdater {
             skipCount,
             totalSize: utils.parseSize(totalBytes),
             zipSize,
-            envType: this.envType
+            envType: this.envType,
+            preview: this.previewMode
         });
 
         if (!confirmed) {
@@ -1056,11 +1175,15 @@ class ExtensionUpdater {
 
                         const prepared = await this.prepareFreshDownload();
                         if (prepared.cancelled) return prepared;
+                        if (prepared.upToDate) return { success: true, upToDate: true, message: '当前已是最新版本' };
+                        if (prepared.needsUpdate) return { needsUpdate: true, fileCheck: prepared.fileCheck };
                     }
                 } else {
                     // 全新下载：版本检查、自选版本、文件列表准备与确认
                     const prepared = await this.prepareFreshDownload();
                     if (prepared.cancelled) return prepared;
+                    if (prepared.upToDate) return { success: true, upToDate: true, message: '当前已是最新版本' };
+                    if (prepared.needsUpdate) return { needsUpdate: true, fileCheck: prepared.fileCheck };
                 }
             }
 
@@ -1105,6 +1228,19 @@ class ExtensionUpdater {
                 await downloadMethod();
                 await progressUI.drain();
                 progressUI.close();
+
+                // 预览模式：汇总被接受的 md5 不符文件（仅警告）
+                if (this.previewMode && this.downloader.lenientMismatches?.length > 0) {
+                    const list = this.downloader.lenientMismatches
+                        .slice(0, 5)
+                        .map(p => `・ ${p}`)
+                        .join('\n');
+                    const more = this.downloader.lenientMismatches.length > 5
+                        ? `\n...等 ${this.downloader.lenientMismatches.length} 个文件`
+                        : '';
+                    game.print(`[警告] 预览版：${this.downloader.lenientMismatches.length} 个文件下载后 md5 与清单不符（已接受，仅警告）`);
+                    console.warn(`[预览] 已接受的 md5 不符文件：\n${list}${more}`);
+                }
             }
 
             const failed = this.state.getFailed();

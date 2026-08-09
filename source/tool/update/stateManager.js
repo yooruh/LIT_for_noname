@@ -83,12 +83,13 @@ class StateManager {
         }
     }
 
-    async init(repo, branch, mode, files, zipMeta = null) {
+    async init(repo, branch, mode, files, zipMeta = null, previewMode = false) {
         this.data = {
             timestamp: Date.now(),
             repo: { platform: repo.platform, owner: repo.owner, repo: repo.repo, branch },
             mode: mode,
             phase: 'downloading', // 新增：阶段标记
+            previewMode: previewMode, // 预览模式标记（断点续传时恢复，保证应用阶段走预览路径）
             zipMeta: zipMeta || null, // 代码包元数据（断点续传时无需重取 version.json）
             files: files.map(f => ({
                 path: f.remote,

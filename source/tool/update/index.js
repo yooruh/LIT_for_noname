@@ -18,18 +18,23 @@ export const extensionUpdateManager = {
                 gitee: updater.tokens.has('gitee')
             };
 
-            const choice = await updater.ui.showMainMenu(resumeInfo, hasToken);
-            if (!choice) return;
+            // 一级菜单：更新中心
+            const mainChoice = await updater.ui.showMainMenu(resumeInfo, hasToken);
+            if (!mainChoice) return;
 
-            if (choice === 'token') {
+            if (mainChoice === 'token') {
                 await updater.manageTokens();
                 return;
             }
 
-            if (choice === 'rollback') {
+            if (mainChoice === 'rollback') {
                 await updater.manageRollback();
                 return;
             }
+
+            // 二级菜单：更新菜单（检查更新 / 更新至预览版 / 更新至发布版 / 继续上次 / 重试失败）
+            const choice = await updater.ui.showUpdateMenu(resumeInfo, hasToken);
+            if (!choice) return;
 
             let mode = 'simple';
             let isResumeMode = false;
@@ -60,8 +65,30 @@ export const extensionUpdateManager = {
                     await updater.resumeFromState(resumeInfo.tempDir);
                 }
                 isRetryMode = true;
+            } else if (choice === 'check') {
+                // 检查更新：仅检查本地与线上 md5，不下载
+                const platform = await updater.ui.selectPlatform();
+                if (!platform) return;
+                await updater.init(platform, 'auto');
+                updater.checkOnly = true;
+                updater.versionSelect = false; // 检查针对最新兼容分支，不弹版本选择
+            } else if (choice === 'preview') {
+                // 更新至预览版：固定 main 分支，版本/md5 差异仅警告
+                const platform = await updater.ui.selectPlatform();
+                if (!platform) return;
+                if (resumeInfo.tempDir) {
+                    const cleaning = await updater.ui.showLoading('正在清理', '正在清理旧的临时文件...');
+                    try {
+                        await updater.cleanup();
+                    } finally {
+                        cleaning.close();
+                    }
+                }
+                updater.previewMode = true; // 先于 init 设置，init 据此配置下载器宽松校验
+                await updater.init(platform, 'auto');
+                updater.versionSelect = false;
             } else {
-                // 新任务
+                // 更新至发布版：新任务（选源 + 选模式 + 下载应用）
                 const config = await updater.ui.showUpdateConfig(
                     'github',
                     resumeInfo.canResume,
@@ -80,25 +107,52 @@ export const extensionUpdateManager = {
                 }
 
                 await updater.init(config.platform, config.mode);
+                updater.versionSelect = true; // 交互路径允许自选更新版本
             }
 
-            updater.versionSelect = true; // 交互路径允许自选更新版本
             const result = await updater.update(false, isResumeMode, isRetryMode);
 
-            if (result.cancelled) {
-                game.print('[更新] 已取消，进度已保存');
+            // 已是最新版本（检查更新 / 更新至发布版·自动 均可能触发）
+            if (result.upToDate) {
+                game.print('当前已是最新版本');
+                await updater.ui.alert('在线更新', '当前已是最新版本');
                 return;
             }
 
-            if (result.retryLater) {
-                let msg = '已保留下载进度，下次可继续';
-                await updater.ui.alert('进度已保存', msg);
+            // 检查更新：存在差异，报告并询问是否更新（仅检查可随时退出）
+            if (result.needsUpdate) {
+                const fileCheck = result.fileCheck || {};
+                const mismatched = fileCheck.mismatched || [];
+                const missing = fileCheck.missing || [];
+                const diffLines = [
+                    ...mismatched.slice(0, 8).map(p => `・ ${p}（md5 不一致）`),
+                    ...missing.slice(0, 8).map(p => `・ ${p}（缺失）`),
+                ];
+                const totalDiff = mismatched.length + missing.length;
+                const more = totalDiff > diffLines.length ? `\n...等 ${totalDiff} 个文件` : '';
+                const proceed = await updater.ui.confirm(
+                    '检查更新',
+                    `发现 ${mismatched.length} 个文件与线上不一致，${missing.length} 个文件缺失：\n\n` +
+                    `${diffLines.join('\n')}${more}\n\n是否立即更新至发布版？`,
+                    '取消',
+                    '更新至发布版'
+                );
+                if (!proceed) {
+                    game.print('[检查更新] 已检查，未执行下载');
+                    return;
+                }
+                // 更新至发布版：选模式后重新走更新流程
+                updater.checkOnly = false;
+                const config = await updater.ui.showUpdateConfig('github', false, false);
+                if (!config) return;
+                await updater.init(config.platform, config.mode);
+                updater.versionSelect = true;
+                const result2 = await updater.update(false, false, false);
+                await this.handleUpdateResult(updater, result2);
                 return;
             }
 
-            if (result.success && result.partial) {
-                game.print(`[更新] 部分完成: ${result.message}`);
-            }
+            await this.handleUpdateResult(updater, result);
 
         } catch (error) {
             console.error('[更新失败]', error);
@@ -137,6 +191,26 @@ export const extensionUpdateManager = {
                 }
             }
         }
+    },
+
+    // 处理 update() 返回结果的共同部分（cancelled / retryLater / 部分完成）。
+    // upToDate / needsUpdate 已由 showUI 单独处理。
+    async handleUpdateResult(updater, result) {
+        if (result.cancelled) {
+            game.print('[更新] 已取消，进度已保存');
+            return false;
+        }
+
+        if (result.retryLater) {
+            let msg = '已保留下载进度，下次可继续';
+            await updater.ui.alert('进度已保存', msg);
+            return false;
+        }
+
+        if (result.success && result.partial) {
+            game.print(`[更新] 部分完成: ${result.message}`);
+        }
+        return true;
     },
 
     // 快速更新（后台模式）
