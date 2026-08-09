@@ -1,0 +1,16 @@
+# 统一文本文件行尾为 LF（强制 eol=lf，覆盖 Windows 下 core.autocrlf=true 的 CRLF 转换）：
+# 保证工作区、git 仓库、发布包与 Directory.json 计算 md5 时的文件内容完全一致，
+# 避免“构建后提交、行尾被改写导致 md5 校验失败”。
+* text=auto eol=lf
+
+# 二进制文件明确排除文本转换（media 目录含大量图片/音频）
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.mp3 binary
+*.ogg binary
+*.wav binary
+*.mp4 binary
+*.zip binary

@@ -1,11 +1,11 @@
 {
   "Directory.json": {
-    "size": 16466,
+    "size": 16464,
     "md5": null
   },
   "extension.js": {
-    "size": 5562,
-    "md5": "35bd3ffb91b15276a6216b49033e252e"
+    "size": 5441,
+    "md5": "97a0772eff4019412a5eed2ac58da33b"
   },
   "image/card/lit_diaoka.png": {
     "size": 4793,
@@ -184,384 +184,384 @@
     "md5": "1f07504829e4abd073ad293bd05ce1d7"
   },
   "info.json": {
-    "size": 240,
-    "md5": "3131fc42a0d3f4a00f55e3a00e9bb011"
+    "size": 236,
+    "md5": "48360a74e0d89835ee3a367811cd0314"
   },
   "LICENSE": {
-    "size": 35475,
-    "md5": "caa6fdf8e5816282515659907d639f09"
+    "size": 34801,
+    "md5": "39b0abbb169dfacbd621296e3d953cb0"
   },
   "source/card/lit_card/index.js": {
-    "size": 738,
-    "md5": "1689384b7886881604d5fd3aaea9aa9c"
+    "size": 710,
+    "md5": "893e7a1945ba0969eb83e283fcf1a409"
   },
   "source/card/lit_card/skills.js": {
-    "size": 31021,
-    "md5": "caf03197972fca7fc285032b9da62c41"
+    "size": 30225,
+    "md5": "a294e5741efa8b24dec0e53bc0a855d6"
   },
   "source/card/lit_card/translate.js": {
-    "size": 3856,
-    "md5": "8a5916ee6d13202920029475c2e1ed65"
+    "size": 3791,
+    "md5": "7dd3c754c88cff14019e4079e3b08eff"
   },
   "source/character/lit/index.js": {
-    "size": 3113,
-    "md5": "178df58069a921c9fc7a2e2c5dc9035e"
+    "size": 3042,
+    "md5": "bfcb272388ab86885c66d71f16113137"
   },
   "source/character/lit/meta.js": {
-    "size": 244,
-    "md5": "fefcb69fc9cf1a5c1525f81baef846ae"
+    "size": 235,
+    "md5": "fe7bbfbf30a9dc17d08e4ac5bb7d15a8"
   },
   "source/character/lit/negClear.js": {
-    "size": 834,
-    "md5": "4175b4114a8ab19c00282fe0fbb0773e"
+    "size": 809,
+    "md5": "7d5289768b9de799798052d256d00395"
   },
   "source/character/lit/roles/boshu.js": {
-    "size": 21598,
-    "md5": "17d3c1df51e4a627c953aa00b5518f1b"
+    "size": 21174,
+    "md5": "ddf4c3456c857e750e116a17bae19cd5"
   },
   "source/character/lit/roles/chenke.js": {
-    "size": 8009,
-    "md5": "ba8d1d5ddca87b4ba372b014eeeba1fd"
+    "size": 7827,
+    "md5": "427696974bc3653caf00a7f16c211289"
   },
   "source/character/lit/roles/hujunwei.js": {
-    "size": 14211,
-    "md5": "65952a90f8eeb91660bb6a868d22431e"
+    "size": 13936,
+    "md5": "0e74bb205c4fd62afda6cb8cf9914e50"
   },
   "source/character/lit/roles/hupan.js": {
-    "size": 27748,
-    "md5": "ff8abe1b1bba19138d87eef788dcf2f1"
+    "size": 27171,
+    "md5": "6f8609de52bac880c4fdfe1c3f12669b"
   },
   "source/character/lit/roles/huxinyu.js": {
-    "size": 11958,
-    "md5": "8637e96aea75aa2ed7875dd5eb5222d8"
+    "size": 11713,
+    "md5": "e4a800fdb7001d99bc3b886ada316541"
   },
   "source/character/lit/roles/jianghaixu.js": {
-    "size": 18680,
-    "md5": "aa53a81fca3ac447aa0191ffbd4e6ee8"
+    "size": 18302,
+    "md5": "5bb96e42f26bc1614d32117802c3dc76"
   },
   "source/character/lit/roles/lanboxun.js": {
-    "size": 6203,
-    "md5": "1272db4155e0d205bfafecf80e96ec3e"
+    "size": 6069,
+    "md5": "1290991b793614645fb7b598d19864db"
   },
   "source/character/lit/roles/linmiao.js": {
-    "size": 7442,
-    "md5": "1a6d17fc938eb99df403e93e53aaa5f8"
+    "size": 7276,
+    "md5": "182d4fd77af3dbdac9014856969e77d1"
   },
   "source/character/lit/roles/liuchenmu.js": {
-    "size": 11186,
-    "md5": "d9b64aa7db04cb394ecf2591fdb968f8"
+    "size": 10957,
+    "md5": "c348b040be9305521236d50ec1328aa6"
   },
   "source/character/lit/roles/liyang9.js": {
-    "size": 4773,
-    "md5": "64b6695f177ef5f850472ea481475537"
+    "size": 4653,
+    "md5": "3fcee218653b1aad91c91fd39a198913"
   },
   "source/character/lit/roles/pangjianlong.js": {
-    "size": 10968,
-    "md5": "1b0cebacfb9e8b21827ce63d7ae2b29a"
+    "size": 10735,
+    "md5": "f66f458ea5ba7d2b4ccb4cf62ab36971"
   },
   "source/character/lit/roles/qb.js": {
-    "size": 15888,
-    "md5": "d717201aef4335ca3ab8d45109bf1256"
+    "size": 15564,
+    "md5": "f19408072b7e8784ca98c8022f33ac85"
   },
   "source/character/lit/roles/qianbaocan.js": {
-    "size": 9310,
-    "md5": "6db82f695817489232c4d8d7d29d396a"
+    "size": 9104,
+    "md5": "910b2926c0971333b152cd5516fc34e0"
   },
   "source/character/lit/roles/rita.js": {
-    "size": 10681,
-    "md5": "128b96b4bd6bdc83a84211f50f4f1595"
+    "size": 10463,
+    "md5": "8ded01246ca53d8fec4a95468b24ce34"
   },
   "source/character/lit/roles/sunnan.js": {
-    "size": 20491,
-    "md5": "1c6c3cca89b0784d73043779179a10fa"
+    "size": 20098,
+    "md5": "686a9a97c8d45e75683923284669173a"
   },
   "source/character/lit/roles/wangcan9.js": {
-    "size": 6602,
-    "md5": "87d0f342d0c4a26feb1ffed67e8e68b7"
+    "size": 6445,
+    "md5": "6e60a8b818afc2aab68699fb636fb643"
   },
   "source/character/lit/roles/wangrong.js": {
-    "size": 26422,
-    "md5": "14497ec96c22e2cc0bbc0d60637e7db8"
+    "size": 25910,
+    "md5": "59308988fbb920d11aeebb720f4d8773"
   },
   "source/character/lit/roles/wuxiaoqi.js": {
-    "size": 16132,
-    "md5": "a928745da41aa788c78f8fec759cedcb"
+    "size": 15791,
+    "md5": "5fea62dde37f2bd6c7c210a1d3dedb59"
   },
   "source/character/lit/roles/yangxiangling.js": {
-    "size": 16573,
-    "md5": "70ac93e90ccf3bfef973c1dbb1557c84"
+    "size": 16249,
+    "md5": "14bcbf4c9cb0d17b9f53d26e0849ebdc"
   },
   "source/character/lit/roles/yutong.js": {
-    "size": 9557,
-    "md5": "e79098693697f90e96c6a4feb50ea151"
+    "size": 9367,
+    "md5": "c18ea16750c6a7dc876f966ae8962e70"
   },
   "source/character/lit/roles/zengpinjia.js": {
-    "size": 22893,
-    "md5": "95b77e2c68e956cef5992ad354b902a0"
+    "size": 22441,
+    "md5": "b5b173138f505713bbd92d670c7ae36f"
   },
   "source/character/lit/roles/zhangchi.js": {
-    "size": 12910,
-    "md5": "374a5d5383aad787c224d523affb13d3"
+    "size": 12658,
+    "md5": "3a14da94570d8595b43c42fc4165cd8d"
   },
   "source/character/lit/roles/zhangchi9.js": {
-    "size": 29480,
-    "md5": "183c256d01e115bf7faa1718677fe611"
+    "size": 28868,
+    "md5": "7ac8e78645c96f18e16d49b89c50b3f6"
   },
   "source/character/lit/roles/zhangqinyi.js": {
-    "size": 8819,
-    "md5": "0d3c860221413647dc9fbc0926e2e360"
+    "size": 8625,
+    "md5": "547940cf6de56b2fea9f476b33a24600"
   },
   "source/character/lit/roles/zhangshengjie.js": {
-    "size": 29491,
-    "md5": "f1a0f628cd26d992fcc0b324ebabfeef"
+    "size": 28937,
+    "md5": "15fc848ca2f74dbe3a823a83b6f7c9dc"
   },
   "source/character/lit/roles/zhangshengjie9.js": {
-    "size": 12945,
-    "md5": "fd4f1a7abe40d4c4739d750991dca8a5"
+    "size": 12660,
+    "md5": "7cb931ff4642269e6088bc98b2b8e14d"
   },
   "source/character/lit/roles/zhengmohan.js": {
-    "size": 14266,
-    "md5": "d2395bec94ce655905bab8cf73963b2e"
+    "size": 13959,
+    "md5": "eeb0035cda58d3f4df63a8499799ebf3"
   },
   "source/character/lit/roles/zhongyutong.js": {
-    "size": 15958,
-    "md5": "8b7c6427d7a81fd07fddbd9ca8bd9b4f"
+    "size": 15617,
+    "md5": "192113c8ee60133540ae5cec6d00df0a"
   },
   "source/character/lit/roles/zigao.js": {
-    "size": 22342,
-    "md5": "03b741cd8e93bcfa85b7649a59feddc8"
+    "size": 21907,
+    "md5": "fe14efc33fdacad32efc65a3cb52c4a6"
   },
   "source/character/lit/shared.js": {
-    "size": 869,
-    "md5": "1f7a57215c7443b9dced99ea3bd568f6"
+    "size": 844,
+    "md5": "35ffcf5816ea967932d7ecf9d72cc223"
   },
   "source/character/lit/shengji.js": {
-    "size": 10201,
-    "md5": "18f6de86a97035f42afd0664530220ae"
+    "size": 9921,
+    "md5": "d590ec6984e2efb628dfa35d0be65141"
   },
   "source/character/lit_gz/index.js": {
-    "size": 3624,
-    "md5": "52ae3b7c33f4767c16a9d84c696c890b"
+    "size": 3546,
+    "md5": "f624472fd4262a6f4e61a77f43edeed1"
   },
   "source/character/lit_gz/roles/README.md": {
-    "size": 1451,
-    "md5": "bf9c4b2309febecc428755187614728d"
+    "size": 1413,
+    "md5": "8c9027cff16a6e4dc93024ac2acc71ad"
   },
   "source/character/test/index.js": {
-    "size": 2338,
-    "md5": "9606e9c5101a7df500efdfa0ea956ab1"
+    "size": 2280,
+    "md5": "2dd7126434a4e4bf228d6b7d5ec52ca9"
   },
   "source/character/test/meta.js": {
-    "size": 161,
-    "md5": "d359b6ce47eb01598a52a39829f65144"
+    "size": 154,
+    "md5": "d149891e1db143949da72b1e5ad2b771"
   },
   "source/character/test/roles/hupan9.js": {
-    "size": 8252,
-    "md5": "f449067fbb809518484e770a89002614"
+    "size": 8041,
+    "md5": "377c140b593e68ab0bafd225a32b358e"
   },
   "source/character/test/roles/pengliying.js": {
-    "size": 10150,
-    "md5": "7f4b1d6757aaeaf6934c57870f06be71"
+    "size": 9873,
+    "md5": "b4e86569e9c483aec2effe0e91c0e83b"
   },
   "source/character/test/roles/wangsiyuan.js": {
-    "size": 4445,
-    "md5": "4c5f0ac80448347b5334488a95bda9c1"
+    "size": 4327,
+    "md5": "26c753d842c1cbecdd5bfe6afebd697b"
   },
   "source/character/test/roles/zengpinjia9.js": {
-    "size": 10870,
-    "md5": "bbcf64e0e5267354abcae46594795799"
+    "size": 10583,
+    "md5": "1912eca9be8e3e0a9ba6840b8d291f25"
   },
   "source/character/test/roles/zhengmohan9.js": {
-    "size": 8726,
-    "md5": "18cc234ba5ed79bdec02fe79e075cd48"
+    "size": 8506,
+    "md5": "693ce0a0032611ed6823d94d9f0b6f76"
   },
   "source/character/test/roles/zhongyutong9.js": {
-    "size": 13843,
-    "md5": "d22f3165f9e9aa19d9d8fc5df99b0add"
+    "size": 13507,
+    "md5": "9f95f096db946fec537c6ca8abd240c3"
   },
   "source/character/test/shared.js": {
-    "size": 316,
-    "md5": "d7db3c09d6514c8eb3eab5ed92aa0de5"
+    "size": 306,
+    "md5": "11440f882428c9ef241d3c6babf882db"
   },
   "source/config.js": {
-    "size": 9166,
-    "md5": "708cc1c696183d19f536aa4ad486296f"
+    "size": 8877,
+    "md5": "482dceef7e8c413b1120c57f41081747"
   },
   "source/content.js": {
-    "size": 4045,
-    "md5": "96c69afecfa8d8ff7a7591b6b23bcfc8"
+    "size": 3981,
+    "md5": "df9f86cf843911a895363dd9fa6182f4"
   },
   "source/help.js": {
-    "size": 4074,
-    "md5": "e174660fd7130ace9e6f48b3446f2f81"
+    "size": 3967,
+    "md5": "e6984a64484e520a3509ff22358d69c9"
   },
   "source/mode/sandaohuanhua.js": {
-    "size": 63859,
-    "md5": "09428c690e706eb291c762851b915908"
+    "size": 61912,
+    "md5": "ce763d2fa09e92b51e9084f8810c89c7"
   },
   "source/mode/sandaohuanhua_brawl.js": {
-    "size": 75350,
-    "md5": "9bcf42b35c81a2606130360bd4f93588"
+    "size": 73982,
+    "md5": "09d3d2cfdce49fc4b71973ca9031acc9"
   },
   "source/onlineFix/characterSelection.js": {
-    "size": 14608,
-    "md5": "813457a79ba2285c4fc800d65955ecf5"
+    "size": 14175,
+    "md5": "688c31a98e7399f5b47462e6a07ed1a0"
   },
   "source/onlineFix/content.js": {
-    "size": 4700,
-    "md5": "a5dabaa6500dc21cc851dc0635d60f7c"
+    "size": 4533,
+    "md5": "700c390e130b440c52a2d9aeac315e8a"
   },
   "source/onlineFix/function.js": {
-    "size": 14134,
-    "md5": "033a1db28b6cb863b74ba38c4f7b2133"
+    "size": 13672,
+    "md5": "183e8532b17330607118fcfeeb3d9f1d"
   },
   "source/onlineFix/handcards.js": {
-    "size": 4903,
-    "md5": "955732860a0efd28c1ad86810ea4d004"
+    "size": 4762,
+    "md5": "48b8bdfc5905c86b1dbd79c00c008684"
   },
   "source/onlineFix/loader.js": {
-    "size": 383,
-    "md5": "5014d43218d929d2df327bce4d00263e"
+    "size": 366,
+    "md5": "389d67c6893066e4d256c1b7a5bd8078"
   },
   "source/onlineFix/lobby.js": {
-    "size": 6947,
-    "md5": "9b4dfd28619465ea4ae0d3076dd80780"
+    "size": 6744,
+    "md5": "465b72b741aaa228bbc6b851b69357af"
   },
   "source/onlineFix/modeset.js": {
-    "size": 10667,
-    "md5": "d9d557bea0ab925fd9cd2e32d7463f23"
+    "size": 10428,
+    "md5": "c9190f82018d0e0b3f6b6c887890f22e"
   },
   "source/onlineFix/player.js": {
-    "size": 1743,
-    "md5": "d377b88e8331c4f1418a83ab06b6086b"
+    "size": 1694,
+    "md5": "2a0d1beada01e2fe85bc06f671077ace"
   },
   "source/onlineFix/playerControl.js": {
-    "size": 7210,
-    "md5": "249acf4a92758c84c02dc91a54638df3"
+    "size": 6982,
+    "md5": "15b695b1f9d4a666eb8edf554395578d"
   },
   "source/onlineFix/precontent.js": {
-    "size": 1632,
-    "md5": "c8e1c21fed6b2f2ad9bd8cd065289b5d"
+    "size": 1599,
+    "md5": "022c4fae685057a70dc33abe71a866df"
   },
   "source/onlineFix/runtime.js": {
-    "size": 1441,
-    "md5": "e5b7d7391d4591e24ca378b46376339c"
+    "size": 1400,
+    "md5": "101668fa989c10085e0f569b734cdc03"
   },
   "source/onlineFix/transport.js": {
-    "size": 549,
-    "md5": "771e100eb311af87f84bbcbc56c5085d"
+    "size": 526,
+    "md5": "865b8f28f01d58f16185206f264fde2f"
   },
   "source/onlineFix/useFunction.js": {
-    "size": 176,
-    "md5": "e0cc31d40841f5b9a7f9a07f56dd986e"
+    "size": 172,
+    "md5": "96ba4f6baa0d4e2455c61d67e7d562e4"
   },
   "source/onlineFix/utils.js": {
-    "size": 5361,
-    "md5": "68ab8119927f9365f225705df68823f5"
+    "size": 5178,
+    "md5": "31632aeeeb72dba530703e9530aa4fff"
   },
   "source/onlineFix/video.js": {
-    "size": 5053,
-    "md5": "f753aa09cc2ecd4805367080006591f0"
+    "size": 4892,
+    "md5": "f19113a99a9f7bfb239f69ea30a0faa1"
   },
   "source/precontent.js": {
-    "size": 4646,
-    "md5": "9fbb636cdb2f1695e50ccc9adae82710"
+    "size": 4530,
+    "md5": "c287a8f66473d7a7c8bfbcb4e4aa5231"
   },
   "source/tool/ai/aiGuard.js": {
-    "size": 3963,
-    "md5": "a34b254cc29ee296e28e6d78596d019e"
+    "size": 3887,
+    "md5": "b1df72c41360842a528c2c73523da3b5"
   },
   "source/tool/configuration/configManager.js": {
-    "size": 15371,
-    "md5": "a29ec6572464b87d5102a53336da1e1c"
+    "size": 15045,
+    "md5": "c08dc779e39a981070d71d194cf1b551"
   },
   "source/tool/configuration/configService.js": {
-    "size": 12003,
-    "md5": "0b8c10b31c1b4244ce0950cb207ed9c9"
+    "size": 11684,
+    "md5": "a13b5ab78af134ccd38ebd5705b1eede"
   },
   "source/tool/pack/guozhanPack.js": {
-    "size": 1194,
-    "md5": "783b0ef9f6dca0294b66ea1fd59fcefc"
+    "size": 1159,
+    "md5": "26badfb22f4d29429759d919ae5d0afc"
   },
   "source/tool/pack/manifest.js": {
-    "size": 228,
-    "md5": "6ccd71f2c33761a44821157dbd90377c"
+    "size": 225,
+    "md5": "0027d93fbb16e8a96fc18ad698d06346"
   },
   "source/tool/pack/registry.js": {
-    "size": 7302,
-    "md5": "2a17b2e0a47dfb869aca37b55f3fd347"
+    "size": 7132,
+    "md5": "5611b4e10b8d75e0dc63152286cde933"
   },
   "source/tool/pack/rolePack.js": {
-    "size": 1636,
-    "md5": "2ae81ef03e8638d31cd5d8e27b8584d8"
+    "size": 1597,
+    "md5": "41b2acdda5cef7af11ac8c32dabcf042"
   },
   "source/tool/ui/dialogManager.js": {
-    "size": 58362,
-    "md5": "8ac96a8e76185d25e33241694695742e"
+    "size": 57059,
+    "md5": "52cfbc9777a52202a030636cff386380"
   },
   "source/tool/ui/poptips.js": {
-    "size": 1606,
-    "md5": "a8a9427532a0cde3059f354cc3103784"
+    "size": 1552,
+    "md5": "ba99b27deab00819e4c942b509928705"
   },
   "source/tool/ui/themeManager.js": {
     "size": 3997,
     "md5": "359f3fe459873455ef09923140d022e8"
   },
   "source/tool/update/backupManager.js": {
-    "size": 7091,
-    "md5": "65cb73e5bee317973fbba7f981b46181"
+    "size": 6925,
+    "md5": "c12e52eeac90a04a291cafe17748c70d"
   },
   "source/tool/update/config.js": {
-    "size": 2035,
-    "md5": "5c4c920a757ea0e97eda92d5ca52bae6"
+    "size": 1987,
+    "md5": "dfbe227c7859c8a6d894f3712fe51023"
   },
   "source/tool/update/downloader.js": {
-    "size": 14624,
-    "md5": "493dc4b73dba8d54a609e13234284816"
+    "size": 14298,
+    "md5": "2902449dddefd49d7487b948f0ba070a"
   },
   "source/tool/update/extensionUpdater.js": {
-    "size": 67072,
-    "md5": "f12293a9a47d5bafa9982ebf23af96f9"
+    "size": 65973,
+    "md5": "60a4f80e47d7d5d52b537a89b9c87b00"
   },
   "source/tool/update/index.js": {
-    "size": 20867,
-    "md5": "37ebd80a1edbe21e296bf379722fb9ad"
+    "size": 20421,
+    "md5": "5900436e75460177a1c69ed10b6b7b70"
   },
   "source/tool/update/logger.js": {
     "size": 3720,
     "md5": "0c099b15cb31734ee11f159f6cce7bcf"
   },
   "source/tool/update/md5.js": {
-    "size": 3207,
-    "md5": "db00ce6d82f8bbe753b4722d7d6ca289"
+    "size": 3119,
+    "md5": "4a161a893a949751a2b1aa3a85de8fee"
   },
   "source/tool/update/repository.js": {
-    "size": 6799,
-    "md5": "bdb2fc5547ae883552c360810ac51080"
+    "size": 6614,
+    "md5": "915ebe9e5cc95de2261d2090a6589808"
   },
   "source/tool/update/stateManager.js": {
-    "size": 9760,
-    "md5": "ed43bc7e4f2b4a2f9d9e3aa0028c1ba2"
+    "size": 9476,
+    "md5": "def737612911f229ddd97732089bfaa2"
   },
   "source/tool/update/updateDialogs.js": {
-    "size": 37500,
-    "md5": "673e6c265f6baa58a77a5bd126e86161"
+    "size": 36714,
+    "md5": "aaa4f02dc0297f9a1f68a8da87c7d1ea"
   },
   "source/tool/update/utils.js": {
-    "size": 5350,
-    "md5": "f16e9b6530aba76fe19bb5cf5161822a"
+    "size": 5212,
+    "md5": "14322b1727ec6636c22686afe6b48e06"
   },
   "source/tool/update/versionChecker.js": {
-    "size": 3545,
-    "md5": "55fec12a0d2970316018b11d4feee92e"
+    "size": 3468,
+    "md5": "ee7dd593ec3d0856c7eff7b5ab65eec4"
   },
   "source/tool/utils/paths.js": {
-    "size": 397,
-    "md5": "b742eae78fdf97f423a426b869c292a6"
+    "size": 390,
+    "md5": "eabfb3bcc6c2b87a6dc38f1a66c9646b"
   },
   "source/tool/utils/textFormat.js": {
-    "size": 480,
-    "md5": "1abc3b22c1c60e403c58dfe0753b1b98"
+    "size": 468,
+    "md5": "3a2f569b40fb2fd5819b922f3a5d8b54"
   },
   "style/css/cards.css": {
     "size": 448,
@@ -572,20 +572,20 @@
     "md5": "c33cc92bbe338d93746693a30967602c"
   },
   "style/css/extension.css": {
-    "size": 6497,
-    "md5": "8b32b3d17d64f58277d1338407140550"
+    "size": 6266,
+    "md5": "ff2024584e0d0d4bc9a1e8e39007a2b0"
   },
   "style/css/materialTheme.css": {
     "size": 13513,
     "md5": "431f6ada4e55f1ff12e006e37b9497d1"
   },
   "style/html/help.html": {
-    "size": 20413,
-    "md5": "3fca38bc32782f13278b1557a1d189aa"
+    "size": 19742,
+    "md5": "94af3e4c105ffe766e100ace9272cc49"
   },
   "style/html/sandaohuanhua.html": {
-    "size": 10543,
-    "md5": "f3989765fd152d8ff31808c266d8f07b"
+    "size": 10312,
+    "md5": "642af369f1427c17df3c97d01ca183b1"
   },
   "style/html/update.html": {
     "size": 15302,

@@ -36,7 +36,7 @@ import { deflateRawSync } from 'node:zlib';
 import { isValidVersion, log, stripV, releaseTag } from './lib/shared.mjs';
 import { crc32 } from './lib/crc32.mjs';
 import { getCurrentReleaseVersion, readReleaseManifest, patchVersionJsonZip } from './lib/release.mjs';
-import { walkDir } from './rebuild.mjs';
+import { walkDir, assertNoCrlfTextFiles } from './rebuild.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -180,6 +180,8 @@ function readCentralDirectory(zipBuf) {
  */
 function buildManifest({ codeOnly = false } = {}) {
   const manifest = walkDir(ROOT, ROOT);
+  // CRLF 文本文件会与 LF 基准的 Directory.json / git 内容不一致，拒绝打包，防止发布自相矛盾的 zip
+  assertNoCrlfTextFiles();
   const isCode = name => !name.startsWith('image/') && !name.startsWith('audio/');
   const files = Object.keys(manifest)
     .filter(name => !codeOnly || isCode(name))

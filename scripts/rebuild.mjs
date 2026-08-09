@@ -42,6 +42,25 @@ const EXCLUDES = [
   'jsconfig.json',
 ];
 
+// 本次扫描检测到的 CRLF 文本文件（relPath -> CR 字节数）。
+// 文本文件若含 CRLF 行尾，经 git 提交会被归一化为 LF，导致 Directory.json / 发布包的
+// md5 与实际分发内容不一致（在线更新 md5 校验失败），故构建入口须先拦截。
+// 检测与 md5 计算共用一次文件读取，不增加二次 I/O。
+let crlfTextFiles = new Map();
+
+/** 校验本次扫描未发现 CRLF 文本文件；发现则抛出错误（拒绝写入不一致的清单/发布包） */
+export function assertNoCrlfTextFiles() {
+  if (crlfTextFiles.size === 0) return;
+  const entries = [...crlfTextFiles.entries()];
+  const list = entries.slice(0, 10).map(([path, cr]) => `・ ${path}（${cr} 个 CR）`).join('\n');
+  const more = entries.length > 10 ? `\n...等 ${entries.length} 个文件` : '';
+  throw new Error(
+    `检测到 ${entries.length} 个文本文件含 CRLF 行尾，其 md5 与 git 提交(LF)后的内容不一致，已中止构建：\n` +
+    `${list}${more}\n\n` +
+    `请先将上述文件行尾统一为 LF 再重新构建（可执行：git add --renormalize . && git checkout -- .）`
+  );
+}
+
 export function scanRoles(dirPath) {
   try {
     return readdirSync(dirPath)
@@ -327,6 +346,8 @@ export function updateIndexFile(indexPath, roleNames, checkOnly = false) {
 }
 
 export function walkDir(dir, baseDir) {
+  // 顶层调用（dir === baseDir）时重置行尾检测状态，递归调用沿用同一份结果
+  if (dir === baseDir) crlfTextFiles = new Map();
   const result = {};
   try {
     const entries = readdirSync(dir, { withFileTypes: true });
@@ -342,9 +363,16 @@ export function walkDir(dir, baseDir) {
       } else if (entry.isFile()) {
         try {
           const stat = statSync(fullPath);
+          const buf = readFileSync(fullPath);
+          // 文本文件（无 NUL 字节，与 git text=auto 判定一致）含 CR 字节即视为 CRLF 行尾
+          if (!buf.includes(0)) {
+            let cr = 0;
+            for (const b of buf) if (b === 13) cr++;
+            if (cr > 0) crlfTextFiles.set(relPath, cr);
+          }
           result[relPath] = {
             size: stat.size,
-            md5: createHash('md5').update(readFileSync(fullPath)).digest('hex'),
+            md5: createHash('md5').update(buf).digest('hex'),
           };
         } catch {
           result[relPath] = { size: 0, md5: null };
@@ -359,6 +387,8 @@ export function walkDir(dir, baseDir) {
 
 export function updateDirectoryJson(checkOnly = false) {
   const manifest = walkDir(ROOT, ROOT);
+  // 文本文件含 CRLF 时 md5 与 git 提交(LF)内容不一致，先拦截，拒绝写入错误清单
+  assertNoCrlfTextFiles();
   // Directory.json 自身的内容包含自身的 md5，无法自洽，置 null（客户端对 null 跳过校验）
   if (manifest['Directory.json']) {
     manifest['Directory.json'].md5 = null;
@@ -450,7 +480,12 @@ export function rebuildProject(options = {}) {
 function main() {
   const args = process.argv.slice(2);
   const checkOnly = args.includes('--check');
-  rebuildProject({ checkOnly, silent: false });
+  try {
+    rebuildProject({ checkOnly, silent: false });
+  } catch (error) {
+    log.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === SELF_PATH) {

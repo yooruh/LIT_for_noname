@@ -1128,6 +1128,11 @@ class ExtensionUpdater {
             await this.cleanup();
             return { needsUpdate: true, fileCheck };
         }
+        // “更新至预览版”：本地文件与 main 清单完全一致 → 已是最新预览版，不再询问是否更新
+        if (this.previewMode && fileCheck?.upToDate) {
+            await this.cleanup();
+            return { upToDate: true, fileCheck };
+        }
         // 预览版：md5 差异仅警告，继续下载
         if (this.previewMode && fileCheck && !fileCheck.upToDate) {
             const { mismatched, missing } = fileCheck;
