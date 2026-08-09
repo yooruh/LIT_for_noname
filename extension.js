@@ -8,7 +8,7 @@ export let type = 'extension';
 
 export default async function () {
 	// 特别提醒+最低版本限制
-	const litVersion = "26.8.7.3", minGameVersion = "1.11.2".split('.').slice(), gameVersion = lib.version.split('.').slice();
+	const litVersion = "26.8.7.3", litDisplayVersion = "", minGameVersion = "1.11.2".split('.').slice(), gameVersion = lib.version.split('.').slice();
 	const alertsConfig = [
 		{
 			id: 'onlineFix',
@@ -105,6 +105,10 @@ export default async function () {
 		});
 		game.saveConfig("customforbid", lib.config.customforbid);
 		game.reload();
+	}
+	// displayVersion 仅用于更新内容等位置的文本展示（{{version}} 替换等），路径/分支一律用 litVersion
+	if (game.getExtensionConfig('叁岛世界', 'displayVersion') != litDisplayVersion) {
+		game.saveExtensionConfig('叁岛世界', 'displayVersion', litDisplayVersion);
 	}
 	const extension = {
 		name: extensionInfo.name, editable: false,

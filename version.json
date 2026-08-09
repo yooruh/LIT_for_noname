@@ -4,7 +4,7 @@
     {
       "extensionVersion": "26.8.7.3",
       "gameVersion": ">=1.11.2",
-      "branch": "main",
+      "branch": "v26.8.7.3",
       "description": "支持无名杀1.11.2及以上的版本",
       "highlights": [
         "新增角色 {{poptip:lit_yutong雨桐|雨桐}} 和隐藏角色 {{poptip:lit_zhongyutong钟雨桐|钟雨桐}}",
@@ -17,8 +17,8 @@
       ],
       "zip": {
         "filename": "26.8.7.3-code.zip",
-        "size": 350728,
-        "md5": "9475c63ef1cfb3e52b86d5eded5bbe85",
+        "size": 356149,
+        "md5": "32770ef12a05c830d537c4d84386d582",
         "branch": "zips",
         "tag": "v26.8.7.3-code-zip"
       }

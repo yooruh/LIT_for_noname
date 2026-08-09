@@ -9,7 +9,9 @@ import { extensionPath } from './tool/utils/paths.js'
 const changelogOnclick = () => {
 	const updateURL = `${extensionPath}/style/html/update.html`.replace(/'/g, "\\'");
 	const version = game.getExtensionConfig('叁岛世界', 'version') || '未知版本';
-	const dataProcessor = (content) => content.replace("{{version}}", version);
+	// {{version}} 属更新内容文本替换：优先 displayVersion，无则用真实版本号
+	const displayVersion = game.getExtensionConfig('叁岛世界', 'displayVersion') || version;
+	const dataProcessor = (content) => content.replace("{{version}}", displayVersion);
 
 	dialogManager.closeAll();
 	dialogManager.showDocModal(updateURL, '更新日志', dataProcessor);
@@ -79,7 +81,8 @@ const helpSections = {
 		str = str.slice(0, str.lastIndexOf('<hr>'));
 		str = str.slice(0, str.lastIndexOf('<br>'));
 		str += '</div>';
-		return `叁岛世界（${game.getExtensionConfig('叁岛世界', 'version')}更新）<br>${str}`;
+		const displayVersion = game.getExtensionConfig('叁岛世界', 'displayVersion') || game.getExtensionConfig('叁岛世界', 'version') || '未知版本';
+		return `叁岛世界（${displayVersion}更新）<br>${str}`;
 	},
 
 	// 更新日志链接

@@ -9,6 +9,7 @@ import { VersionChecker } from './versionChecker.js';
 import { UpdateDialogs as UIManager } from './updateDialogs.js';
 import { BackupManager } from './backupManager.js';
 import { md5Hex } from './md5.js';
+import { updateLogger } from './logger.js';
 
 // 更新时需保护、绝不删除/清理的目录与文件
 const PROTECTED_DIRS = new Set(['_temp_downloading', '.git', '.vscode', 'node_modules']);
@@ -72,7 +73,14 @@ class ExtensionUpdater {
         this.totalBytes = 0;
         this.tasks = [];
 
-        console.log(`[更新器] 初始化: 平台=${platform}, 环境=${this.envType}, 模式=${mode}${this.previewMode ? ', 预览版(main)' : ''}`);
+        updateLogger.setContext({
+            '更新源': this.repo.platform,
+            '更新模式': this.mode,
+            '运行环境': this.envType,
+            '目标分支': this.repo.branch,
+            '类型': this.previewMode ? '预览版(main)' : this.checkOnly ? '仅检查' : '发布版'
+        });
+        updateLogger.info('更新器', `初始化: 平台=${platform}, 环境=${this.envType}, 模式=${mode}${this.previewMode ? ', 预览版(main)' : ''}`);
     }
 
     async resumeFromState(tempDir) {
@@ -84,7 +92,7 @@ class ExtensionUpdater {
             // 验证阶段合法性
             const RESUMABLE_PHASES = ['downloading', 'staging', 'extracting', 'verifying', 'moving'];
             if (loaded.phase && !RESUMABLE_PHASES.includes(loaded.phase)) {
-                console.warn(`[恢复] 上次更新停留在阶段: ${loaded.phase}，可能未完整应用`);
+                updateLogger.warn('恢复', `上次更新停留在阶段: ${loaded.phase}，可能未完整应用`);
                 if (loaded.phase === 'completed') {
                     return false; // 已完成的不恢复
                 }
@@ -93,6 +101,13 @@ class ExtensionUpdater {
             this.repo = new GitAdapter(CONFIG.urls[loaded.repo.platform]);
             this.repo.switchBranch(loaded.repo.branch);
             this.mode = normalizeMode(loaded.mode);
+            updateLogger.setContext({
+                '更新源': this.repo.platform,
+                '更新模式': this.mode,
+                '目标分支': this.repo.branch,
+                '类型': loaded.previewMode ? '预览版(main)' : '发布版'
+            });
+            updateLogger.info('恢复', `恢复上次状态：平台=${loaded.repo.platform}，分支=${loaded.repo.branch}，模式=${loaded.mode}，阶段=${loaded.phase}，文件=${loaded.files?.length || 0} 个`);
             // 恢复预览模式标记，保证续传后的应用阶段仍走预览路径（不要求代码包）
             this.previewMode = !!loaded.previewMode;
             this.downloader = new SmartDownloader(this.repo, this.tokens);
@@ -125,7 +140,7 @@ class ExtensionUpdater {
                     try {
                         const exists = await game.promises.checkFile(task.temp);
                         if (exists !== 1 && f.status !== 'applied') {
-                            console.warn(`[恢复] 临时文件丢失，重置为pending: ${f.path}`);
+                            updateLogger.warn('恢复', `临时文件丢失，重置为pending: ${f.path}`);
                             f.status = 'pending';
                             f.downloadedBytes = 0;
                             f.tempVerified = false;
@@ -235,6 +250,9 @@ class ExtensionUpdater {
                 missing.push(path);
             }
         }
+        updateLogger.info('校验', `本地 vs 远端清单比对：含 md5 条目 ${checked}，md5 不符 ${mismatched.length}，缺失 ${missing.length} → ${mismatched.length === 0 && missing.length === 0 ? '已是最新' : '存在更新'}`);
+        if (mismatched.length) updateLogger.info('校验', `md5 不符文件(前10): ${mismatched.slice(0, 10).join(', ')}`);
+        if (missing.length) updateLogger.info('校验', `缺失文件(前10): ${missing.slice(0, 10).join(', ')}`);
         return {
             checked,
             mismatched,
@@ -254,7 +272,19 @@ class ExtensionUpdater {
             type: 'json'
         });
 
-        const result = await this.downloader.download(listTask);
+        let result = await this.downloader.download(listTask);
+        // 显式指定分支但拉取版本清单失败（分支不存在/不可用）→ 回退到 v+版本号 分支重试一次
+        if (!result.success && !result.needToken && !this.previewMode && verInfo?.branch) {
+            const fallbackBranch = `v${utils.stripV(verInfo.extensionVersion)}`;
+            if (fallbackBranch && fallbackBranch !== verInfo.branch) {
+                updateLogger.warn('分支', `从分支 ${verInfo.branch} 拉取 ${CONFIG.files.directory} 失败（${result.error}），尝试回退分支 ${fallbackBranch}`);
+                this.repo.switchBranch(fallbackBranch);
+                result = await this.downloader.download(listTask);
+                if (result.success) {
+                    updateLogger.info('分支', `已回退到 ${fallbackBranch} 分支拉取版本清单`);
+                }
+            }
+        }
         if (!result.success) {
             if (result.needToken) {
                 // 动态请求 Token
@@ -391,6 +421,9 @@ class ExtensionUpdater {
         });
 
         const skipCount = this.tasks.filter(t => t.skip).length;
+        updateLogger.info('准备', `文件任务构建完成：${this.tasks.length} 个任务，跳过 ${skipCount} 个` +
+            `${this.codeZipMeta ? `，代码包 ${this.codeZipMeta.filename}(${this.codeZipMeta.size}B md5=${this.codeZipMeta.md5})` : '，无代码包（预览逐文件）'}` +
+            `，分支=${this.repo.branch}`);
         await this.state.init(this.repo, this.repo.branch, this.mode, this.tasks, this.codeZipMeta, this.previewMode);
 
         return {
@@ -514,12 +547,12 @@ class ExtensionUpdater {
                     }
                 }
             } catch (error) {
-                console.error(`[下载] ${task.remote} 异常:`, error);
+                updateLogger.error('下载', `${task.remote} 异常: ${String(error?.message || error)}`);
                 result = { success: false, error: String(error?.message || error), errorType: 'network' };
                 try {
                     await this.state.updateFile(task.remote, 'failed', result.error, result.errorType, 0, true);
                 } catch (stateError) {
-                    console.error(`[下载] ${task.remote} 保存失败状态异常:`, stateError);
+                    updateLogger.error('下载', `${task.remote} 保存失败状态异常: ${String(stateError?.message || stateError)}`);
                 }
             } finally {
                 if (onFileComplete) {
@@ -581,7 +614,7 @@ class ExtensionUpdater {
             await this.state.setPhase('backing_up', true);
             const backupResult = await this.backupManager.createBackup(report);
             if (!backupResult.success) {
-                console.warn('[备份] 创建失败，继续更新:', backupResult.error);
+                updateLogger.warn('备份', `创建失败，继续更新: ${String(backupResult.error || '')}`);
             } else {
                 backup = backupResult;
             }
@@ -605,7 +638,7 @@ class ExtensionUpdater {
             await this.refreshLocalDirectoryJson();
             await this.cleanup();
         } catch (error) {
-            console.error('[应用更新] 失败:', error);
+            updateLogger.error('应用', `应用更新失败: ${String(error?.message || error)}`);
             // 回滚到备份，确保正式目录不被半更新状态破坏
             if (backup) await this.rollback(backup, report);
             await this.state.setPhase('downloading', true);
@@ -636,12 +669,16 @@ class ExtensionUpdater {
         await game.promises.ensureDirectory(this.stagingDir);
 
         const buf = await game.promises.readFile(codeZipTemp);
+        const zipMd5 = md5Hex(buf);
+        updateLogger.info('校验', `code.zip 读取：size=${buf.byteLength}B md5=${zipMd5}${this.codeZipMeta?.md5 ? ` 期望=${this.codeZipMeta.md5}${zipMd5 === this.codeZipMeta.md5 ? '（一致）' : '（不一致！）'}` : ''}`);
         let zip;
         try {
             zip = await get.promises.zip();
             // jszip 2.7：同步 load，checkCRC32 对每个条目做 CRC 校验，损坏/截断即抛
             zip.load(buf, { checkCRC32: true });
+            updateLogger.info('校验', `code.zip CRC32 校验通过（${Object.keys(zip.files).filter(n => !n.endsWith('/')).length} 个条目）`);
         } catch (e) {
+            updateLogger.error('校验', `code.zip CRC32 校验失败: ${e.message}`);
             const error = new Error(`代码包损坏（CRC32 校验失败）: ${e.message}`);
             error.updateStage = 'verify';
             throw error;
@@ -700,8 +737,11 @@ class ExtensionUpdater {
             const expected = this.stagedManifest[path]?.md5;
             if (expected && this.staged[path] !== expected) {
                 mismatched.push(path);
+                updateLogger.warn('校验', `暂存文件 md5 不符: ${path} 期望=${expected} 实际=${this.staged[path]}`);
             }
         }
+        updateLogger.info('校验', `代码包暂存树校验：缺失 ${missing.length}，md5 不符 ${mismatched.length}`);
+        if (missing.length) updateLogger.info('校验', `暂存缺失(前10): ${missing.slice(0, 10).join(', ')}`);
         if (missing.length > 0 || mismatched.length > 0) {
             const error = new Error(
                 `代码包校验失败：缺失 ${missing.length} 个文件、MD5 不符 ${mismatched.length} 个\n` +
@@ -733,11 +773,13 @@ class ExtensionUpdater {
             if (typeof onProgress === 'function') onProgress(`正在校验 ${path} ...`);
             const local = await game.promises.readFile(`${this.targetDir}/${path}`);
             if (md5Hex(local) !== expected) {
+                updateLogger.error('校验', `覆盖后复验失败: ${path} 期望=${expected} 实际=${md5Hex(local)}`);
                 const error = new Error(`覆盖后校验失败: ${path}`);
                 error.updateStage = 'verify';
                 throw error;
             }
         }
+        updateLogger.info('校验', '覆盖后复验通过：全部代码文件 md5 与包内清单一致');
     }
 
     // 回滚到备份，并清理暂存目录
@@ -746,13 +788,13 @@ class ExtensionUpdater {
         try {
             const result = await this.backupManager.rollbackToBackup(backup, onProgress);
             if (result.success) {
-                console.log('[回滚] 已恢复到备份版本');
+                updateLogger.info('回滚', '已恢复到备份版本');
             } else {
-                console.error('[回滚] 失败:', result.error);
+                updateLogger.error('回滚', `失败: ${String(result.error || '')}`);
                 await this.ui.alert('回滚失败', `更新失败且自动回滚未成功，可手动从备份恢复：\n${backup.path}`);
             }
         } catch (e) {
-            console.error('[回滚] 异常:', e.message);
+            updateLogger.error('回滚', `异常: ${e.message}`);
         } finally {
             try {
                 if (await game.promises.checkDir(this.stagingDir) === 1) {
@@ -770,7 +812,7 @@ class ExtensionUpdater {
             const content = await game.promises.readFileAsText(`${this.targetDir}/${CONFIG.files.directory}`);
             return Object.keys(JSON.parse(content));
         } catch (e) {
-            console.warn('[清理] 读取本地文件清单失败:', e.message);
+            updateLogger.warn('清理', `读取本地文件清单失败: ${e.message}`);
             return null;
         }
     }
@@ -783,7 +825,7 @@ class ExtensionUpdater {
     async removeObsoleteFiles(oldFileList, newManifestPaths, onProgress = null) {
         const newSet = new Set(newManifestPaths || []);
         if (newSet.size === 0) {
-            console.warn('[清理] 新版本文件清单为空，跳过清理');
+            updateLogger.warn('清理', '新版本文件清单为空，跳过清理');
             return;
         }
 
@@ -810,10 +852,10 @@ class ExtensionUpdater {
                 const exists = await game.promises.checkFile(target);
                 if (exists === 1) {
                     await game.promises.removeFile(target);
-                    console.log(`[更新] 清理失效文件: ${relPath}`);
+                    updateLogger.info('清理', `清理失效文件: ${relPath}`);
                 }
             } catch (e) {
-                console.warn(`[清理] 删除失败: ${relPath}`, e);
+                updateLogger.warn('清理', `删除失败: ${relPath} ${String(e?.message || e)}`);
             }
         }
         await this.pruneEmptyDirs();
@@ -879,9 +921,9 @@ class ExtensionUpdater {
             }
             if (content == null) return;
             await game.promises.writeFile(content, this.targetDir, CONFIG.files.directory);
-            console.log('[更新] 已更新本地文件清单 Directory.json');
+            updateLogger.info('应用', '已更新本地文件清单 Directory.json');
         } catch (e) {
-            console.warn('[更新] 更新本地文件清单失败:', e.message);
+            updateLogger.warn('应用', `更新本地文件清单失败: ${e.message}`);
         }
     }
 
@@ -902,7 +944,7 @@ class ExtensionUpdater {
                 await this.state.updateFile(fileState.path, 'applied', null, null, fileState.size || 0, true);
                 await game.promises.removeFile(task.temp);
             } catch (e) {
-                console.error(`[应用文件] 失败: ${fileState.path}`, e);
+                updateLogger.error('应用', `应用文件失败: ${fileState.path} - ${e.message}`);
                 const error = new Error(`应用文件失败: ${fileState.path} - ${e.message}`);
                 error.updateStage = 'apply';
                 error.errorType = 'apply';
@@ -918,10 +960,10 @@ class ExtensionUpdater {
                 const exists = await game.promises.checkDir(dir);
                 if (exists === 1) {
                     await game.promises.removeDir(dir);
-                    console.log(`[清理] 已删除临时目录: ${dir}`);
+                    updateLogger.info('清理', `已删除临时目录: ${dir}`);
                 }
             } catch (e) {
-                console.warn(`[清理] 删除临时目录失败: ${dir}`, e);
+                updateLogger.warn('清理', `删除临时目录失败: ${dir} ${String(e?.message || e)}`);
             }
         }
     }
@@ -1028,12 +1070,21 @@ class ExtensionUpdater {
                     await this.ui.alert('预览版兼容性警告', `${reason}。\n\n预览版仅作警示，可继续下载，但可能无法正常运行。`);
                 }
             } else {
+                // 更新至发布版：必须从 version.json 选到可用的发布版本。
+                // 所有分支/版本失效时直接报错，绝不回退到 main（main 仅用于预览版）。
                 const versions = await new VersionChecker(this.repo, this.tokens, this.envType).list(gameVer);
-                if (versions.length > 0) {
-                    candidates = versions.filter(v => v.compatible);
-                    if (candidates.length === 0) candidates = versions; // 无兼容版本时列出全部
-                    verInfo = candidates[0]; // 默认选最新兼容版本
+                if (versions.length === 0) {
+                    const error = new Error('未能获取有效的发布版本信息（version.json 为空或解析失败），所有分支失效，无法更新到发布版');
+                    error.updateStage = 'version';
+                    throw error;
                 }
+                candidates = versions.filter(v => v.compatible);
+                if (candidates.length === 0) {
+                    const error = new Error(`没有兼容当前无名杀版本（${gameVer}）的发布版本，全部分支失效；可改用“更新至预览版”进行尝试`);
+                    error.updateStage = 'version';
+                    throw error;
+                }
+                verInfo = candidates[0]; // 默认选最新兼容版本
             }
         } finally {
             loadInfo.close();
@@ -1053,6 +1104,8 @@ class ExtensionUpdater {
         if (!this.previewMode && verInfo && verInfo.branch && verInfo.branch !== this.repo.branch) {
             this.repo.switchBranch(verInfo.branch);
         }
+        updateLogger.setContext({ '目标版本': verInfo?.extensionVersion || '(main 最新)', '目标分支': this.repo.branch });
+        updateLogger.info('版本', `目标版本=${verInfo?.extensionVersion || '未知'}，目标分支=${this.repo.branch}`);
 
         // 阶段二：下载文件清单并建立任务（Directory.json）—— 同样耗时，显示“请稍候”
         const loadList = await this.ui.showLoading('正在准备更新清单', '正在下载文件清单，请稍候...');
@@ -1085,7 +1138,8 @@ class ExtensionUpdater {
             const totalDiff = mismatched.length + missing.length;
             const more = totalDiff > diffLines.length ? `\n...等 ${totalDiff} 个文件` : '';
             game.print(`[警告] 预览版：${mismatched.length} 个文件与 main 清单不一致，${missing.length} 个文件缺失（仅警告，继续下载）`);
-            console.warn(`[预览] 与 main 清单差异：\n${diffLines.join('\n')}${more}`);
+            updateLogger.warn('版本', `预览版与 main 清单差异：${mismatched.length} 不一致，${missing.length} 缺失`);
+            updateLogger.warn('版本', `差异文件：${diffLines.join('；')}${more}`);
         }
 
         // “更新至发布版·自动”：全部含 md5 的文件均与清单一致 → 已是最新，不下载。
@@ -1122,6 +1176,8 @@ class ExtensionUpdater {
         this.startTime = Date.now();
         let progressUI = null;
         this._tokenPrompted = false;
+
+        updateLogger.info('更新', `开始更新任务：模式=${resumeMode ? '断点续传' : retryMode ? '重试失败' : '全新下载'}`);
 
         try {
             // 断点续传模式：保持现有状态继续下载
@@ -1239,7 +1295,7 @@ class ExtensionUpdater {
                         ? `\n...等 ${this.downloader.lenientMismatches.length} 个文件`
                         : '';
                     game.print(`[警告] 预览版：${this.downloader.lenientMismatches.length} 个文件下载后 md5 与清单不符（已接受，仅警告）`);
-                    console.warn(`[预览] 已接受的 md5 不符文件：\n${list}${more}`);
+                    updateLogger.warn('校验', `预览版已接受的 md5 不符文件：${list}${more}`);
                 }
             }
 

@@ -33,7 +33,7 @@ export const perfectPair = roles.collect('perfectPair');
 
 export const skill = roles.merge('skill');
 
-import { translate as metaTranslate, dynamicTranslate as metaDynamicTranslate, pinyins as metaPinyins } from './_meta.js';
+import { translate as metaTranslate, dynamicTranslate as metaDynamicTranslate, pinyins as metaPinyins } from './meta.js';
 
 export const translate = { ...metaTranslate, ...roles.merge('translate') };
 export const dynamicTranslate = { ...metaDynamicTranslate, ...roles.merge('dynamicTranslate') };

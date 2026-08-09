@@ -4,7 +4,6 @@
     {
       "version": "26.8.7.3",
       "gameVersion": ">=1.11.2",
-      "branch": "main",
       "description": "支持无名杀1.11.2及以上的版本",
       "players": [
         "lit_yutong雨桐", "lit_zhongyutong钟雨桐"
@@ -26,7 +25,6 @@
     {
       "version": "26.6.25.2",
       "gameVersion": ">=1.11.2",
-      "branch": "v26.6.25.2",
       "description": "支持无名杀1.11.2及以上的版本",
       "highlights": [
         "临时更新，用于测试平衡性与检验新版本适配状况；",
@@ -37,9 +35,7 @@
     },
     {
       "version": "26.3.15.3",
-      "displayVersion": "26.3.15",
       "gameVersion": "1.11.1 || 1.11.2",
-      "branch": "v26.3.15.3",
       "description": "支持无名杀1.11.1~1.11.2版本",
       "highlights": [
         "准备加入角色“羲烨”“雨桐”，敬请期待；",
@@ -54,7 +50,6 @@
       "version": "26.2.12.0",
       "displayVersion": "26.2.12",
       "gameVersion": "1.11.0",
-      "branch": "v26.2.12.0",
       "description": "支持无名杀1.11.0版本",
       "highlights": [
         "加入角色：王荣 以及吊卡技能：蔡晨的狂热、荣少的剑；",

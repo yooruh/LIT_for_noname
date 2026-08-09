@@ -27,6 +27,11 @@ const utils = {
         return Math.floor(seconds / 3600) + '时' + Math.floor((seconds % 3600) / 60) + '分';
     },
 
+    // 去掉版本号前导的 v（如 v26.8.7.3 → 26.8.7.3）；未传或非字符串时返回空串
+    stripV(v) {
+        return String(v ?? '').replace(/^v/, '');
+    },
+
     compareVersion(v1, v2) {
         const a = String(v1).replace(/^v/, '').split('.').map(Number);
         const b = String(v2).replace(/^v/, '').split('.').map(Number);

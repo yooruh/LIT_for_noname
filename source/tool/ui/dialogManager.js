@@ -979,6 +979,9 @@ const DialogManager = (() => {
         },
 
         async filesManager(title, message, items, options = {}) {
+            // 选中项集合：提升到方法作用域，供 buildContent 与按钮 result 共享
+            // （按钮闭包无法访问 createBaseDialog 内的局部 dialog，故不在此查询 dialog）
+            const selectedFiles = new Set();
             return await this.createBaseDialog({
                 title,
                 message: null,
@@ -998,8 +1001,6 @@ const DialogManager = (() => {
                     const listContainer = document.createElement('div');
                     listContainer.className = 'lit-ui-content lit-ui-scrollable lit-ui-list';
                     listContainer.style.maxHeight = '400px';
-
-                    const selectedFiles = new Set();
 
                     items.forEach((item, index) => {
                         const itemEl = document.createElement('div');
@@ -1064,47 +1065,35 @@ const DialogManager = (() => {
                 defaultResult: null,
                 buttons: (() => {
                     const list = [
-                    {
-                        text: '删除',
-                        action: 'delete',
-                        isDestructive: true,
-                        result: () => {
-                            let files = Array.from(dialog.querySelectorAll('.lit-ui-list-item input:checked'))
-                                .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value);
-                            return ({
+                        {
+                            text: '删除',
+                            action: 'delete',
+                            isDestructive: true,
+                            result: () => ({
                                 action: 'delete',
-                                files: files
-                            });
-                        },
-                        disabled: true
-                    }];
+                                files: Array.from(selectedFiles)
+                            }),
+                            disabled: true
+                        }];
                     if (options.showEdit !== false) {
                         list.push({
-                        text: '编辑',
-                        action: 'edit',
-                        result: () => {
-                            let files = Array.from(dialog.querySelectorAll('.lit-ui-list-item input:checked'))
-                                .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value);
-                            return ({
+                            text: '编辑',
+                            action: 'edit',
+                            result: () => ({
                                 action: 'edit',
-                                files: files
-                            });
-                        },
-                        disabled: true
+                                files: Array.from(selectedFiles)
+                            }),
+                            disabled: true
                         });
                     }
                     list.push({
                         text: options.applyText || '应用配置',
                         action: 'apply',
                         isPrimary: true,
-                        result: () => {
-                            let files = Array.from(dialog.querySelectorAll('.lit-ui-list-item input:checked'))
-                                .map(checkbox => checkbox.closest('.lit-ui-list-item').dataset.value);
-                            return ({
-                                action: 'apply',
-                                files: files
-                            });
-                        },
+                        result: () => ({
+                            action: 'apply',
+                            files: Array.from(selectedFiles)
+                        }),
                         disabled: true
                     });
                     list.push({

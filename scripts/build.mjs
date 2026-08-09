@@ -25,6 +25,7 @@ import {
 } from './lib/shared.mjs';
 import {
   getCurrentReleaseVersion,
+  getLatestRelease,
   getReleaseManifestPath,
   readReleaseManifest,
   syncVersionFiles,
@@ -69,9 +70,11 @@ function showCurrent() {
 }
 
 function collectResults(manifest, previewOnly) {
-  const latestVersion = getCurrentReleaseVersion(manifest);
+  const latest = getLatestRelease(manifest);
+  const latestVersion = stripV(latest.version);
+  const latestDisplayVersion = latest.displayVersion || '';
   const results = [
-    ...syncVersionFiles(latestVersion, previewOnly),
+    ...syncVersionFiles(latestVersion, latestDisplayVersion, previewOnly),
     writeVersionJson(manifest, previewOnly),
     writeUpdateHtml(manifest, previewOnly),
     writeContentJs(manifest, previewOnly),

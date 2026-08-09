@@ -5,11 +5,13 @@ import { TokenManager, Environment } from './repository.js';
 import { StateManager } from './stateManager.js';
 import { DownloadTask } from './downloader.js';
 import { ExtensionUpdater } from './extensionUpdater.js';
+import { updateLogger } from './logger.js';
 
 // ==================== 对外接口 ====================
 export const extensionUpdateManager = {
     async showUI() {
         const updater = new ExtensionUpdater();
+        updateLogger.reset(); // 开始新的更新会话，清空上次日志
 
         try {
             const resumeInfo = await updater.checkResume();
@@ -137,7 +139,7 @@ export const extensionUpdateManager = {
                     '取消',
                     '更新至发布版'
                 );
-                if (!proceed) {
+                if (proceed) {
                     game.print('[检查更新] 已检查，未执行下载');
                     return;
                 }
@@ -160,7 +162,7 @@ export const extensionUpdateManager = {
             // 细化错误提示
             const stage = error.updateStage || 'download';
             const isApplyStage = stage === 'apply';
-            let errorTitle = isApplyStage ? '应用更新失败' : '下载更新失败';
+            let errorTitle = isApplyStage ? '应用更新失败' : (stage === 'version' ? '无可用发布版本' : '下载更新失败');
             let errorMsg = error.message;
 
             if (error.message.includes('CORS') || error.message.includes('403')) {
@@ -173,6 +175,10 @@ export const extensionUpdateManager = {
             }
 
             await updater.ui.alert(errorTitle, errorMsg);
+
+            // 失败后：先存档日志到临时下载目录（赶在用户清理临时目录之前），再展示可复制日志
+            updateLogger.error('更新', `更新失败: ${errorMsg}`);
+            const logPath = await updateLogger.writeToFile(updater.tempDir);
 
             if (error.message !== '下载已取消' && updater.tempDir) {
                 const canResume = await updater.ui.confirm(
@@ -190,7 +196,16 @@ export const extensionUpdateManager = {
                     }
                 }
             }
+
+            await updater.ui.showLogReport(updateLogger.format(), logPath);
         }
+    },
+
+    // 存档日志文件到临时下载目录，并弹出可复制日志（供发群排查）
+    async archiveAndShowLog(updater, summary) {
+        updateLogger.error('更新', summary);
+        const logPath = await updateLogger.writeToFile(updater.tempDir);
+        await updater.ui.showLogReport(updateLogger.format(), logPath);
     },
 
     // 处理 update() 返回结果的共同部分（cancelled / retryLater / 部分完成）。
@@ -204,11 +219,15 @@ export const extensionUpdateManager = {
         if (result.retryLater) {
             let msg = '已保留下载进度，下次可继续';
             await updater.ui.alert('进度已保存', msg);
+            // 下载失败（如 code.zip 失败）：存档日志并弹可复制日志
+            await this.archiveAndShowLog(updater, `下载失败：${result.failed?.length || 0} 个文件未完成，进度已保存`);
             return false;
         }
 
         if (result.success && result.partial) {
             game.print(`[更新] 部分完成: ${result.message}`);
+            // 部分文件下载失败（已忽略并应用）：同样存档日志供排查
+            await this.archiveAndShowLog(updater, `部分完成：${result.stats?.failed || 0} 个文件下载失败`);
         }
         return true;
     },

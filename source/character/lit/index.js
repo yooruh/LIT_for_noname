@@ -31,9 +31,9 @@ export const characterFilter = roles.merge('characterFilter');
 export const characterSubstitute = roles.merge('characterSubstitute');
 export const perfectPair = roles.collect('perfectPair');
 
-import { skill as negClear, translate as negClearTranslate } from './_negClear.js';
-import { skill as shengji, translate as shengjiTranslate } from './_shengji.js';
-import { translate as metaTranslate } from './_meta.js';
+import { skill as negClear, translate as negClearTranslate } from './negClear.js';
+import { skill as shengji, translate as shengjiTranslate } from './shengji.js';
+import { translate as metaTranslate } from './meta.js';
 
 export const skill = { ...negClear, ...shengji, ...roles.merge('skill') };
 export const fullTranslate = {

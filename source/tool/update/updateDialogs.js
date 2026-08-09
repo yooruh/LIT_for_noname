@@ -5,23 +5,23 @@ import { updateEnvironment as Environment } from './repository.js';
 
 // 将更新内容中的轻量 HTML 转为对话框可显示的纯文本（对话框使用 textContent，HTML 会被转义）
 function plainText(html) {
-	return String(html ?? '')
-		.replace(/<br\s*\/?>/gi, '\n')
-		.replace(/<\/li>/gi, '\n')
-		.replace(/<li[^>]*>/gi, '')
-		.replace(/\{\{poptip:([^}]+)\}\}/g, (_, token) => {
-			const [arg, label] = token.split('|');
-			return label || String(arg).replace(/^[a-z0-9_]+/i, '') || arg;
-		})
-		.replace(/<[^>]+>/g, '')
-		.replace(/&nbsp;/gi, ' ')
-		.replace(/&gt;/gi, '>')
-		.replace(/&lt;/gi, '<')
-		.replace(/&quot;/gi, '"')
-		.replace(/&#39;/g, "'")
-		.replace(/&amp;/gi, '&')
-		.replace(/\n{3,}/g, '\n\n')
-		.trim();
+    return String(html ?? '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<li[^>]*>/gi, '')
+        .replace(/\{\{poptip:([^}]+)\}\}/g, (_, token) => {
+            const [arg, label] = token.split('|');
+            return label || String(arg).replace(/^[a-z0-9_]+/i, '') || arg;
+        })
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&gt;/gi, '>')
+        .replace(/&lt;/gi, '<')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/gi, '&')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
 }
 
 // ==================== UI 管理器 ====================
@@ -646,8 +646,8 @@ class UIManager {
 
         const modeText = mode === 'auto' ? '自动选择（代码整包 + 媒体按需）'
             : mode === 'code' ? '仅代码（媒体不动）'
-            : mode === 'retry_failed' ? '失败重试'
-            : '完整覆写（全部覆盖）';
+                : mode === 'retry_failed' ? '失败重试'
+                    : '完整覆写（全部覆盖）';
         const platformText = platform === 'gitee' ? 'Gitee（国内）' : 'GitHub（国际）';
         const envText = envType === 'node'
             ? 'Node.js 本体下载'
@@ -728,6 +728,58 @@ class UIManager {
 
     async confirm(title, message, confirmText = '确定', cancelText = '取消') {
         return await this.dialog.confirm(title, message, confirmText, cancelText);
+    }
+
+    // 展示可复制的更新失败日志；filePath 为已存档的文件路径（可空）。
+    // 文本框内容可直接全选复制，也可点“复制日志”按钮复制后发到群里排查。
+    async showLogReport(logText, filePath) {
+        return await this.dialog.createBaseDialog({
+            title: '更新失败 · 日志',
+            message: null,
+            dialogOptions: {
+                width: 'min(720px, 94vw)',
+                maxHeight: '88vh'
+            },
+            buildContent: (dialog) => {
+                const note = document.createElement('div');
+                note.className = 'lit-ui-content lit-ui-message';
+                note.style.marginBottom = '8px';
+                note.style.whiteSpace = 'pre-line';
+                note.textContent = filePath
+                    ? `📄 日志已保存至：${filePath}\n可打开该文件全选复制，或直接点下方「复制日志」后发到群里排查。`
+                    : '📄 本次更新失败，日志未写入文件，可直接复制下方内容发到群里排查。';
+                dialog.appendChild(note);
+
+                const copyBtn = document.createElement('button');
+                copyBtn.textContent = '复制日志';
+                copyBtn.style.cssText = 'margin-bottom:8px;padding:6px 16px;cursor:pointer;border-radius:6px;border:1px solid currentColor;background:transparent;color:inherit;font-size:14px;';
+                copyBtn.onclick = async () => {
+                    try {
+                        await navigator.clipboard.writeText(logText);
+                    } catch (e) {
+                        // 兜底：选中后触发复制命令
+                        try {
+                            ta.focus();
+                            ta.select();
+                            document.execCommand('copy');
+                        } catch (e2) { }
+                    }
+                    copyBtn.textContent = '已复制 ✓';
+                    copyBtn.style.opacity = '0.7';
+                };
+                dialog.appendChild(copyBtn);
+
+                const ta = document.createElement('textarea');
+                ta.readOnly = true;
+                ta.value = logText;
+                ta.style.cssText = 'width:100%;height:min(420px, 52vh);box-sizing:border-box;font-family:Consolas,Menlo,monospace;font-size:12px;line-height:1.5;white-space:pre;resize:vertical;border:1px solid currentColor;border-radius:6px;padding:8px;color:inherit;background:transparent;';
+                dialog.appendChild(ta);
+            },
+            defaultResult: null,
+            buttons: [
+                { text: '关闭', result: null }
+            ]
+        });
     }
 }
 

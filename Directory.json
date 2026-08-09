@@ -1,11 +1,11 @@
 {
   "Directory.json": {
-    "size": 16365,
+    "size": 16466,
     "md5": null
   },
   "extension.js": {
-    "size": 5235,
-    "md5": "9fa49515358f4631c307569a2008acfa"
+    "size": 5562,
+    "md5": "35bd3ffb91b15276a6216b49033e252e"
   },
   "image/card/lit_diaoka.png": {
     "size": 4793,
@@ -204,8 +204,16 @@
     "md5": "8a5916ee6d13202920029475c2e1ed65"
   },
   "source/character/lit/index.js": {
-    "size": 3116,
-    "md5": "03c2f0ba5733303d958419215c9e89de"
+    "size": 3113,
+    "md5": "178df58069a921c9fc7a2e2c5dc9035e"
+  },
+  "source/character/lit/meta.js": {
+    "size": 244,
+    "md5": "fefcb69fc9cf1a5c1525f81baef846ae"
+  },
+  "source/character/lit/negClear.js": {
+    "size": 834,
+    "md5": "4175b4114a8ab19c00282fe0fbb0773e"
   },
   "source/character/lit/roles/boshu.js": {
     "size": 21598,
@@ -327,15 +335,7 @@
     "size": 869,
     "md5": "1f7a57215c7443b9dced99ea3bd568f6"
   },
-  "source/character/lit/_meta.js": {
-    "size": 244,
-    "md5": "fefcb69fc9cf1a5c1525f81baef846ae"
-  },
-  "source/character/lit/_negClear.js": {
-    "size": 834,
-    "md5": "4175b4114a8ab19c00282fe0fbb0773e"
-  },
-  "source/character/lit/_shengji.js": {
+  "source/character/lit/shengji.js": {
     "size": 10201,
     "md5": "18f6de86a97035f42afd0664530220ae"
   },
@@ -348,8 +348,12 @@
     "md5": "bf9c4b2309febecc428755187614728d"
   },
   "source/character/test/index.js": {
-    "size": 2339,
-    "md5": "e3f35c0c3a3a0217b303bdb1b5876fa9"
+    "size": 2338,
+    "md5": "9606e9c5101a7df500efdfa0ea956ab1"
+  },
+  "source/character/test/meta.js": {
+    "size": 161,
+    "md5": "d359b6ce47eb01598a52a39829f65144"
   },
   "source/character/test/roles/hupan9.js": {
     "size": 8252,
@@ -379,10 +383,6 @@
     "size": 316,
     "md5": "d7db3c09d6514c8eb3eab5ed92aa0de5"
   },
-  "source/character/test/_meta.js": {
-    "size": 161,
-    "md5": "d359b6ce47eb01598a52a39829f65144"
-  },
   "source/config.js": {
     "size": 9166,
     "md5": "708cc1c696183d19f536aa4ad486296f"
@@ -392,8 +392,8 @@
     "md5": "96c69afecfa8d8ff7a7591b6b23bcfc8"
   },
   "source/help.js": {
-    "size": 3755,
-    "md5": "cad7e1c9439e7dd9a853b94005f12991"
+    "size": 4074,
+    "md5": "e174660fd7130ace9e6f48b3446f2f81"
   },
   "source/mode/sandaohuanhua.js": {
     "size": 63859,
@@ -496,8 +496,8 @@
     "md5": "2ae81ef03e8638d31cd5d8e27b8584d8"
   },
   "source/tool/ui/dialogManager.js": {
-    "size": 58912,
-    "md5": "0febe9bcfd087e6eb1378fab8614fbd7"
+    "size": 58362,
+    "md5": "8ac96a8e76185d25e33241694695742e"
   },
   "source/tool/ui/poptips.js": {
     "size": 1606,
@@ -508,24 +508,28 @@
     "md5": "359f3fe459873455ef09923140d022e8"
   },
   "source/tool/update/backupManager.js": {
-    "size": 5494,
-    "md5": "d2eda08349de559a1993650d7510085c"
+    "size": 7091,
+    "md5": "65cb73e5bee317973fbba7f981b46181"
   },
   "source/tool/update/config.js": {
     "size": 2035,
     "md5": "5c4c920a757ea0e97eda92d5ca52bae6"
   },
   "source/tool/update/downloader.js": {
-    "size": 13528,
-    "md5": "e80885710a39eddb19e21d9750c59e4c"
+    "size": 14624,
+    "md5": "493dc4b73dba8d54a609e13234284816"
   },
   "source/tool/update/extensionUpdater.js": {
-    "size": 61791,
-    "md5": "6f634b76880b7df4655cc04dbe43738c"
+    "size": 67072,
+    "md5": "f12293a9a47d5bafa9982ebf23af96f9"
   },
   "source/tool/update/index.js": {
-    "size": 19535,
-    "md5": "049ec7cd2619f4fae240d39773ec4cb7"
+    "size": 20867,
+    "md5": "37ebd80a1edbe21e296bf379722fb9ad"
+  },
+  "source/tool/update/logger.js": {
+    "size": 3720,
+    "md5": "0c099b15cb31734ee11f159f6cce7bcf"
   },
   "source/tool/update/md5.js": {
     "size": 3207,
@@ -540,16 +544,16 @@
     "md5": "ed43bc7e4f2b4a2f9d9e3aa0028c1ba2"
   },
   "source/tool/update/updateDialogs.js": {
-    "size": 34614,
-    "md5": "e1e166d9bd6f858dde9cf4287cf6ff00"
+    "size": 37500,
+    "md5": "673e6c265f6baa58a77a5bd126e86161"
   },
   "source/tool/update/utils.js": {
-    "size": 5166,
-    "md5": "2a91bbc0ec241cd36df720332ce91dac"
+    "size": 5350,
+    "md5": "f16e9b6530aba76fe19bb5cf5161822a"
   },
   "source/tool/update/versionChecker.js": {
-    "size": 2878,
-    "md5": "5cebdeb2f4741b0c7abddee01f6f9151"
+    "size": 3545,
+    "md5": "55fec12a0d2970316018b11d4feee92e"
   },
   "source/tool/utils/paths.js": {
     "size": 397,
@@ -584,8 +588,8 @@
     "md5": "f3989765fd152d8ff31808c266d8f07b"
   },
   "style/html/update.html": {
-    "size": 15300,
-    "md5": "99fe721d3043d6de959067d30c0ebb2e"
+    "size": 15302,
+    "md5": "de26f78cdb3f021876ff455fac0e0280"
   },
   "style/nncfg/android_wide11.0.nncfg": {
     "size": 3956,

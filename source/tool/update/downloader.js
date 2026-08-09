@@ -3,6 +3,7 @@ import { UPDATE_CONFIG as CONFIG } from './config.js';
 import { updateUtils as utils } from './utils.js';
 import { updateEnvironment as Environment } from './repository.js';
 import { md5Hex } from './md5.js';
+import { updateLogger } from './logger.js';
 
 // ==================== 下载任务实体 ====================
 class DownloadTask {
@@ -260,21 +261,27 @@ class SmartDownloader {
             const currentUrl = attempts[index];
             try {
                 await this.removeTempFile(task.temp);
+                updateLogger.info('下载', `${task.remote} 尝试源 ${index + 1}/${attempts.length}: ${currentUrl}${task.md5 ? ` 期望md5=${task.md5}` : ''}`);
                 const result = await this.downloadViaGame(currentUrl, task.temp, onProgress);
+                const actual = result?.data ? md5Hex(result.data) : null;
 
                 // 内容完整性校验：与清单 md5 不一致视为失败（媒体逐文件与代码包共用此钩子）。
                 // 预览模式（lenientMd5）下不一致仅警告并接受，不强制中断。
                 if (task.md5) {
-                    const actual = md5Hex(result.data);
                     if (actual !== task.md5) {
                         if (this.lenientMd5) {
-                            console.warn(`[预览] MD5 与清单不一致（仅警告，继续使用）: ${task.remote}`);
+                            updateLogger.warn('下载', `${task.remote} md5 不一致，预览模式已接受：size=${result.size}B 实际=${actual} 期望=${task.md5}`);
                             this.lenientMismatches.push(task.remote);
                         } else {
+                            updateLogger.warn('下载', `${task.remote} md5 校验失败：size=${result.size}B 实际=${actual} 期望=${task.md5}`);
                             await this.removeTempFile(task.temp);
                             throw new Error(`MD5校验失败: ${task.remote}`);
                         }
+                    } else {
+                        updateLogger.info('下载', `${task.remote} md5 校验通过：size=${result.size}B md5=${actual}`);
                     }
+                } else {
+                    updateLogger.info('下载', `${task.remote} 下载完成（清单无 md5，跳过校验）：size=${result.size}B`);
                 }
 
                 if (stateManager) {
@@ -293,6 +300,7 @@ class SmartDownloader {
                 if (error?.code) lastError.code = error.code;
                 const { type, recoverable } = this.classifyError(error);
                 const hasMoreAttempts = index < attempts.length - 1;
+                updateLogger.warn('下载', `${task.remote} 源 ${index + 1}/${attempts.length} 失败: ${detail}（类型=${type}${recoverable ? '' : '，不可恢复'}）`);
 
                 if (!recoverable || !hasMoreAttempts) break;
                 game.print(index === 0 ? '🔄 主源失败，尝试备用源...' : '🔄 下载失败，重试其他来源...');
@@ -301,6 +309,7 @@ class SmartDownloader {
         }
 
         const { type } = this.classifyError(lastError);
+        updateLogger.error('下载', `${task.remote} 全部源失败，最终判定：${String(lastError?.message || lastError || '下载失败')}（类型=${type}）`);
         if (stateManager && String(lastError?.message || lastError) !== '下载已取消') {
             await stateManager.updateFile(task.remote, 'failed', String(lastError?.message || lastError), type, 0, true);
         }

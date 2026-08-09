@@ -1,5 +1,6 @@
 import { game } from '../../../../../noname.js';
 import { UPDATE_CONFIG as CONFIG } from './config.js';
+import { updateLogger } from './logger.js';
 
 // ==================== 备份管理器 ====================
 class BackupManager {
@@ -110,9 +111,9 @@ class BackupManager {
         for (const backup of toDelete) {
             try {
                 await game.promises.removeDir(backup.path);
-                console.log(`[备份清理] 删除旧备份: ${backup.name}`);
+                updateLogger.info('备份', `删除旧备份: ${backup.name}`);
             } catch (e) {
-                console.warn(`[备份清理] 删除失败: ${backup.name}`);
+                updateLogger.warn('备份', `删除旧备份失败: ${backup.name} ${String(e?.message || e)}`);
             }
         }
     }
@@ -132,6 +133,32 @@ class BackupManager {
         for (const folder of folders) {
             if (skipDirs.has(folder)) continue;
             await this.copyDirectoryRecursive(`${src}/${folder}`, `${dest}/${folder}`, options);
+        }
+
+        // 兼容旧版本：getFileList 会过滤 `_` 开头文件，备份/回滚会丢旧版的 `_meta.js` 等。
+        // 源目录自带的 Directory.json 记录了完整文件清单，据此把 `_` 文件显式复制过去。
+        await this.copyLegacyUnderscore(src, dest, onProgress);
+    }
+
+    // 兼容旧版本：显式复制源目录清单中 `_` 开头的文件（getFileList 看不到它们）
+    async copyLegacyUnderscore(src, dest, onProgress = null) {
+        if (await game.promises.checkFile(`${src}/Directory.json`) !== 1) return;
+        let fileList;
+        try {
+            fileList = Object.keys(JSON.parse(await game.promises.readFileAsText(`${src}/Directory.json`)));
+        } catch (e) {
+            return;
+        }
+        for (const rel of fileList) {
+            const name = rel.split('/').pop();
+            if (!name || !name.startsWith('_')) continue;
+            if (await game.promises.checkFile(`${src}/${rel}`) !== 1) continue;
+            const content = await game.promises.readFile(`${src}/${rel}`);
+            const dir = rel.includes('/') ? `${dest}/${rel.slice(0, rel.lastIndexOf('/'))}` : dest;
+            await game.promises.ensureDirectory(dir);
+            await game.promises.writeFile(content, dir, name);
+            if (typeof onProgress === 'function') onProgress(`正在复制 ${rel}`);
+            updateLogger.info('备份', `兼容旧版复制 ${rel}`);
         }
     }
 }

@@ -120,8 +120,9 @@ export function validateManifest(manifest) {
     }
     seen.add(version);
 
-    if (release.displayVersion && !isValidVersion(release.displayVersion)) {
-      throw new Error(`${label}.displayVersion 不是合法版本号`);
+    // displayVersion 仅用于更新内容等位置的文本展示，不参与分支/路径，故不限定版本号格式
+    if (release.displayVersion != null && typeof release.displayVersion !== 'string') {
+      throw new Error(`${label}.displayVersion 必须是字符串`);
     }
     if (!Array.isArray(release.highlights) || release.highlights.length === 0) {
       throw new Error(`${label}.highlights 不能为空数组`);
@@ -146,7 +147,7 @@ export function manifestToVersionJson(manifest) {
       .map(release => ({
         extensionVersion: stripV(release.version),
         gameVersion: release.gameVersion,
-        branch: release.branch || (stripV(release.version) === getCurrentReleaseVersion(manifest) ? (manifest.defaultBranch || 'main') : `v${stripV(release.version)}`),
+        branch: release.branch || `v${stripV(release.version)}`,
         description: release.description || `支持无名杀${release.gameVersion}版本`,
         highlights: Array.isArray(release.highlights) ? release.highlights : [],
       })),
@@ -286,10 +287,10 @@ export function renderContentJs(manifest) {
   );
 }
 
-export function syncVersionFiles(version, dryRun = false) {
+export function syncVersionFiles(version, displayVersion = '', dryRun = false) {
   return [
     syncPackageJson(version, dryRun),
-    syncExtensionJs(version, dryRun),
+    syncExtensionJs(version, displayVersion, dryRun),
     syncInfoJson(version, dryRun),
   ];
 }
@@ -363,13 +364,15 @@ function syncPackageJson(version, dryRun) {
   return { file: 'package.json', changed: newContent !== oldContent };
 }
 
-function syncExtensionJs(version, dryRun) {
+function syncExtensionJs(version, displayVersion, dryRun) {
   const oldContent = readFile(PATHS.extensionJs);
-  const pattern = /(const litVersion\s*=\s*)".*?"/;
-  const replacement = `$1"${stripV(version)}"`;
-  const newContent = oldContent.replace(pattern, replacement);
+  // litVersion 为真实版本号（用于分支/zip/tag 等路径）；litDisplayVersion 仅用于更新内容等文本展示
+  const newContent = oldContent
+    .replace(/(const litVersion\s*=\s*)".*?"/, `$1"${stripV(version)}"`)
+    // litDisplayVersion 是同一 const 语句内逗号分隔的第二个声明符，前面没有 const
+    .replace(/(litDisplayVersion\s*=\s*)".*?"/, `$1"${displayVersion}"`);
   if (!dryRun && newContent !== oldContent) {
-    replaceInFile(PATHS.extensionJs, pattern, replacement);
+    writeFile(PATHS.extensionJs, newContent);
   }
   return { file: 'extension.js', changed: newContent !== oldContent };
 }
@@ -397,7 +400,7 @@ function writeWholeFile(filePath, newContent, dryRun) {
 function renderUpdateBlock(release, index) {
   const title = index === 0
     ? '{{version}}更新（当前版本）'
-    : `${stripV(release.displayVersion || release.version)}更新`;
+    : `${release.displayVersion || stripV(release.version)}更新`;
   const items = release.highlights
     .map((item, itemIndex) => `\t\t\t\t<li>${formatOrder(itemIndex + 1)} ${renderStaticMarkup(item)}</li>`)
     .join('\n');
