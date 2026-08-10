@@ -2,6 +2,7 @@ import { lib, game, get } from '../../../../../noname.js';
 import { UPDATE_CONFIG as CONFIG, normalizeMode } from './config.js';
 import { updateUtils as utils } from './utils.js';
 import { extensionFilesPath, extensionPath } from '../utils/paths.js';
+import { getFileList } from '../utils/fileSystem.js';
 import { updateEnvironment as Environment, TokenManager, GitAdapter } from './repository.js';
 import { StateManager } from './stateManager.js';
 import { DownloadTask, SmartDownloader } from './downloader.js';
@@ -12,8 +13,9 @@ import { md5Hex } from './md5.js';
 import { updateLogger } from './logger.js';
 
 // 更新时需保护、绝不删除/清理的目录与文件
-const PROTECTED_DIRS = new Set(['_temp_downloading', '.git', '.vscode', 'node_modules']);
-const PROTECTED_FILES = new Set(['Directory.json', 'version.json']);
+// 自定义 getFileList 会返回 `_`/`.` 开头的全部条目，故忽略清单覆盖开发机文件与运行时临时项
+const PROTECTED_DIRS = new Set(CONFIG.ignoredDirs);
+const PROTECTED_FILES = new Set([...CONFIG.ignoredFiles, CONFIG.files.directory, CONFIG.files.version]);
 
 // ==================== 主更新器 ====================
 class ExtensionUpdater {
@@ -868,7 +870,7 @@ class ExtensionUpdater {
         const walk = async (dir) => {
             let folders = [], files = [];
             try {
-                [folders, files] = await game.promises.getFileList(dir);
+                [folders, files] = await getFileList(dir);
             } catch (e) {
                 return;
             }
@@ -890,7 +892,7 @@ class ExtensionUpdater {
         const walk = async (dir) => {
             let isEmpty = false;
             try {
-                const [folders, files] = await game.promises.getFileList(dir);
+                const [folders, files] = await getFileList(dir);
                 const removable = [];
                 for (const f of folders) {
                     if (PROTECTED_DIRS.has(f)) continue;
@@ -900,7 +902,7 @@ class ExtensionUpdater {
                 for (const f of removable) {
                     await game.promises.removeDir(`${dir}/${f}`);
                 }
-                const [folders2, files2] = await game.promises.getFileList(dir);
+                const [folders2, files2] = await getFileList(dir);
                 isEmpty = folders2.filter(f => !PROTECTED_DIRS.has(f)).length === 0 && files2.length === 0;
             } catch (e) { }
             return isEmpty;

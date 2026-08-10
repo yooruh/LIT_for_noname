@@ -541,7 +541,7 @@ export const translate = {
     'lit_xinhen_faq': "关于判定区内牌数量的计算",
     'lit_xinhen_faq_info': `由于存在将多张牌当作单张牌使用的情况（如${get.poptip('lit_saohua')}①），故在此明确：对于此类视为牌，即便其对应的实体牌数量大于单张牌，在计算“牌的数量”时也只算作单张牌。拆和顺等也都将这些牌作为一个集合来看成是单张牌，除非明确说明是按照“实体牌数量”来计算的（如${get.poptip('lit_youxia')}）`,
     'lit_shengjizsj': "升级·张盛杰",
-    'lit_shengjizsj_info': `获得场上所有人判定区和手牌中的延时锦囊牌`,
+    'lit_shengjizsj_info': `${get.poptip("lit_sjInstantFull")}，获得场上所有人判定区和手牌中的延时锦囊牌`,
 };
 
 export const simpleTranslate = {
@@ -550,5 +550,5 @@ export const simpleTranslate = {
     'lit_xinyi_info': `觉；出牌阶段，若判定区内有或有过≥3种延时锦囊牌，则-1上限，获得${get.poptip('lit_xinhen')}`,
     'lit_xinhen_info': "出牌阶段限1次，可将判定区中所有牌当杀，依次对攻击范围内的1人使用。若这些牌中有牌在判定区中视为：" +
         "<li>【闪电】，这些杀视为雷杀</li><li>【乐不思蜀】，技能目标被指定后，弃置“与你判定区等量”的牌；</li><li>【兵粮寸断】，每张杀所需的闪+1；</li><li>【遣返牌】，杀基础伤害+1</li>",
-    'lit_shengjizsj_info': `获得场上所有人判定区和手牌中的延时锦囊牌`,
+    'lit_shengjizsj_info': `${get.poptip("lit_sjInstantSimple")}，获得场上所有人判定区和手牌中的延时锦囊牌`,
 };

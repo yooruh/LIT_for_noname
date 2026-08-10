@@ -422,6 +422,7 @@ const DialogManager = (() => {
             await _initCSS();
             return new Promise((resolve) => {
                 const overlay = _createOverlay();
+                let lastActivityAt = Date.now();
 
                 const dialog = _createDialog(title, "", {
                     width: options.width || 'min(420px, 90vw)',
@@ -439,6 +440,12 @@ const DialogManager = (() => {
                 msgEl.textContent = message || '';
                 dialog.appendChild(msgEl);
 
+                // 底部提示行（默认隐藏）：供外部信号追加“是否重启”等提示，不干扰上方内容
+                const promptRow = document.createElement('div');
+                promptRow.className = 'lit-loading-prompt';
+                promptRow.style.display = 'none';
+                dialog.appendChild(promptRow);
+
                 overlay.appendChild(dialog);
                 document.body.appendChild(overlay);
 
@@ -455,8 +462,24 @@ const DialogManager = (() => {
 
                 resolve({
                     updateText: (text) => {
+                        lastActivityAt = Date.now();
                         msgEl.textContent = text;
                     },
+                    // 在底部追加一行提示（文本居左 + 按钮居右），保持上方内容不变；供停滞检测等外部信号调用
+                    showPromptRow: (text, buttonLabel, onClick) => {
+                        lastActivityAt = Date.now();
+                        promptRow.style.display = 'flex';
+                        promptRow.innerHTML = '';
+                        const textEl = document.createElement('span');
+                        textEl.className = 'lit-loading-prompt-text';
+                        textEl.textContent = text || '';
+                        promptRow.appendChild(textEl);
+                        if (buttonLabel) {
+                            promptRow.appendChild(_createButton(buttonLabel, { isPrimary: true, onClick }));
+                        }
+                    },
+                    // 最近一次界面活动的时刻（停滞检测据此判断是否卡死）
+                    getLastActivityAt: () => lastActivityAt,
                     close: overlay.close
                 });
             });
@@ -468,6 +491,7 @@ const DialogManager = (() => {
                 // 百分比固定为最宽（100%）的宽度，用空格占位，避免数字变化时画面跳动
                 const padPercent = (n) => `${String(n).padStart(3, ' ')}%`;
                 const overlay = _createOverlay();
+                let lastActivityAt = Date.now();
 
                 const dialog = _createDialog(title, "", {
                     width: options.width || 'min(480px, 90vw)',
@@ -537,7 +561,7 @@ const DialogManager = (() => {
 
                 const fileTitleEl = document.createElement('div');
                 fileTitleEl.className = 'lit-complex-loading-file-title';
-                fileTitleEl.textContent = '当前文件';
+                fileTitleEl.textContent = '当前下载队列的首个文件';
                 fileSection.appendChild(fileTitleEl);
 
                 const fileLabelEl = document.createElement('div');
@@ -560,11 +584,17 @@ const DialogManager = (() => {
                 fileSection.appendChild(fileBarContainer);
                 dialog.appendChild(fileSection);
 
-                // 操作按钮区域（可选）
+                // 操作按钮区域（可选，setError/重试使用）
                 const actionRow = document.createElement('div');
                 actionRow.className = 'lit-complex-loading-actions';
                 actionRow.style.display = 'none';
                 dialog.appendChild(actionRow);
+
+                // 底部提示行（默认隐藏）：供外部信号追加“是否重启”等提示，独立于 actionRow，不干扰上方显示
+                const promptRow = document.createElement('div');
+                promptRow.className = 'lit-loading-prompt';
+                promptRow.style.display = 'none';
+                dialog.appendChild(promptRow);
 
                 overlay.appendChild(dialog);
                 document.body.appendChild(overlay);
@@ -588,10 +618,12 @@ const DialogManager = (() => {
                 // 返回控制器对象
                 resolve({
                     updateText: (text) => {
+                        lastActivityAt = Date.now();
                         msgEl.textContent = text;
                     },
 
                     updateProgress: (value, total, opts = {}) => {
+                        lastActivityAt = Date.now();
                         let percent = 0;
 
                         if (typeof value === 'object') {
@@ -647,6 +679,7 @@ const DialogManager = (() => {
                     },
 
                     setIndeterminate: (enable = true, statusText) => {
+                        lastActivityAt = Date.now();
                         isIndeterminate = enable;
                         if (enable) {
                             progressFill.style.display = 'none';
@@ -663,6 +696,7 @@ const DialogManager = (() => {
                     },
 
                     complete: (message, autoCloseDelay = 0) => {
+                        lastActivityAt = Date.now();
                         isIndeterminate = false;
                         progressFill.style.display = 'block';
                         indeterminateBar.style.display = 'none';
@@ -685,6 +719,7 @@ const DialogManager = (() => {
                     },
 
                     setError: (message, showRetryButton = false, onRetry) => {
+                        lastActivityAt = Date.now();
                         isIndeterminate = false;
                         progressFill.style.display = 'block';
                         indeterminateBar.style.display = 'none';
@@ -715,16 +750,19 @@ const DialogManager = (() => {
                     },
 
                     setStatus: (text) => {
+                        lastActivityAt = Date.now();
                         statusEl.textContent = text;
                     },
 
                     setDetail: (text) => {
+                        lastActivityAt = Date.now();
                         detailEl.textContent = text;
                         detailEl.style.display = text ? 'block' : 'none';
                     },
 
                     // 更新次级进度条：文件名标签与当前文件进度百分比（均可选）
                     setFileBar: (label, percent, opts = {}) => {
+                        lastActivityAt = Date.now();
                         // label 支持结构化 { name, info }：第一行文件名、第二行进度信息，由本方法合并渲染
                         if (label !== undefined && label !== null) {
                             if (typeof label === 'object') {
@@ -789,6 +827,23 @@ const DialogManager = (() => {
                     }),
 
                     getProgress: () => currentProgress,
+
+                    // 在底部追加一行提示（文本居左 + 按钮居右），保持上方显示不变；供停滞检测等外部信号调用
+                    showPromptRow: (text, buttonLabel, onClick) => {
+                        lastActivityAt = Date.now();
+                        promptRow.style.display = 'flex';
+                        promptRow.innerHTML = '';
+                        const textEl = document.createElement('span');
+                        textEl.className = 'lit-loading-prompt-text';
+                        textEl.textContent = text || '';
+                        promptRow.appendChild(textEl);
+                        if (buttonLabel) {
+                            promptRow.appendChild(_createButton(buttonLabel, { isPrimary: true, onClick }));
+                        }
+                    },
+
+                    // 最近一次界面活动的时刻（停滞检测据此判断是否卡死）
+                    getLastActivityAt: () => lastActivityAt,
 
                     close: overlay.close
                 });

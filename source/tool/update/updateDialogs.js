@@ -1,7 +1,9 @@
+import { game } from '../../../../../noname.js';
 import { dialogManager } from '../ui/dialogManager.js';
 import { UPDATE_CONFIG as CONFIG } from './config.js';
 import { updateUtils as utils } from './utils.js';
 import { updateEnvironment as Environment } from './repository.js';
+import { watchStall } from './stallWatchdog.js';
 
 // 将更新内容中的轻量 HTML 转为对话框可显示的纯文本（对话框使用 textContent，HTML 会被转义）
 function plainText(html) {
@@ -29,6 +31,19 @@ class UIManager {
     constructor() {
         this.dialog = dialogManager;
         this.env = Environment.getEnvironmentType();
+    }
+
+    // 卡死/停滞检测的默认配置：30 秒无活动即提示重启；可用 options.stall 覆盖或关闭（false）
+    _stallOptions(options = {}) {
+        const stall = options.stall;
+        if (stall === false) return null;
+        return {
+            threshold: 30000,
+            message: '检测到更新可能已卡死（进度长时间未变化），是否立即重启游戏？',
+            buttonLabel: '立即重启',
+            onRestart: () => game.reload(),
+            ...(typeof stall === 'object' && stall ? stall : {})
+        };
     }
 
     async showMainMenu(resumeInfo, hasToken) {
@@ -228,7 +243,7 @@ class UIManager {
     }
 
     // 计算下载进度
-    async createDownloadProgress(title, totalBytes, totalFiles, mode) {
+    async createDownloadProgress(title, totalBytes, totalFiles, mode, options = {}) {
         const controller = await this.dialog.complexLoading(
             title,
             mode === 'retry_failed' ? '正在重试失败的文件...' : '准备下载...',
@@ -244,6 +259,10 @@ class UIManager {
                 initialFileName: '等待开始...'
             }
         );
+
+        // 卡死/停滞检测（默认开启）：30s 无进度即在底部追加“是否重启”提示，不打断下载
+        const stallCfg = this._stallOptions(options);
+        const stallWatch = stallCfg ? watchStall(controller, stallCfg) : null;
 
         const files = new Map();
         const queue = [];
@@ -388,6 +407,7 @@ class UIManager {
 
         const close = () => {
             closed = true;
+            if (stallWatch) stallWatch.stop();
             files.forEach(file => {
                 if (file.timeoutId) clearTimeout(file.timeoutId);
                 file.timeoutId = null;
@@ -504,7 +524,10 @@ class UIManager {
             close,
             showRetry: (onRetry) => {
                 controller.setError('部分文件下载失败', true, onRetry);
-            }
+            },
+            // 供其他代码发送信号：在底部追加“是否重启”等提示，不干扰下载显示
+            showPromptRow: (text, buttonLabel, onClick) => controller.showPromptRow(text, buttonLabel, onClick),
+            getLastActivityAt: () => controller.getLastActivityAt()
         };
     }
 
@@ -713,13 +736,27 @@ class UIManager {
         return null;
     }
 
-    // 显示不可交互的“处理中，请稍候”模态框（转圈动画），返回 { close, updateText } 控制器。
+    // 显示不可交互的“处理中，请稍候”模态框（转圈动画），返回 { close, updateText, showPromptRow, getLastActivityAt } 控制器。
     // 用于版本信息请求、文件清单下载、更新覆写等耗时阶段，避免 UI 空窗让用户误以为卡死。
     // 这些阶段没有进度回调，使用转圈加载框（loading），而不是 complexLoading 的确定进度条。
-    async showLoading(title, message) {
-        return await this.dialog.loading(title, message, {
+    async showLoading(title, message, options = {}) {
+        const controller = await this.dialog.loading(title, message, {
             width: 'min(420px, 90vw)'
         });
+        // 卡死/停滞检测（默认开启）：30s 无活动即在底部追加“是否重启”提示，不打断进行中的操作
+        const stallCfg = this._stallOptions(options);
+        const stallWatch = stallCfg ? watchStall(controller, stallCfg) : null;
+        const close = () => {
+            if (stallWatch) stallWatch.stop();
+            controller.close();
+        };
+        return {
+            updateText: (text) => controller.updateText(text),
+            close,
+            // 供其他代码发送信号：在底部追加“是否重启”等提示，不干扰上方内容
+            showPromptRow: (text, buttonLabel, onClick) => controller.showPromptRow(text, buttonLabel, onClick),
+            getLastActivityAt: () => controller.getLastActivityAt()
+        };
     }
 
     async alert(title, message) {

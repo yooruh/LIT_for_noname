@@ -29,6 +29,10 @@ const CONFIG = {
         codeZipSentinel: '~code.zip',   // 状态任务中代表代码包的哨兵 remote（不落盘）
         stagingDir: '_temp_update'      // 代码包解压/校验暂存目录（扩展目录内）
     },
+    // 不属于扩展包内容、需在备份/清理/遍历中忽略的条目
+    // （开发机上的 .git/scripts 等 + 运行时临时项，与 scripts/rebuild.mjs 的 EXCLUDES 对齐）
+    ignoredDirs: ['.git', '.vscode', 'node_modules', 'scripts', 'release', '.claude', '_temp_downloading', '_temp_update'],
+    ignoredFiles: ['.update_state.json', 'package.json', 'package-lock.json', 'jsconfig.json', '.gitignore', '.gitattributes'],
     previewBranch: 'main',              // 预览版固定使用的分支（main 最新代码，非已发布版）
     limits: {
         maxRetries: 3,

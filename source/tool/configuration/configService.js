@@ -1,5 +1,6 @@
 import { lib, game } from '../../../../../noname.js';
 import { extensionFilesPath, extensionPath } from '../utils/paths.js';
+import { getFileList } from '../utils/fileSystem.js';
 
 /**
  * 处理配置的加载、备份、恢复等操作
@@ -136,7 +137,7 @@ const ConfigService = (() => {
             let fileList = [];
 
             try {
-                const [folders, files] = await game.promises.getFileList(backupDir);
+                const [, files] = await getFileList(backupDir);
                 fileList = files || [];
             } catch (error) {
                 console.warn('读取文件列表失败:', error);

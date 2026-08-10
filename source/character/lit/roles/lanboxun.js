@@ -119,13 +119,13 @@ export const translate = {
     'lit_shouwang': "守望",
     'lit_shouwang_info': "锁定技，当你的手牌数或体力值为全场最多（之一）时，造成的伤害+1",
     'lit_shengjilbx': "升级·兰柏勋",
-    'lit_shengjilbx_info': "增加1点体力上限，恢复体力至上限",
+    'lit_shengjilbx_info': `${get.poptip("lit_sjInstantFull")}，增加1点体力上限，恢复体力至上限`,
 };
 
 export const simpleTranslate = {
     'lit_yuqiu_info': `${get.poptip("lit_damageCard")}对目标未造成伤害：<li>质数牌可拿目标1牌</li><li>非质数牌可弃目标至多2牌</li>`,
     'lit_shouwang_info': "锁；手牌数/体力为全场最多（之一）时伤害+1",
-    'lit_shengjilbx_info': "+1体力上限，回满血",
+    'lit_shengjilbx_info': `${get.poptip("lit_sjInstantSimple")}，+1体力上限，回满血`,
 };
 
 export const pinyins = {

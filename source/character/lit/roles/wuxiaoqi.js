@@ -315,7 +315,7 @@ export const translate = {
     'lit_xiaochouV2': "小丑V2",
     'lit_xiaochouV2_info': "锁定技，当你死亡后，伤害来源弃置所有牌",
     'lit_shengjiwxq': "升级·伍小戚",
-    'lit_shengjiwxq_info': `${get.poptip('lit_mianjuV2')}${get.poptip('lit_xiaochouV2')} 获得〖面具〗和〖小丑〗，并修改其中的〖小丑〗：锁定技，当你死亡后，伤害来源弃置所有牌`,
+    'lit_shengjiwxq_info': `${get.poptip('lit_mianjuV2')}${get.poptip('lit_xiaochouV2')} 获得〖面具〗或〖小丑〗，并修改其中的〖小丑〗：锁定技，当你死亡后，伤害来源弃置所有牌`,
 };
 
 export const simpleTranslate = {

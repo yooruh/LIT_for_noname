@@ -1,6 +1,6 @@
 {
   "Directory.json": {
-    "size": 16464,
+    "size": 16685,
     "md5": null
   },
   "extension.js": {
@@ -240,8 +240,8 @@
     "md5": "5bb96e42f26bc1614d32117802c3dc76"
   },
   "source/character/lit/roles/lanboxun.js": {
-    "size": 6069,
-    "md5": "1290991b793614645fb7b598d19864db"
+    "size": 6145,
+    "md5": "6e244d7bc4d2df8b2a66063892d6566c"
   },
   "source/character/lit/roles/linmiao.js": {
     "size": 7276,
@@ -285,7 +285,7 @@
   },
   "source/character/lit/roles/wuxiaoqi.js": {
     "size": 15791,
-    "md5": "5fea62dde37f2bd6c7c210a1d3dedb59"
+    "md5": "bef01fd1993c5dd087ad5ba1fdc6d29b"
   },
   "source/character/lit/roles/yangxiangling.js": {
     "size": 16249,
@@ -312,16 +312,16 @@
     "md5": "547940cf6de56b2fea9f476b33a24600"
   },
   "source/character/lit/roles/zhangshengjie.js": {
-    "size": 28937,
-    "md5": "15fc848ca2f74dbe3a823a83b6f7c9dc"
+    "size": 29013,
+    "md5": "604e46b3bc92859ad9363a9aca573e54"
   },
   "source/character/lit/roles/zhangshengjie9.js": {
     "size": 12660,
     "md5": "7cb931ff4642269e6088bc98b2b8e14d"
   },
   "source/character/lit/roles/zhengmohan.js": {
-    "size": 13959,
-    "md5": "eeb0035cda58d3f4df63a8499799ebf3"
+    "size": 14017,
+    "md5": "a82ad3f3e8fd64d0a936a03b843bdb7e"
   },
   "source/character/lit/roles/zhongyutong.js": {
     "size": 15617,
@@ -336,8 +336,8 @@
     "md5": "35ffcf5816ea967932d7ecf9d72cc223"
   },
   "source/character/lit/shengji.js": {
-    "size": 9921,
-    "md5": "d590ec6984e2efb628dfa35d0be65141"
+    "size": 16668,
+    "md5": "e4580725d0b3498a7025b5528ae281bd"
   },
   "source/character/lit_gz/index.js": {
     "size": 3546,
@@ -476,8 +476,8 @@
     "md5": "c08dc779e39a981070d71d194cf1b551"
   },
   "source/tool/configuration/configService.js": {
-    "size": 11684,
-    "md5": "a13b5ab78af134ccd38ebd5705b1eede"
+    "size": 11717,
+    "md5": "88cea550ba8b02b7de5b286eb0b55f79"
   },
   "source/tool/pack/guozhanPack.js": {
     "size": 1159,
@@ -496,32 +496,32 @@
     "md5": "41b2acdda5cef7af11ac8c32dabcf042"
   },
   "source/tool/ui/dialogManager.js": {
-    "size": 57059,
-    "md5": "52cfbc9777a52202a030636cff386380"
+    "size": 60393,
+    "md5": "89427c42034d0a2fe8ca26aee929ce7f"
   },
   "source/tool/ui/poptips.js": {
-    "size": 1552,
-    "md5": "ba99b27deab00819e4c942b509928705"
+    "size": 2183,
+    "md5": "738b1e910d76d2e97cc6d30791b1a258"
   },
   "source/tool/ui/themeManager.js": {
     "size": 3997,
     "md5": "359f3fe459873455ef09923140d022e8"
   },
   "source/tool/update/backupManager.js": {
-    "size": 6925,
-    "md5": "c12e52eeac90a04a291cafe17748c70d"
+    "size": 5742,
+    "md5": "7920a4976cb9d01ccc690b78456e08a1"
   },
   "source/tool/update/config.js": {
-    "size": 1987,
-    "md5": "dfbe227c7859c8a6d894f3712fe51023"
+    "size": 2431,
+    "md5": "ec0376ab747db00fc8bcab2c5ef0d166"
   },
   "source/tool/update/downloader.js": {
     "size": 15872,
     "md5": "5838f7cc80295c23c190edf469ae0592"
   },
   "source/tool/update/extensionUpdater.js": {
-    "size": 65973,
-    "md5": "60a4f80e47d7d5d52b537a89b9c87b00"
+    "size": 66108,
+    "md5": "c51d38877d56588ac451ef4f95f969bb"
   },
   "source/tool/update/index.js": {
     "size": 20421,
@@ -539,13 +539,17 @@
     "size": 7104,
     "md5": "2492f475d0af3d886f528e1649864f08"
   },
+  "source/tool/update/stallWatchdog.js": {
+    "size": 1340,
+    "md5": "4a27b7ded7ad32acb9e4de856cdb5dc8"
+  },
   "source/tool/update/stateManager.js": {
     "size": 9476,
     "md5": "def737612911f229ddd97732089bfaa2"
   },
   "source/tool/update/updateDialogs.js": {
-    "size": 36714,
-    "md5": "aaa4f02dc0297f9a1f68a8da87c7d1ea"
+    "size": 38847,
+    "md5": "a47efbd0388aa038eeca95ece199f6a7"
   },
   "source/tool/update/utils.js": {
     "size": 5212,
@@ -554,6 +558,10 @@
   "source/tool/update/versionChecker.js": {
     "size": 3468,
     "md5": "ee7dd593ec3d0856c7eff7b5ab65eec4"
+  },
+  "source/tool/utils/fileSystem.js": {
+    "size": 1300,
+    "md5": "14988f56fdcd3c6770b173a659d78cf8"
   },
   "source/tool/utils/paths.js": {
     "size": 390,
@@ -568,8 +576,8 @@
     "md5": "1b1ba53e476ae3ea3f0762224b50876d"
   },
   "style/css/dialogManager.css": {
-    "size": 14639,
-    "md5": "c33cc92bbe338d93746693a30967602c"
+    "size": 15349,
+    "md5": "5309544135eb578453adc8a498f1f93d"
   },
   "style/css/extension.css": {
     "size": 6266,

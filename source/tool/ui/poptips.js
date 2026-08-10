@@ -51,4 +51,16 @@ export function registerPoptips(characterPacks) {
 		type: "character",
 		info: `指真实存在的牌：多张牌当作单张牌来使用时，计算数量按照多张牌计算；无实体牌的虚拟牌，不计入数量`,
 	});
+	lib.poptip.add({
+		id: "lit_sjInstantFull",
+		name: "触发式升级",
+		type: "character",
+		info: `带此标签的升级技能在「开局就满足升级条件时」不会自动升级，而是改为获得“升级·使用”：可在每轮开始，或任意角色阵亡后手动选择是否触发这些升级`,
+	});
+	lib.poptip.add({
+		id: "lit_sjInstantSimple",
+		name: "触发",
+		type: "character",
+		info: `带此标签的升级技能在「开局就满足升级条件时」不会自动升级，而是改为获得“升级·使用”：可在每轮开始，或任意角色阵亡后手动选择是否触发这些升级`,
+	});
 }

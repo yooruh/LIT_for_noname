@@ -1,6 +1,7 @@
 import { game } from '../../../../../noname.js';
 import { UPDATE_CONFIG as CONFIG } from './config.js';
 import { updateLogger } from './logger.js';
+import { getFileList } from '../utils/fileSystem.js';
 
 // ==================== 备份管理器 ====================
 class BackupManager {
@@ -11,7 +12,7 @@ class BackupManager {
 
     async listBackups() {
         try {
-            const [folders] = await game.promises.getFileList(this.filesDir);
+            const [folders] = await getFileList(this.filesDir);
             const backups = [];
 
             for (const folder of folders) {
@@ -20,7 +21,7 @@ class BackupManager {
                     if (!isNaN(timestamp)) {
                         let fileCount = 0;
                         try {
-                            const [, files] = await game.promises.getFileList(`${this.filesDir}/${folder}`);
+                            const [, files] = await getFileList(`${this.filesDir}/${folder}`);
                             fileCount = files.length;
                         } catch (e) { }
 
@@ -46,11 +47,8 @@ class BackupManager {
             const dirExists = await game.promises.checkDir(this.targetDir);
             if (dirExists === 1) {
                 game.print(`[备份] 创建备份: ${backupDir}`);
-                await this.copyDirectoryRecursive(this.targetDir, backupDir, {
-                    skipDirs: new Set(['_temp_downloading', CONFIG.files.stagingDir]),
-                    skipFiles: new Set([CONFIG.files.state]),
-                    onProgress
-                });
+                // 忽略清单（_temp_*、.git、scripts 等）已由 copyDirectoryRecursive 默认处理
+                await this.copyDirectoryRecursive(this.targetDir, backupDir, { onProgress });
                 await this.cleanupOldBackups(CONFIG.limits.backupCount);
                 return { success: true, path: backupDir };
             }
@@ -120,45 +118,22 @@ class BackupManager {
 
     async copyDirectoryRecursive(src, dest, options = {}) {
         const { skipDirs = new Set(), skipFiles = new Set(), onProgress = null } = options;
-        const [folders, files] = await game.promises.getFileList(src);
+        // 默认忽略清单合并调用方额外指定的跳过项（自定义 getFileList 返回全部条目，含 `_`/`.` 开头）
+        const effectiveSkipDirs = new Set([...CONFIG.ignoredDirs, ...skipDirs]);
+        const effectiveSkipFiles = new Set([...CONFIG.ignoredFiles, ...skipFiles]);
+        const [folders, files] = await getFileList(src);
         await game.promises.createDir(dest);
 
         for (const file of files) {
-            if (skipFiles.has(file)) continue;
+            if (effectiveSkipFiles.has(file)) continue;
             if (typeof onProgress === 'function') onProgress(`正在复制 ${src}/${file}`);
             const content = await game.promises.readFile(`${src}/${file}`);
             await game.promises.writeFile(content, dest, file);
         }
 
         for (const folder of folders) {
-            if (skipDirs.has(folder)) continue;
+            if (effectiveSkipDirs.has(folder)) continue;
             await this.copyDirectoryRecursive(`${src}/${folder}`, `${dest}/${folder}`, options);
-        }
-
-        // 兼容旧版本：getFileList 会过滤 `_` 开头文件，备份/回滚会丢旧版的 `_meta.js` 等。
-        // 源目录自带的 Directory.json 记录了完整文件清单，据此把 `_` 文件显式复制过去。
-        await this.copyLegacyUnderscore(src, dest, onProgress);
-    }
-
-    // 兼容旧版本：显式复制源目录清单中 `_` 开头的文件（getFileList 看不到它们）
-    async copyLegacyUnderscore(src, dest, onProgress = null) {
-        if (await game.promises.checkFile(`${src}/Directory.json`) !== 1) return;
-        let fileList;
-        try {
-            fileList = Object.keys(JSON.parse(await game.promises.readFileAsText(`${src}/Directory.json`)));
-        } catch (e) {
-            return;
-        }
-        for (const rel of fileList) {
-            const name = rel.split('/').pop();
-            if (!name || !name.startsWith('_')) continue;
-            if (await game.promises.checkFile(`${src}/${rel}`) !== 1) continue;
-            const content = await game.promises.readFile(`${src}/${rel}`);
-            const dir = rel.includes('/') ? `${dest}/${rel.slice(0, rel.lastIndexOf('/'))}` : dest;
-            await game.promises.ensureDirectory(dir);
-            await game.promises.writeFile(content, dir, name);
-            if (typeof onProgress === 'function') onProgress(`正在复制 ${rel}`);
-            updateLogger.info('备份', `兼容旧版复制 ${rel}`);
         }
     }
 }

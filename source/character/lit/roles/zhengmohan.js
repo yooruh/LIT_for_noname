@@ -260,6 +260,7 @@ export const skill = {
                     source: 'damageBegin1',
                 },
                 filter: (event, player) => {
+                    if (!player.isLinked()) return false;
                     if (!event.hasNature("linked")) return false;
                     if (event.notLink()) return true;
                     // 只有传导源未触发此技能时，才对满足条件的横置角色触发
