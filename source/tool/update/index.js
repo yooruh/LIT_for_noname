@@ -136,10 +136,10 @@ export const extensionUpdateManager = {
                     '检查更新',
                     `发现 ${mismatched.length} 个文件与线上不一致，${missing.length} 个文件缺失：\n\n` +
                     `${diffLines.join('\n')}${more}\n\n是否立即更新至发布版？`,
-                    '取消',
-                    '更新至发布版'
+                    '更新至发布版',
+                    '取消'
                 );
-                if (proceed) {
+                if (!proceed) {
                     game.print('[检查更新] 已检查，未执行下载');
                     return;
                 }

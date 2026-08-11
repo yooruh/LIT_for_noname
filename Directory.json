@@ -5,7 +5,7 @@
   },
   "extension.js": {
     "size": 5441,
-    "md5": "97a0772eff4019412a5eed2ac58da33b"
+    "md5": "44411a93ec7f069e87e0ef6179f26ec6"
   },
   "image/card/lit_diaoka.png": {
     "size": 4793,
@@ -185,7 +185,7 @@
   },
   "info.json": {
     "size": 236,
-    "md5": "48360a74e0d89835ee3a367811cd0314"
+    "md5": "10308b1f37cd056c0d9c5de2894228ae"
   },
   "LICENSE": {
     "size": 34801,
@@ -336,8 +336,8 @@
     "md5": "35ffcf5816ea967932d7ecf9d72cc223"
   },
   "source/character/lit/shengji.js": {
-    "size": 16668,
-    "md5": "e4580725d0b3498a7025b5528ae281bd"
+    "size": 15491,
+    "md5": "a0af494e6084d2cc0eb4b7cea8543f5a"
   },
   "source/character/lit_gz/index.js": {
     "size": 3546,
@@ -388,8 +388,8 @@
     "md5": "482dceef7e8c413b1120c57f41081747"
   },
   "source/content.js": {
-    "size": 3981,
-    "md5": "df9f86cf843911a895363dd9fa6182f4"
+    "size": 4097,
+    "md5": "02f3f8de8cf2691a5cd251cb40bf68f5"
   },
   "source/help.js": {
     "size": 3967,
@@ -500,8 +500,8 @@
     "md5": "89427c42034d0a2fe8ca26aee929ce7f"
   },
   "source/tool/ui/poptips.js": {
-    "size": 2183,
-    "md5": "738b1e910d76d2e97cc6d30791b1a258"
+    "size": 2333,
+    "md5": "e53ed24aee00f80080350349ae5201eb"
   },
   "source/tool/ui/themeManager.js": {
     "size": 3997,
@@ -524,8 +524,8 @@
     "md5": "c51d38877d56588ac451ef4f95f969bb"
   },
   "source/tool/update/index.js": {
-    "size": 20421,
-    "md5": "5900436e75460177a1c69ed10b6b7b70"
+    "size": 20422,
+    "md5": "d04ac63c25ae6d695f0c6bd8cea524b6"
   },
   "source/tool/update/logger.js": {
     "size": 3720,
@@ -576,8 +576,8 @@
     "md5": "1b1ba53e476ae3ea3f0762224b50876d"
   },
   "style/css/dialogManager.css": {
-    "size": 15349,
-    "md5": "5309544135eb578453adc8a498f1f93d"
+    "size": 15345,
+    "md5": "ef4636be50795cc126de88bdf4378a7d"
   },
   "style/css/extension.css": {
     "size": 6266,
@@ -596,8 +596,8 @@
     "md5": "642af369f1427c17df3c97d01ca183b1"
   },
   "style/html/update.html": {
-    "size": 15302,
-    "md5": "de26f78cdb3f021876ff455fac0e0280"
+    "size": 15355,
+    "md5": "e16460cc6214a9a10dd68adb83195e53"
   },
   "style/nncfg/android_wide11.0.nncfg": {
     "size": 3956,

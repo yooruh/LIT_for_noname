@@ -15,7 +15,7 @@ export const skill = {
             content: (storage, player) => `当前经验：${player.countMark('lit_shengji')}/3<li>击杀时全场获得1经验，击杀者额外获得1经验；经验达3，或全场不足5人时升级</li>`,
         },
         utils: {
-            // 升级动作表：按升级技能名（lit_shengji 去掉前缀）映射到升级后的技能或动作
+            // 升级动作表：按升级技能名映射到升级后的技能或动作
             // 动作函数签名：(event, trigger, player)
             actions: {
                 'qb': 'lit_tiannaV2',
@@ -78,42 +78,38 @@ export const skill = {
             },
             // 对指定升级技能逐一执行升级动作，并整理技能排序
             async shengjiUpgrade(player, skills) {
+                // 归一化动作：函数直接执行，其余统一为 { skills, beforeAdd } 描述对象
+                const normalizeAction = action => {
+                    if (typeof action === 'function') return { run: action };
+                    if (typeof action === 'string') return { skills: [action] };
+                    return { beforeAdd: action.beforeAdd, skills: [].concat(action.skills || []) };
+                };
+
                 const mainAllSkills = lib.character[player.name1]?.skills || [];
                 const viceAllSkills = lib.character[player.name2]?.skills || [];
 
                 for (const skill of skills) {
-                    const skillKey = skill.slice(11);
-                    const action = this.actions[skillKey];
-                    if (!action) continue;
+                    const rawAction = this.actions[skill.slice(11)];
+                    if (!rawAction) continue;
+                    const action = normalizeAction(rawAction);
 
                     if (mainAllSkills.includes(skill)) await player.showCharacter(0, true);
                     if (viceAllSkills.includes(skill)) await player.showCharacter(1, true);
                     player.removeSkill(skill);
 
-                    if (typeof action === 'function') {
-                        await action(undefined, undefined, player);
+                    if (action.beforeAdd) await action.beforeAdd(undefined, undefined, player);
+                    if (action.run) {
+                        await action.run(undefined, undefined, player);
                     } else {
-                        let skillsToAdd = [];
-                        if (typeof action === 'string') {
-                            skillsToAdd = [action];
-                        } else if (Array.isArray(action)) {
-                            skillsToAdd = action;
-                        } else if (typeof action === 'object') {
-                            if (action.beforeAdd) await action.beforeAdd(undefined, undefined, player);
-                            if (typeof action.skills === 'string') {
-                                skillsToAdd = [action.skills];
-                            } else {
-                                skillsToAdd = action.skills || [];
-                            }
-                        }
-                        let strArray = [];
-                        skillsToAdd.forEach(s => {
+                        // 添加升级后的技能并弹窗提示
+                        const added = [];
+                        for (const s of action.skills) {
                             if (!player.hasSkill(s)) {
                                 player.addSkill(s);
-                                strArray.push(get.translation(s));
+                                added.push(get.translation(s));
                             }
-                        });
-                        if (strArray.length > 0) player.popup(strArray.join('<br>'));
+                        }
+                        if (added.length) player.popup(added.join('<br>'));
                     }
                 }
 
@@ -141,34 +137,19 @@ export const skill = {
             }
             player.setStorage("lit_shengji", 0);
 
-            /** TODO: 若升级技能有标签lit_sjEff: "instant"，且当前的game.roundNumber === 0，则此升级技能不通过useSkill('lit_shengji')来进行升级
-             *  需要注意：
-             *  （1）多个升级技能，一个有lit_sjEff: "instant"，另一个没有。没有此标签的仍走旧升级路线，有此标签的不这么走
-             *  （2）仅仅game.roundNumber === 0时不走，game.roundNumber === 0 不满足时仍然走老路线
-             *  （3）不走useSkill('lit_shengji')的升级，改为获得lit_shengji的子技能lit_shengji_use，并将角色当前有标签lit_sjEff: "instant"的技能名列表写进lit_shengji_use的storage中
-             *  （4）lit_shengji_use被触发时，能用于手动触发升级技能，其可以选择的升级技能来自lit_shengji_use的storage
-             *  （5）lit_shengji_use可在global: ['roundStart', 'dieAfter']触发，触发时，角色可以选择使用，也可以选择不使用。
-             *  （6）使用cost来细节地选择要触发哪些升级技能，升级技能的选项要包含技能的完整版描述，可多选（使用无名杀本体的多选框）
-             *  （7）使用lit_shengji_use触发升级后，会移除storage中的对应记录，如果storage触发完了，则移除lit_shengji_use
-             *  （8）lit_shengji_use没有技能描述，使用slient来避免显式出现在角色技能中
-             *  （9）修改升级条件的描述，同时修改有标签lit_sjEff: "instant"的升级技能描述。有标签lit_sjEff: "instant"时，升级技能的完整描述前加“触发式升级，”，简略描述前加“触发，”
-             *  （10）注册“触发式升级”和“触发”的poptip，替换技能描述中的对应文本为${get.poptip("xxx")}，说明此类特殊升级在开局触发升级时的效果，以及后续应该如何使用
-             */
-            // 人数不足5时，直接升级
-            if (lib.lit.getPlayers() < 5) {
-                player.useSkill('lit_shengji');
-            }
-            // 主公开局直接升级
-            else if (player.isZhu && game.roundNumber === 0) {
+            // 开局即时升级：全场不足5人时，非开局时触发
+            if (lib.lit.getPlayers() < 5 && game.roundNumber !== 0) {
                 player.useSkill('lit_shengji');
             }
         },
 
-        trigger: { global: ['dieAfter'] },
+        trigger: { global: ['gameDrawBefore', 'dieAfter'] },
         async content(event, trigger, player) {
-            // 开场升级条件由 init 强制触发
-            // 击杀：全场+1经验，击杀者额外+1；经验≥3 或 全场不足5人 → 升级
-            if (trigger?.name === 'die') {
+            // 击杀结算：全场 +1 经验，击杀者额外 +1；经验达 3 或全场不足 5 人时升级
+            if (trigger?.name === 'gameDraw') {
+                if (game.roundNumber !== 0) return;
+                if (lib.lit.getPlayers() >= 5 && !player.isZhu) return;
+            } else if (trigger?.name === 'die') {
                 if (!player.isAlive()) return;
                 const expGain = (trigger.source === player && trigger.source.isAlive() ? 1 : 0) + 1;
                 if (player.skills.some(e => lib.lit.isShengjiSkill(e))) {
@@ -179,19 +160,26 @@ export const skill = {
                 if (player.countMark('lit_shengji') < 3 && lib.lit.getPlayers() >= 5) return;
             }
 
-            // 开局升级：带 lit_sjEff: "instant" 标签的升级技能不自动升级，
-            // 改由 lit_shengji_use 手动触发（roundStart / dieAfter）
-            if (game.roundNumber === 0) lib.skill.lit_shengji.utils.registerInstantUse(player);
-
-            player.clearMark('lit_shengji', false);
-            await player.logSkill('lit_shengji');
-            player.removeSkill('lit_shengji');
-
-            // round-0 升级时跳过 instant 技能，其余仍走旧升级路线
+            // 开局即时升级时，instant 标签技能转由 lit_shengji_use 手动触发，其余照常自动升级
+            const utils = lib.skill.lit_shengji.utils;
+            if (game.roundNumber === 0) {
+                utils.registerInstantUse(player);
+            } else if (player.hasSkill('lit_shengji_use')) {
+                player.setStorage('lit_shengji_use', []);
+                player.removeSkill("lit_shengji_use");
+            }
             const eventSkills = player.skills.filter(s => lib.lit.isShengjiSkill(s)
                 && !(game.roundNumber === 0 && get.info(s).lit_sjEff === "instant"));
+            if (eventSkills.length === 0) return;
 
-            await lib.skill.lit_shengji.utils.shengjiUpgrade(player, eventSkills);
+            await player.logSkill('lit_shengji');
+            // 仍有手动待触发的升级时保留技能，否则移除，避免后续升级无法自动触发
+            if (player.getStorage('lit_shengji_use', []).length === 0) {
+                player.clearMark('lit_shengji', false);
+                player.removeSkill('lit_shengji');
+            }
+
+            await utils.shengjiUpgrade(player, eventSkills);
         },
         subSkill: {
             markAfterShow: {
@@ -209,12 +197,12 @@ export const skill = {
                 sub: true,
                 sourceSkill: "lit_shengji",
             },
-            // 手动触发式升级：开局不自动升级的 instant 升级技能收进 storage，由玩家手动触发
+            // 手动触发式升级：带 instant 标签的升级技能在开局即时升级时不自动触发，收进 storage；
+            // 玩家可在每轮开始或任意角色阵亡后手动多选触发，触发后移除对应记录，清空后移除本技能
             use: {
                 charlotte: true,
-                sub: true,
-                sourceSkill: "lit_shengji",
-                silent: true,
+                log: false,
+                priority: -999,
                 trigger: { global: ["roundStart", "dieAfter"] },
                 filter(event, player) {
                     if (!player.isAlive()) return false;
@@ -222,22 +210,14 @@ export const skill = {
                     return Array.isArray(list) && list.length > 0;
                 },
                 async cost(event, trigger, player) {
-                    const list = (player.getStorage("lit_shengji_use") || []).filter(s => player.hasSkill(s));
+                    const list = player.getStorage("lit_shengji_use", []).filter(s => player.hasSkill(s));
                     if (!list.length) {
                         event.result = { bool: false };
                         return;
                     }
+                    // 参照无名杀本体：dialog.add([技能数组, "skill"]) 走 buttonPresets.skill 构建标准技能按钮
                     const dialog = ui.create.dialog("触发式升级", "hidden");
-                    const buttons = ui.create.div(".buttons", dialog.content);
-                    for (const skill of list) {
-                        const button = ui.create.div(".button.selectable.pointerdiv", buttons);
-                        button.link = skill;
-                        button.innerHTML = `<div class="name">${get.translation(skill)}</div>` +
-                            `<div class="info">${lib.translate[skill + '_info'] || ''}</div>`;
-                        button.listen(ui.click.button);
-                        dialog.buttons.push(button);
-                    }
-                    dialog.open();
+                    dialog.add([list, "skill"]);
                     const result = await player.chooseButton(dialog, [1, list.length])
                         .set("ai", () => 1)
                         .forResult();
@@ -245,31 +225,45 @@ export const skill = {
                         event.result = { bool: false };
                         return;
                     }
+                    if (result.links.length === 0) return;
                     event.result = { bool: true, cost_data: result.links.slice() };
                 },
                 async content(event, trigger, player) {
                     const skills = event.cost_data || [];
-                    if (!skills.length) return;
                     await lib.skill.lit_shengji.utils.shengjiUpgrade(player, skills);
-                    const remaining = (player.getStorage("lit_shengji_use") || []).filter(s => !skills.includes(s));
+                    const remaining = player.getStorage("lit_shengji_use", []).filter(s => !skills.includes(s));
                     player.setStorage("lit_shengji_use", remaining);
                     if (!remaining.length) player.removeSkill("lit_shengji_use");
+                    // 无待触发升级且无剩余升级技能时，结束整个升级机制
+                    if (!remaining.length && !player.skills.some(s => lib.lit.isShengjiSkill(s))) {
+                        player.clearMark('lit_shengji', false);
+                        player.removeSkill('lit_shengji');
+                    }
                 },
+                sub: true,
+                sourceSkill: "lit_shengji",
             },
         },
     },
     lit_sj: {
         unique: true,
-        group: 'lit_shengji',
+        // 不依赖 group，避免移除任一升级技能时引擎 expandSkills 连带删除其全局触发器
+        init(player) {
+            if (!player.hasSkill('lit_shengji')) player.addSkill('lit_shengji');
+        },
         onremove: (player) => {
             if (player.getSkills().filter(e => lib.lit.isShengjiSkill(e)).length) return;
             let hidden = player.getSkills(true).filter(e => lib.lit.isShengjiSkill(e)).length;
-            if (hidden) {
+            if (player.getStorage('lit_shengji_use', []).length) {
+                // 仍有待手动触发的升级，保留升级机制，避免中途被移除
+                return;
+            } else if (hidden) {
+                // 仍有隐藏的升级技，仅移除公开的标记
                 player.unmarkSkill('lit_shengji');
                 player.markSkill("lit_shengji", null, null, true);
-            } else {
-                player.removeSkill('lit_shengji');
+                return;
             }
+            player.removeSkill('lit_shengji');
         },
     },
     lit_shengjiqb: {
@@ -368,5 +362,5 @@ export const skill = {
 
 export const translate = {
     'lit_shengji': "升级",
-    'lit_shengji_info': `击杀时全场获得1经验，击杀者额外获得1经验；经验达到3或全场角色数不足5时升级，玩家为主公时开局立即升级；${get.poptip("lit_sjInstantFull")}技能不自动升级，可于每轮开始或任意角色阵亡时手动触发`,
+    'lit_shengji_info': `击杀时全场获得1经验，击杀者额外获得1经验；经验达到3或全场角色数不足5时升级，玩家为主公时开局立即升级；${get.poptip("lit_sjInstantFull")}技能不在开局自动升级，可于每轮开始或任意角色阵亡时手动触发`,
 };
